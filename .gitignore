@@ -1,0 +1,80 @@
+# Resources
+*.dat
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Linker files
+*.ilk
+
+# Debugger Files
+*.pdb
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+
+# Executables
+*.exe
+*.out
+*.app
+
+# debug information files
+*.dwo
+
+*.ini
+*.fbx
+*.gltf
+*.bin
+
+.vs/
+Editor/Bin/Resource/*
+Engine/Bin/Resource/*
+Client/Bin/Resource/*
+Client/Default/x64/
+Client/Bin/Debug/*
+!Client/Bin/Debug/fmod.dll
+Client/Bin/Release/*
+!Client/Bin/Release/fmod.dll
+Client/Bin/Sound/*
+Editor/Bin/Debug/*
+!Editor/Bin/Debug/fmod.dll
+Editor/Bin/Release/*
+!Editor/Bin/Release/fmod.dll
+Engine/Bin/Debug
+Engine/Bin/Release
+Engine/Public/json.hpp
+Editor/Default/x64/
+Engine/Default/x64/
+EngineSDK/*
+!Engine/ThirdPartyLib/Jolt.pdb
+!Engine/ThirdPartyLib/Jolt_d.pdb
+!Engine/ThirdPartyLib/ImGuiLib.pdb
+!Engine/ThirdPartyLib/ImGuiLib_d.pdb
+!Engine/ThirdPartyLib/freetyped.pdb
+Editor/Bin/Resource/BTtest
+Client/Bin/Resource/Map/Test/*
+Client/Bin/Resource/Map/MapData/Heaven2/*
+Client/Bin/Resource/Map/MapData/Heaven3/*
+Client/Bin/Resource/UI/ExternalShaderResource/poi_toonshader_origin/*

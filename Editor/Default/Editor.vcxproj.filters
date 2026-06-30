@@ -1,0 +1,817 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="98. Default">
+      <UniqueIdentifier>{3dfde732-6c59-4ad9-b523-70d76df69a29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="99. Define">
+      <UniqueIdentifier>{732253f7-81b7-4749-a561-d0933d068347}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="00. EditorApp">
+      <UniqueIdentifier>{9638c829-a88c-443d-9e3c-1f7bd614e9e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="97. Event">
+      <UniqueIdentifier>{04d5f5cd-8ded-487c-b94c-5faa3bd733f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level">
+      <UniqueIdentifier>{f5a1beda-663b-4398-9fe1-e8db78d82c7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Edit">
+      <UniqueIdentifier>{79d0f649-1e9f-4bdd-9f15-13a2469a8d43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Shader">
+      <UniqueIdentifier>{b0e8ae58-0f4b-4c6a-8b3a-e3a210f41ef7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect">
+      <UniqueIdentifier>{f4aa0a89-a2f3-4990-b59a-18bc03fb3cfe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Map">
+      <UniqueIdentifier>{c6148559-fc43-4b25-b1d8-64c1351feab2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\UI">
+      <UniqueIdentifier>{462d5121-ab97-4cd9-9f72-1383b46c5133}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\UI\Temp Props">
+      <UniqueIdentifier>{95123eb5-a89e-4ad2-943b-6e889793fe28}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. ModelLoader">
+      <UniqueIdentifier>{db7fc10f-8c21-4931-995b-434b4bf0263d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\UI\Temp Props\Temp Shader">
+      <UniqueIdentifier>{d637f06b-45b4-4721-88ec-ab3eea943955}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject">
+      <UniqueIdentifier>{de0fe91c-5209-4722-8a86-e489175325f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Anim">
+      <UniqueIdentifier>{9b7ad361-c799-4838-a5fd-daa9fca538a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Anim\Tool">
+      <UniqueIdentifier>{d85a380d-6291-4d80-82cd-144b8717416c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Actor">
+      <UniqueIdentifier>{9c95090d-76d9-420a-9c10-93a9be039151}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Actor\Anim">
+      <UniqueIdentifier>{9619ec0a-9481-4a6d-841b-d15795f22a0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\MapObject">
+      <UniqueIdentifier>{37459326-e791-4800-8124-a7fc6a5fbe15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\UI\Temp Props\Temp Object">
+      <UniqueIdentifier>{a6fc9ea8-8c8e-40c2-8cce-41af32e1cac1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\UI\Temp Props\Temp Component">
+      <UniqueIdentifier>{7113c53c-3cf4-458b-94e1-6ab78b5811b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller">
+      <UniqueIdentifier>{25ff35f3-c9b6-46fb-b8ba-b5d0ab5959d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\Effect_Prefab">
+      <UniqueIdentifier>{774ff9b9-e035-4e09-a1cc-28229109e0fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\Particle_Controller">
+      <UniqueIdentifier>{2b2fad62-1edf-4bd6-9a2a-458a7f630978}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\Particle_Controller\Particle">
+      <UniqueIdentifier>{2a0944a9-b39e-4557-96c5-e4bced5aac12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="96. Interface">
+      <UniqueIdentifier>{38ba9fe0-934e-46d0-9236-736886be424d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\UI\Temp Props\Temp VIBuffer">
+      <UniqueIdentifier>{d88da4ce-b21b-485c-85ed-641ff34d1d1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\Mesh_Controller">
+      <UniqueIdentifier>{9263d0e1-7d86-4ac4-9599-2ba75b735225}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\Mesh_Controller\Effect_Mesh">
+      <UniqueIdentifier>{1bb47858-1a20-4e2d-9d0a-f4ed9c99e57b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="96. Interface\Shader">
+      <UniqueIdentifier>{21eca06b-421e-485e-9750-c3ffa52c827e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Dummy">
+      <UniqueIdentifier>{8bda64fb-8c84-43cf-aeba-bf18fe387c1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Dummy\Wolf">
+      <UniqueIdentifier>{c0bf34ec-7cee-42c3-9edb-a381b63719df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Camera">
+      <UniqueIdentifier>{d283c436-c990-447a-bf81-d5b355c034dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="96. Interface\Camera">
+      <UniqueIdentifier>{978c092b-586e-4a0d-b07d-3f8d454f78d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Camera">
+      <UniqueIdentifier>{8390f353-e799-4f6f-bfd6-a7718826e6e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Camera\Action">
+      <UniqueIdentifier>{bfd1b2ba-66c1-4aba-998e-ff6db6deb0c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Dummy\Augusta">
+      <UniqueIdentifier>{e3b0fe7a-92fa-4d49-9339-e575e6ab1be3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="96. Interface\StateMachine">
+      <UniqueIdentifier>{d30d9ac5-e7ba-40a0-a9c6-e7559e971818}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="96. Interface\Map">
+      <UniqueIdentifier>{4bd189de-803f-4b9d-acea-690d376b0d31}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\MapObject\Brush">
+      <UniqueIdentifier>{4778d04b-2c4b-4128-ba74-01a5ae1afb96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\MapObject\Light">
+      <UniqueIdentifier>{db0c8029-72af-4f1e-9e5b-ccfe1d547f0a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\MapObject\PreView">
+      <UniqueIdentifier>{4e151d40-03f1-4157-9d26-b544a6224106}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Dummy\Map">
+      <UniqueIdentifier>{c0abfd4d-8622-45a6-8c1d-49ec5cf5026a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\TrailMesh_Controller">
+      <UniqueIdentifier>{efd448f7-af3a-4925-88dc-5ae7a3652045}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\TrailMesh_Controller\Trail_Mesh">
+      <UniqueIdentifier>{04a9b020-ab0c-441f-94d2-06b0a6e4d851}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Load_Controller">
+      <UniqueIdentifier>{0182cffd-05d2-48b1-832b-37a4b99f7a27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Spectrum_Controller">
+      <UniqueIdentifier>{0c131423-5c6c-48ab-bfa3-5c0f120f37cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Spectrum_Controller\Spectrum">
+      <UniqueIdentifier>{dc01c551-693d-4efd-b197-55a3163b4754}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Dummy\Target">
+      <UniqueIdentifier>{022955cb-36e1-47b4-90d3-440b456680b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Camera\Sequencer">
+      <UniqueIdentifier>{11fc27fe-040e-443a-b82b-7ad88739045e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\MapObject\Destruction">
+      <UniqueIdentifier>{1e367e59-8695-45e4-8839-a31fb74b2d93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Sequence">
+      <UniqueIdentifier>{3226be9e-5451-4b8f-b216-4b07b5a01ffc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Sequence\Actor">
+      <UniqueIdentifier>{6509f61d-c948-4490-930a-9a3acb78e0b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Sequence\Camera">
+      <UniqueIdentifier>{0348049c-4ba5-4984-a77d-03ef1f4b9e1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Sequence\Audio">
+      <UniqueIdentifier>{ed778718-71c4-4e24-98a3-b46352eb56c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Sequence\SFX">
+      <UniqueIdentifier>{c97249cc-c410-4aa1-866e-1c7d8a0f8093}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Sequence\Effect">
+      <UniqueIdentifier>{c46f0d49-ab5a-47fb-b030-3debd47973e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\Rect_Controller">
+      <UniqueIdentifier>{246c0645-080c-48f3-994e-e9ce1033609b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\Rect_Controller\Effect_Rect">
+      <UniqueIdentifier>{78b70b79-18c1-4b75-b8a8-2322db63397f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\Decal_Controller">
+      <UniqueIdentifier>{0bd9ea5f-ea07-449d-8822-ba7f58e8277c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\Decal_Controller\Decal">
+      <UniqueIdentifier>{aed8a9b4-29ba-402f-8bad-85ea69775db6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\MapObject\Spawn">
+      <UniqueIdentifier>{f219fc04-ee62-4e2b-b86e-216ec6af55d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\MapObject\Trigger">
+      <UniqueIdentifier>{5912a73b-0563-44d9-874f-2b25f496dd7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\ScreenEffect">
+      <UniqueIdentifier>{d893448c-109b-43ed-b408-c4ea11350da9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="96. Interface\SFX">
+      <UniqueIdentifier>{091e099d-8ebc-4cbc-8569-af0394daa544}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\SFX">
+      <UniqueIdentifier>{b6acf729-2fb1-47d8-9f35-6fc9c8778acf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\SFX\Augusta">
+      <UniqueIdentifier>{a57d6569-499a-4271-92bc-c4aa3f903e44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\SFX\Augusta\Slash">
+      <UniqueIdentifier>{c319f2a6-687e-46aa-8a56-e1e6c61087c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\SFX\Augusta\Blur">
+      <UniqueIdentifier>{c3ce7c20-a584-4462-b6ad-20fe10d384d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\SFX\Galbrena">
+      <UniqueIdentifier>{6be37b23-a636-4bc7-84ce-e899da39eb63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\SFX\Galbrena\Blur">
+      <UniqueIdentifier>{7c036509-854b-4b08-8d10-aec1747c6dbd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Test">
+      <UniqueIdentifier>{b2dd2452-a82b-41dc-8da3-5dc497c14423}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\VA_Controller">
+      <UniqueIdentifier>{e59009cf-230b-4ab5-b7c4-508acbc36321}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\Mesh_Controller\Radial_Controller">
+      <UniqueIdentifier>{ad4a7415-e98d-4f47-996d-36267f17b585}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\Mesh_Controller\Radial_Controller\Radial">
+      <UniqueIdentifier>{606c33d5-720d-4502-82fe-1a443a9678bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Shader\StateMachine">
+      <UniqueIdentifier>{cb31a44c-e4ba-40b8-9e45-14e9d8e0e9be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\Light_Controller">
+      <UniqueIdentifier>{0ac5dddb-8f12-46dd-bc9f-6a2d00560acb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Level\Effect\Effect_Controller\Light_Controller\FXLight">
+      <UniqueIdentifier>{5389f285-edee-4fc2-8c14-a508a90bb558}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Editor.h">
+      <Filter>98. Default</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>98. Default</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>98. Default</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>98. Default</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Editor_Define.h">
+      <Filter>99. Define</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Editor_Enum.h">
+      <Filter>99. Define</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\EditorPch.h">
+      <Filter>99. Define</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Event_Level.h">
+      <Filter>97. Event</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Level_Edit.h">
+      <Filter>01. Level\Edit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Level_UI.h">
+      <Filter>01. Level\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Level_Shader.h">
+      <Filter>01. Level\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Level_Map.h">
+      <Filter>01. Level\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\ModelLoader.h">
+      <Filter>02. ModelLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\EditorApp.h">
+      <Filter>00. EditorApp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Level_Animation.h">
+      <Filter>01. Level\Anim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\AnimationTool.h">
+      <Filter>01. Level\Anim\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\AnimationActor.h">
+      <Filter>03. GameObject\Actor\Anim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\AnimNotifyTool.h">
+      <Filter>01. Level\Anim\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Particle.h">
+      <Filter>01. Level\Effect\Effect_Controller\Particle_Controller\Particle</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_MapObject_Instance.h">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_MapObject.h">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Effect_Prefab.h">
+      <Filter>01. Level\Effect\Effect_Controller\Effect_Prefab</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Effect_Controller.h">
+      <Filter>01. Level\Effect\Effect_Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\AnimNotifyDefine.h">
+      <Filter>01. Level\Anim\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="..\public\Custom_UI.h">
+      <Filter>01. Level\UI\Temp Props\Temp Object</Filter>
+    </ClInclude>
+    <ClInclude Include="..\public\Animator_UI.h">
+      <Filter>01. Level\UI\Temp Props\Temp Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Effect_Prefab.h">
+      <Filter>01. Level\Effect\Effect_Controller\Effect_Prefab</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Interface_Edit.h">
+      <Filter>96. Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\public\VIBuffer_Rect_Instance_UI.h">
+      <Filter>01. Level\UI\Temp Props\Temp VIBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Editor_Define_UI.h">
+      <Filter>01. Level\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Particle_Controller.h">
+      <Filter>01. Level\Effect\Effect_Controller\Particle_Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_LightObject.h" />
+    <ClInclude Include="..\Public\Effect_Mesh.h">
+      <Filter>01. Level\Effect\Effect_Controller\Mesh_Controller\Effect_Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Mesh_Controller.h">
+      <Filter>01. Level\Effect\Effect_Controller\Mesh_Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="..\public\Shader_Interface.h">
+      <Filter>96. Interface\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\public\EditDummy.h">
+      <Filter>03. GameObject\Dummy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\public\EditDummy_Wolf.h">
+      <Filter>03. GameObject\Dummy\Wolf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Level_Camera.h">
+      <Filter>01. Level\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Camera_Interface.h">
+      <Filter>96. Interface\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\SpringCamera_Edit.h">
+      <Filter>03. GameObject\Camera\Action</Filter>
+    </ClInclude>
+    <ClInclude Include="..\public\EditDummy_Augusta.h">
+      <Filter>03. GameObject\Dummy\Augusta</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Level_ASM.h">
+      <Filter>01. Level\Shader\StateMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\ASM_Interface.h">
+      <Filter>96. Interface\StateMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Map_Interface.h">
+      <Filter>96. Interface\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_Brush.h">
+      <Filter>03. GameObject\MapObject\Brush</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_LightObject.h">
+      <Filter>03. GameObject\MapObject\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_PreViewModel.h">
+      <Filter>03. GameObject\MapObject\PreView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\EditDummy_Map.h">
+      <Filter>03. GameObject\Dummy\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\EditDummy_Target.h">
+      <Filter>03. GameObject\Dummy\Target</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Particle_Controller.h">
+      <Filter>01. Level\Effect\Effect_Controller\Particle_Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Trail_Mesh.h">
+      <Filter>01. Level\Effect\Effect_Controller\TrailMesh_Controller\Trail_Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TrailMesh_Controller.h">
+      <Filter>01. Level\Effect\Effect_Controller\TrailMesh_Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Load_Controller.h">
+      <Filter>01. Level\Effect\Load_Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Spectrum.h">
+      <Filter>01. Level\Effect\Spectrum_Controller\Spectrum</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Sequencer.h">
+      <Filter>01. Level\Camera\Sequencer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Level_Effect.h">
+      <Filter>01. Level\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Event_Scene_Edit.h">
+      <Filter>97. Event</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Editor_Struct.h">
+      <Filter>99. Define</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Effect_Rect.h">
+      <Filter>01. Level\Effect\Effect_Controller\Rect_Controller\Effect_Rect</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Rect_Controller.h">
+      <Filter>01. Level\Effect\Effect_Controller\Rect_Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_MapObject_Destruction_Piece.h">
+      <Filter>03. GameObject\MapObject\Destruction</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\SQ_Item_Edit.h">
+      <Filter>03. GameObject\Sequence</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\SQ_Actor_Edit.h">
+      <Filter>03. GameObject\Sequence\Actor</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\SQ_Camera_Edit.h">
+      <Filter>03. GameObject\Sequence\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\SQ_Audio_Edit.h">
+      <Filter>03. GameObject\Sequence\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\SQ_Effect_Edit.h">
+      <Filter>03. GameObject\Sequence\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\SQ_SFX_Edit.h">
+      <Filter>03. GameObject\Sequence\SFX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_TriggerBox.h" />
+    <ClInclude Include="..\Public\Edit_MapObject_Destruction.h">
+      <Filter>03. GameObject\MapObject\Destruction</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\EditorProp.h">
+      <Filter>03. GameObject\Actor\Anim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\EditorPropWeapon.h">
+      <Filter>03. GameObject\Actor\Anim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Decal_Controller.h">
+      <Filter>01. Level\Effect\Effect_Controller\Decal_Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Effect_Decal.h">
+      <Filter>01. Level\Effect\Effect_Controller\Decal_Controller\Decal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_TriggerBox.h">
+      <Filter>03. GameObject\MapObject\Trigger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_MonsterSpawnor.h">
+      <Filter>03. GameObject\MapObject\Spawn</Filter>
+    </ClInclude>
+    <ClInclude Include="..\public\SFX_Interface.h">
+      <Filter>96. Interface\SFX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Level_SFX.h">
+      <Filter>01. Level\ScreenEffect</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_ScreenEffect.h">
+      <Filter>03. GameObject\SFX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\public\Augusta_SFX.h">
+      <Filter>03. GameObject\SFX\Augusta\Slash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\public\AugustaBlur.h">
+      <Filter>03. GameObject\SFX\Augusta\Blur</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Radial_Controller.h">
+      <Filter>01. Level\Effect\Effect_Controller\Mesh_Controller\Radial_Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Effect_Radial.h">
+      <Filter>01. Level\Effect\Effect_Controller\Mesh_Controller\Radial_Controller\Radial</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Galbrena_SFX.h">
+      <Filter>03. GameObject\SFX\Galbrena</Filter>
+    </ClInclude>
+    <ClInclude Include="..\public\Galbrena_SFX_Star.h">
+      <Filter>03. GameObject\SFX\Galbrena</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Galbrena_SFX_Circle.h">
+      <Filter>03. GameObject\SFX\Galbrena</Filter>
+    </ClInclude>
+    <ClInclude Include="..\public\Galbrena_Blur.h">
+      <Filter>03. GameObject\SFX\Galbrena\Blur</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\GltfLoader.h">
+      <Filter>02. ModelLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_Meteo.h">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_MapObject_Collaps.h">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_MapObject_Water.h">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_MapEffectCollector.h">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_FireFly.h">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_FireFly_Manager.h">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_LightManager.h">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Edit_SlideZone.h" />
+    <ClInclude Include="..\Public\Edit_Portal.h" />
+    <ClInclude Include="..\public\TestVA.h">
+      <Filter>03. GameObject\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\VA_Controller.h">
+      <Filter>01. Level\Effect\Effect_Controller\VA_Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Effect_Light.h">
+      <Filter>01. Level\Effect\Effect_Controller\Light_Controller\FXLight</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Light_Controller.h">
+      <Filter>01. Level\Effect\Effect_Controller\Light_Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Spectrum_Controller.h">
+      <Filter>01. Level\Effect\Spectrum_Controller</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Editor.ico">
+      <Filter>98. Default</Filter>
+    </Image>
+    <Image Include="small.ico">
+      <Filter>98. Default</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Editor.rc">
+      <Filter>98. Default</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Editor.cpp">
+      <Filter>98. Default</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\EditorApp.cpp">
+      <Filter>00. EditorApp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\EditorPch.cpp">
+      <Filter>99. Define</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Level_Edit.cpp">
+      <Filter>01. Level\Edit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Level_Effect.cpp">
+      <Filter>01. Level\Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Level_Map.cpp">
+      <Filter>01. Level\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Level_UI.cpp">
+      <Filter>01. Level\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\ModelLoader.cpp">
+      <Filter>02. ModelLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Level_Animation.cpp">
+      <Filter>01. Level\Anim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\AnimationTool.cpp">
+      <Filter>01. Level\Anim\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\AnimationActor.cpp">
+      <Filter>03. GameObject\Actor\Anim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\AnimNotifyTool.cpp">
+      <Filter>01. Level\Anim\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_MapObject_Instance.cpp">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\private\Custom_UI.cpp">
+      <Filter>01. Level\UI\Temp Props\Temp Object</Filter>
+    </ClCompile>
+    <ClCompile Include="..\private\Animator_UI.cpp">
+      <Filter>01. Level\UI\Temp Props\Temp Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_MapObject.cpp">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Effect_Prefab.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\Effect_Prefab</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Effect_Controller.cpp">
+      <Filter>01. Level\Effect\Effect_Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Particle_Controller.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\Particle_Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Interface_Edit.cpp">
+      <Filter>96. Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Level_Shader.cpp">
+      <Filter>01. Level\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\private\VIBuffer_Rect_Instance_UI.cpp">
+      <Filter>01. Level\UI\Temp Props\Temp VIBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Effect_Mesh.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\Mesh_Controller\Effect_Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Mesh_Controller.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\Mesh_Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="..\private\Shader_Interface.cpp">
+      <Filter>96. Interface\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\private\EditDummy.cpp">
+      <Filter>03. GameObject\Dummy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\private\EditDummy_Wolf.cpp">
+      <Filter>03. GameObject\Dummy\Wolf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Level_Camera.cpp">
+      <Filter>01. Level\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Camera_Interface.cpp">
+      <Filter>96. Interface\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\SpringCamera_Edit.cpp">
+      <Filter>03. GameObject\Camera\Action</Filter>
+    </ClCompile>
+    <ClCompile Include="..\private\EditDummy_Augusta.cpp">
+      <Filter>03. GameObject\Dummy\Augusta</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Level_ASM.cpp">
+      <Filter>01. Level\Shader\StateMachine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\ASM_Interface.cpp">
+      <Filter>96. Interface\StateMachine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Map_Interface.cpp">
+      <Filter>96. Interface\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_Brush.cpp">
+      <Filter>03. GameObject\MapObject\Brush</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_LightObject.cpp">
+      <Filter>03. GameObject\MapObject\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_PreViewModel.cpp">
+      <Filter>03. GameObject\MapObject\PreView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\EditDummy_Map.cpp">
+      <Filter>03. GameObject\Dummy\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Trail_Mesh.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\TrailMesh_Controller\Trail_Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TrailMesh_Controller.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\TrailMesh_Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Load_Controller.cpp">
+      <Filter>01. Level\Effect\Load_Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Spectrum.cpp">
+      <Filter>01. Level\Effect\Spectrum_Controller\Spectrum</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\EditDummy_Target.cpp">
+      <Filter>03. GameObject\Dummy\Target</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Sequencer.cpp">
+      <Filter>01. Level\Camera\Sequencer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Effect_Rect.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\Rect_Controller\Effect_Rect</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Rect_Controller.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\Rect_Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_MapObject_Destruction_Piece.cpp">
+      <Filter>03. GameObject\MapObject\Destruction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\SQ_Item_Edit.cpp">
+      <Filter>03. GameObject\Sequence</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\SQ_Actor_Edit.cpp">
+      <Filter>03. GameObject\Sequence\Actor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\SQ_Camera_Edit.cpp">
+      <Filter>03. GameObject\Sequence\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\SQ_Audio_Edit.cpp">
+      <Filter>03. GameObject\Sequence\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\SQ_Effect_Edit.cpp">
+      <Filter>03. GameObject\Sequence\Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\SQ_SFX_Edit.cpp">
+      <Filter>03. GameObject\Sequence\SFX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_TriggerBox.cpp" />
+    <ClCompile Include="..\Private\Edit_MapObject_Destruction.cpp">
+      <Filter>03. GameObject\MapObject\Destruction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\EditorProp.cpp">
+      <Filter>03. GameObject\Actor\Anim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\EditorPropWeapon.cpp">
+      <Filter>03. GameObject\Actor\Anim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Decal_Controller.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\Decal_Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Effect_Decal.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\Decal_Controller\Decal</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_TriggerBox.cpp">
+      <Filter>03. GameObject\MapObject\Trigger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_MonsterSpawnor.cpp">
+      <Filter>03. GameObject\MapObject\Spawn</Filter>
+    </ClCompile>
+    <ClCompile Include="..\private\SFX_Interface.cpp">
+      <Filter>96. Interface\SFX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Level_SFX.cpp">
+      <Filter>01. Level\ScreenEffect</Filter>
+    </ClCompile>
+    <ClCompile Include="..\private\Augusta_SFX.cpp">
+      <Filter>03. GameObject\SFX\Augusta\Slash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_ScreenEffect.cpp">
+      <Filter>03. GameObject\SFX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\private\AugustaBlur.cpp">
+      <Filter>03. GameObject\SFX\Augusta\Blur</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Radial_Controller.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\Mesh_Controller\Radial_Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Effect_Radial.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\Mesh_Controller\Radial_Controller\Radial</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Galbrena_SFX.cpp">
+      <Filter>03. GameObject\SFX\Galbrena</Filter>
+    </ClCompile>
+    <ClCompile Include="..\private\Galbrena_SFX_Star.cpp">
+      <Filter>03. GameObject\SFX\Galbrena</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Galbrena_SFX_Circle.cpp">
+      <Filter>03. GameObject\SFX\Galbrena</Filter>
+    </ClCompile>
+    <ClCompile Include="..\private\Galbrena_Blur.cpp">
+      <Filter>03. GameObject\SFX\Galbrena\Blur</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\GltflLoader.cpp">
+      <Filter>02. ModelLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_MapObject_Collaps.cpp">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_MapObject_Water.cpp">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_Meteo.cpp">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_FireFly.cpp">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_FireFly_Manager.cpp">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_LightManager.cpp">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_MapEffectCollector.cpp">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Edit_SlideZone.cpp" />
+    <ClCompile Include="..\Private\Edit_Portal.cpp" />
+    <ClCompile Include="..\private\TestVA.cpp">
+      <Filter>03. GameObject\Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\VA_Controller.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\VA_Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Effect_Light.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\Light_Controller\FXLight</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Light_Controller.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\Light_Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Spectrum_Controller.cpp">
+      <Filter>01. Level\Effect\Spectrum_Controller</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Bin\ShaderFiles\Editor_Shader_VtxPosTex.hlsl">
+      <Filter>01. Level\UI\Temp Props\Temp Shader</Filter>
+    </FxCompile>
+    <ClCompile Include="..\Private\Particle.cpp">
+      <Filter>01. Level\Effect\Effect_Controller\Particle_Controller\Particle</Filter>
+    </ClCompile>
+    <FxCompile Include="..\Bin\ShaderFiles\Editor_Shader_VtxPosTex_Instance.hlsl">
+      <Filter>01. Level\UI\Temp Props\Temp Shader</Filter>
+    </FxCompile>
+  </ItemGroup>
+</Project>
