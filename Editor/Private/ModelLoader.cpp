@@ -23,21 +23,35 @@ void CModelLoader::Update()
 	else if (2 == m_iAnim) m_eType = MODELTYPE::CHARACTER;
 	else if (3 == m_iAnim) m_eType = MODELTYPE::VA;
 
-	if (ImGui::Button("Load FBX"))
-		m_isShowLoadFile = !m_isShowLoadFile;
-	ImGui::SameLine();
-	if (ImGui::Button("Save Model"))
-		m_isShowSaveFile = !m_isShowSaveFile;
-
 	ImGui::Checkbox("LoadAll_For_Map", &m_isLoadAll);
-	
-	if(true == m_isShowLoadFile)
-		Load_File();
-	if (true == m_isShowSaveFile)
-		Save_File();
 
-	// Model Info
-	Show_Info();
+	if (m_isLoadAll)
+	{
+		if (ImGui::Button("Load Map"))
+			m_isMapSaveLoadFile = !m_isMapSaveLoadFile;
+
+		if (true == m_isMapSaveLoadFile)
+			Map_SaveLoad();
+	}
+	else
+	{
+		if (ImGui::Button("Load FBX"))
+			m_isShowLoadFile = !m_isShowLoadFile;
+		ImGui::SameLine();
+		if (ImGui::Button("Save Model"))
+			m_isShowSaveFile = !m_isShowSaveFile;
+
+		if (true == m_isShowLoadFile)
+			Load_File();
+		if (true == m_isShowSaveFile)
+			Save_File();
+
+		// Model Info
+		Show_Info();
+	}
+	
+
+
 
 	ImGui::End();
 }
@@ -989,6 +1003,85 @@ HRESULT CModelLoader::Save_Material(const _char* pFileName)
 	return S_OK;
 }
 
+void CModelLoader::Map_SaveLoad()
+{
+	IGFD::FileDialogConfig config;
+
+	config.path = "../../Editor/Bin/Resource/";
+	config.flags = ImGuiFileDialogFlags_ReadOnlyFileNameField;
+	ImGuiFileDialog::Instance()->OpenDialog("Map FBX File Load", "Map Load", ".fbx", config);
+	ImVec2 vMinSize = ImVec2(800, 400);  // 理쒖냼 ?ш린
+	ImVec2 vMaxSize = ImVec2(1000, 400); // 理쒕? ?ш린
+
+
+	if (ImGuiFileDialog::Instance()->Display(
+		"Map FBX File Load", ImGuiWindowFlags_NoCollapse
+		, vMinSize
+		, vMaxSize))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk()) {
+			_string strCurrentFilePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+			_uint iFlag = { aiProcess_ConvertToLeftHanded | aiProcessPreset_TargetRealtime_Fast };
+			if (MODELTYPE::NONANIM == m_eType)
+				iFlag |= aiProcess_PreTransformVertices;
+			for (const auto& entry : filesystem::directory_iterator(strCurrentFilePath)) {
+				if (entry.is_regular_file()) {
+					if (entry.path().extension() == ".fbx")
+					{
+						_string strFilePath = entry.path().string();
+						m_pAIScene = m_Importer.ReadFile(strFilePath.c_str(), iFlag);
+
+						if (nullptr == m_pAIScene)
+						{
+							MSG_BOX("FBX 파일이 잘못되었습니다.");
+							return;
+						}
+						//_string SaveFilePath = "../../Client/Bin/Resource/Map/Asphodel_Barrens/Tetragon_Hnuter's_Den/";
+						//_string SaveFilePath = "../../Client/Bin/Resource/Map/Test/Decal/";
+						//_string SaveFilePath = "../../Client/Bin/Resource/Map/Test/Heaven/";
+						//_string SaveFilePath = "../../Client/Bin/Resource/Dat/";
+						_string SaveFilePath = "../../Client/Bin/Resource/Map/Parkour";
+
+						_string FileName = entry.path().filename().string();
+						_string FolderPath;
+
+						size_t CutPos = FileName.find("_LOD");
+
+						if (CutPos != std::string::npos)
+							FolderPath = FileName.substr(0, CutPos);
+						else // _LOD가 없다면?
+						{
+							size_t extPos = FileName.find(".fbx");
+							FolderPath = FileName.substr(0, extPos);
+						}
+
+						SaveFilePath += "/" + FolderPath + "/";
+
+						filesystem::create_directories(SaveFilePath);
+
+						if (FileName.find(".mo") != string::npos)
+							CutPos = FileName.find(".mo");
+						else if (FileName.find(".ao") != string::npos)
+							CutPos = FileName.find(".ao");
+
+
+						size_t Ext = FileName.find(".");
+						if (Ext != std::string::npos)
+							FileName = FileName.substr(0, Ext);
+
+						SaveFilePath += FileName + ".dat";
+
+						Save_Dat_NonAnim(SaveFilePath.c_str());
+						Save_Material(SaveFilePath.c_str());
+					}
+				}
+			}
+		}
+		ImGuiFileDialog::Instance()->Close();
+		m_isMapSaveLoadFile = false;
+	}
+}
+
 void CModelLoader::Load_File()
 {
 	IGFD::FileDialogConfig config;
@@ -1023,6 +1116,7 @@ void CModelLoader::Load_File()
 			}
 			else
 			{
+				// 현재 위치에 있는 fbx 파일을 리컬시브해서 모두 설정?
 				_string strCurrentFilePath = ImGuiFileDialog::Instance()->GetCurrentPath();
 
 				_uint iFlag = { aiProcess_ConvertToLeftHanded | aiProcessPreset_TargetRealtime_Fast };
@@ -1043,7 +1137,8 @@ void CModelLoader::Load_File()
 							//_string SaveFilePath = "../../Client/Bin/Resource/Map/Asphodel_Barrens/Tetragon_Hnuter's_Den/";
 							//_string SaveFilePath = "../../Client/Bin/Resource/Map/Test/Decal/";
 							//_string SaveFilePath = "../../Client/Bin/Resource/Map/Test/Heaven/";
-							_string SaveFilePath = "../../Client/Bin/Resource/Dat/";
+							//_string SaveFilePath = "../../Client/Bin/Resource/Dat/";
+							_string SaveFilePath = "../../Client/Bin/Resource/Map/Parkour";
 
 							_string FileName = entry.path().filename().string();
 							_string FolderPath;
@@ -1052,6 +1147,12 @@ void CModelLoader::Load_File()
 
 							if (CutPos != std::string::npos)
 								FolderPath = FileName.substr(0, CutPos);
+							else // _LOD가 없다면?
+							{
+								size_t extPos = FileName.find(".fbx");
+								FolderPath = FileName.substr(0, extPos);
+							}
+								
 							SaveFilePath += "/" + FolderPath + "/";
 
 							filesystem::create_directories(SaveFilePath);
@@ -1060,8 +1161,7 @@ void CModelLoader::Load_File()
 								CutPos = FileName.find(".mo");
 							else if (FileName.find(".ao") != string::npos)
 								CutPos = FileName.find(".ao");
-							//f (CutPos != std::string::npos)
-							//	FileName = FileName.substr(0, CutPos);
+	
 
 							size_t Ext = FileName.find(".");
 							if (Ext != std::string::npos)
@@ -1088,7 +1188,7 @@ void CModelLoader::Save_File()
 
 	IGFD::FileDialogConfig config;
 
-	config.path = "../../Client/Bin/Resource/Model/";
+	config.path = "../../Client/Bin/Resource/";
 	config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
 
 	ImGuiFileDialog::Instance()->OpenDialog("Save Model", "Export File", ".dat", config);

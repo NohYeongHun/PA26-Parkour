@@ -19,7 +19,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Private\GameSystem.cpp" />
+    <ClCompile Include="..\Private\Level_Loading.cpp" />
+    <ClCompile Include="..\Private\Level_Test.cpp" />
+    <ClCompile Include="..\Private\Loader.cpp" />
+    <ClCompile Include="..\Private\Loader_Test.cpp" />
     <ClCompile Include="..\Private\MainApp.cpp" />
+    <ClCompile Include="..\Private\MapObject.cpp" />
+    <ClCompile Include="..\Private\Mouse.cpp" />
+    <ClCompile Include="..\Private\MouseController.cpp" />
+    <ClCompile Include="..\Private\Parser.cpp" />
+    <ClCompile Include="..\Private\SpringCamera.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientPch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -27,10 +37,22 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Public\Client_CharacterEnum.h" />
     <ClInclude Include="..\Public\Client_Define.h" />
     <ClInclude Include="..\Public\Client_Enum.h" />
     <ClInclude Include="..\Public\Client_Struct.h" />
+    <ClInclude Include="..\Public\Event_Level.h" />
+    <ClInclude Include="..\Public\GameSystem.h" />
+    <ClInclude Include="..\Public\Level_Loading.h" />
+    <ClInclude Include="..\Public\Level_Test.h" />
+    <ClInclude Include="..\Public\Loader.h" />
+    <ClInclude Include="..\Public\Loader_Test.h" />
     <ClInclude Include="..\Public\MainApp.h" />
+    <ClInclude Include="..\Public\MapObject.h" />
+    <ClInclude Include="..\Public\Mouse.h" />
+    <ClInclude Include="..\Public\MouseController.h" />
+    <ClInclude Include="..\Public\Parser.h" />
+    <ClInclude Include="..\Public\SpringCamera.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="ClientPch.h" />
     <ClInclude Include="framework.h" />

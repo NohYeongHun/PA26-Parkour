@@ -38,11 +38,13 @@ private:
 
 	_bool					m_isShowLoadFile = { false };
 	_bool					m_isShowSaveFile = { false };
+	_bool					m_isMapSaveLoadFile = { false };
 
 	// Info
 	_string				m_strModelName;
 
 private:
+	void					Map_SaveLoad();
 	void					Load_File();
 	void					Save_File();
 	void					Show_Info();

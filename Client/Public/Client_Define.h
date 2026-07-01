@@ -2,6 +2,8 @@
 
 #include "../Default/framework.h"
 #include <process.h>
+
+#include "Client_Struct.h"
 #define GRAVITY 98.f
 
 namespace Client

@@ -85,30 +85,6 @@ HRESULT CLevel_Map::Initialize()
 	}
 
 
-	//if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_Component_Shader_VtxAnimMesh"),
-	//    CShader::Create(m_pDevice, m_pContext, TEXT("../../Client/Bin/ShaderFiles/Shader_VtxAnimMesh.hlsl")
-	//        , VTXANIMMESH::Elements, VTXANIMMESH::iNumElements))))
-	//{
-	//    CRASH("Failed Load AnimMesh Shader");
-	//    return E_FAIL;
-	//}
-
-	//SHADER_MACRO eShaderMacro = {
-	//	{"THREAD_X", "64" }
-	//	,{"THREAD_Y", "1" }
-	//	,{"THREAD_Z", "1" }
-	//	, { NULL, NULL }
-	//};
-
-	//string strEntryPoint = "CSMain";
-	//if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_Component_Shader_ComputeVtxAnimMesh"),
-	//	CComputeShader::Create(m_pDevice, m_pContext, TEXT("../../Client/Bin/ShaderFiles/Shader_ComputeVtxAnimMesh.hlsl")
-	//		, eShaderMacro, strEntryPoint))))
-	//{
-	//	CRASH("Failed Load AnimMesh Shader");
-	//	return E_FAIL;
-	//}
-
 	m_eObjectType = ENUM_CLASS(OBJECTTYPE::DEFAULT);
 
 	m_pGameInstance->Add_Prototype(m_iLevel, TEXT("Prototype_GameObject_TriggerBox"),
@@ -192,7 +168,7 @@ void CLevel_Map::Menu_Select()
 {
     if (ImGui::BeginMainMenuBar())
     {
-        if (ImGui::MenuItem("Ojbect")) {
+        if (ImGui::MenuItem("Object")) {
             m_eMenu == MENU_OBJECT ? m_eMenu = END : m_eMenu = MENU_OBJECT;
         }
 
@@ -337,7 +313,6 @@ void CLevel_Map::Menu_Light()
 
 void CLevel_Map::Menu_Model_Load()
 {
-    //?대┃ ?섍린 ?꾧퉴吏 留덉슦???꾩튂 ?곕씪?ㅻ땲湲?.
     ImGui::Begin("Model Table", nullptr, ImGuiWindowFlags_NoTitleBar);
     if (ImGui::BeginTable("Test", 1, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
     {
@@ -501,7 +476,7 @@ void CLevel_Map::Menu_Save_Load()
     config.flags = ImGuiFileDialogFlags_ReadOnlyFileNameField;
 
     static _char exportText[128] = ""; // ?낅젰 ??μ슜 踰꾪띁
-    ImGui::InputText("?뚯씪 ?대쫫", exportText, IM_ARRAYSIZE(exportText));
+    ImGui::InputText("<Input>/<Input>_<Category>.dat", exportText, IM_ARRAYSIZE(exportText));
 
     if (ImGui::BeginMenu("Save"))
     {
@@ -991,9 +966,10 @@ void CLevel_Map::Load_Objects()
 	//m_FolderPath = "../../Client/Bin/Resource/Map/The_False_Sovereign/";
 	//m_FolderPath = "../../Client/Bin/Resource/Map/Test/Heaven_Deco/";
 	//m_FolderPath = "../../Client/Bin/Resource/Map/Test/Heaven/";
-	m_FolderPath = "../../Client/Bin/Resource/Map/Heaven/";
+	//m_FolderPath = "../../Client/Bin/Resource/Map/Heaven/";
 	//m_FolderPath = "../../Client/Bin/Resource/Map/Test/Heaven_Interaction/";
 	//m_FolderPath = "../../Client/Bin/Resource/Map/Test/Heaven_Foliage/";
+	m_FolderPath = "../../Client/Bin/Resource/Map/Parkour/";
 
     vector<_wstring> m_PrototypeNames;
     vector<_wstring> m_FoliageNames;
@@ -1068,20 +1044,6 @@ void CLevel_Map::Load_Objects()
 
 				_wstring key = L"Prototype_Component_Model_" + namePart;
 
-				//if (FAILED(m_pGameInstance->Add_Prototype(m_iLevel, PrototypeName,
-				//	CModel_Streaming::Create(m_pDevice, m_pContext, FileDir))))
-				//	continue;
-
-				//continue;
-
-
-
-				//m_pGameInstance->Add_Work([&, ProtoName = PrototypeName, Path = VersionPath]() {
-				//	if (FAILED(m_pGameInstance->Add_Prototype(m_iLevel, ProtoName,
-				//		CModel::Create(m_pDevice, m_pContext, MODELTYPE::MAP, PreTransformMatrix, Path.c_str()))))
-				//		CRASH("Prototype Create Failed");
-				//	});
-
 				if (entry.path().string().find("Foliage") != std::string::npos)
 				{
 					_wstring ProtoName = TEXT("Prototype_Component_Model_Instance_");
@@ -1137,18 +1099,6 @@ void CLevel_Map::Load_Objects()
 	}
 
     m_pGameInstance->Wait_Thread_End();
-
-    //for (_uint i = 0; i < m_PrototypeNames.size(); ++i)
-    //{
-    //    m_pPreViewObject->Add_Model(m_PrototypeNames[i]);
-    //}
-
-
-    //for (_uint i = 0; i < m_FoliageNames.size(); ++i)
-    //{
-    //    m_pPreViewObject->Add_Model(m_FoliageNames[i]);
-    //}
-
     m_pGameInstance->Wait_Thread_End();
 
 }
@@ -1220,9 +1170,6 @@ void CLevel_Map::Ready_Map_Load_Prototype()
 		if (iter == m_szPrototypeName.end())
 		{
 			m_szPrototypeName.insert(FileDir);
-
-
-
 			_string VersionName = FileName;
 
 			_string NoVersionName = FileName;

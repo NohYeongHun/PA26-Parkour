@@ -13,6 +13,54 @@
     <Filter Include="97. ShaderFiles">
       <UniqueIdentifier>{c305467f-1771-4b11-beda-1de0fac301c4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="01. GameSystem">
+      <UniqueIdentifier>{26c768ce-5f71-4f70-8693-c65eca28a699}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Level">
+      <UniqueIdentifier>{1a78b8cb-8cd8-4895-8eed-22806f0d8e2a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject">
+      <UniqueIdentifier>{34e3b977-6fc9-49d2-80e1-a0c1b3ec0000}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Level\Loading">
+      <UniqueIdentifier>{f4dec924-25cc-4b18-a4c5-cd13a5e0985c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Level\Loader">
+      <UniqueIdentifier>{cb5cb257-1010-476e-87c1-c8ac6d6ce126}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Level\Test">
+      <UniqueIdentifier>{c0dcb699-8c85-429c-a81b-34377cf59e4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Actor">
+      <UniqueIdentifier>{6a7a8fd9-23f5-455e-afc4-fca59299e41c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Actor\Player">
+      <UniqueIdentifier>{8ba51e29-1401-46dc-8463-c059a5b41df3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Camera">
+      <UniqueIdentifier>{dd8b6bac-b4ff-4177-952b-29df71ae01e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Camera\Spring">
+      <UniqueIdentifier>{8f28c818-5319-4968-8785-cdaee46b8e86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\MapObject">
+      <UniqueIdentifier>{ebe0fb22-91ec-4430-ae9e-0df8d362c45d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\MapObject\Interact">
+      <UniqueIdentifier>{70aae893-14ca-41ab-aa7f-88d1f95318bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="93. Mouse">
+      <UniqueIdentifier>{d8dd451b-49a6-491f-b81b-d466131e4cd1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. GameObject\Mouse">
+      <UniqueIdentifier>{112247e6-15de-41a2-a26f-ab58f58bd91a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="94. Event">
+      <UniqueIdentifier>{fd2a1759-dbbe-45d4-9b99-994a0c4dce91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="95. Parser">
+      <UniqueIdentifier>{3e2f559c-08a5-4100-b97a-2b2ac8727d98}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -23,6 +71,36 @@
     </ClCompile>
     <ClCompile Include="..\Private\MainApp.cpp">
       <Filter>00. MainApp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\GameSystem.cpp">
+      <Filter>01. GameSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MouseController.cpp">
+      <Filter>93. Mouse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Mouse.cpp">
+      <Filter>03. GameObject\Mouse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\SpringCamera.cpp">
+      <Filter>03. GameObject\Camera\Spring</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Level_Loading.cpp">
+      <Filter>02. Level\Loading</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Level_Test.cpp">
+      <Filter>02. Level\Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Loader.cpp">
+      <Filter>02. Level\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Loader_Test.cpp">
+      <Filter>02. Level\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Parser.cpp">
+      <Filter>95. Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject.cpp">
+      <Filter>03. GameObject\MapObject</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -52,6 +130,42 @@
     </ClInclude>
     <ClInclude Include="..\Public\Client_Struct.h">
       <Filter>99. Define</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Client_CharacterEnum.h">
+      <Filter>99. Define</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\GameSystem.h">
+      <Filter>01. GameSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\MouseController.h">
+      <Filter>93. Mouse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Mouse.h">
+      <Filter>03. GameObject\Mouse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\SpringCamera.h">
+      <Filter>03. GameObject\Camera\Spring</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Event_Level.h">
+      <Filter>94. Event</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Level_Loading.h">
+      <Filter>02. Level\Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Level_Test.h">
+      <Filter>02. Level\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Loader.h">
+      <Filter>02. Level\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Loader_Test.h">
+      <Filter>02. Level\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Parser.h">
+      <Filter>95. Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\MapObject.h">
+      <Filter>03. GameObject\MapObject</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

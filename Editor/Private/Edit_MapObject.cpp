@@ -28,7 +28,7 @@ HRESULT CEdit_MapObject::Initialize_Prototype()
 HRESULT CEdit_MapObject::Initialize_Clone(void* pArg)
 {
 
-	Load_SoundTag("/Client/Bin/Resource/Sound/2D/BGM/rock/sound/");
+	// Load_SoundTag("/Client/Bin/Resource/Sound/2D/BGM/rock/sound/");
 
     MAP_LOAD* pDesc = static_cast<MAP_LOAD*>(pArg);
 
@@ -175,12 +175,6 @@ HRESULT CEdit_MapObject::Initialize_Clone(void* pArg)
 
 
 	m_iNumObject = CEdit_MapObject::g_iNumObjects++;
-
-	/*for(_uint i=0; i<3;++i)
-	{
-		if (vScale.m128_f32[i] <= 0.98f || vScale.m128_f32[i] > 1.1f)
-			m_iShaderPassIndex = 3;
-	}*/
 
 	XMStoreFloat4x4(&m_DefaultMat, m_pTransformCom->Get_WorldMatrix());
 	if (m_eObjectType == OBJECTTYPE::SONORA)
@@ -452,7 +446,7 @@ void CEdit_MapObject::Set_ImGuiOption()
 
 	About_Texture();
 
-	if (ImGui::BeginCombo("Sound Tag", m_SoundTags[m_iPickedSoundTag].c_str()))
+	/*if (ImGui::BeginCombo("Sound Tag", m_SoundTags[m_iPickedSoundTag].c_str()))
 	{
 		for (_uint i = 0; i < ENUM_CLASS(OBJECTTYPE::END); ++i)
 		{
@@ -469,7 +463,7 @@ void CEdit_MapObject::Set_ImGuiOption()
 	{
 		m_pGameInstance->Stop_Sound_Dynamic(ENUM_CLASS(CHANNEL::ENEMY_VOICE));
 		m_pGameInstance->Play_Sound_Dynamic(StringToWString(m_SoundTags[m_iPickedSoundTag]), ENUM_CLASS(CHANNEL::ENEMY_VOICE), m_fDynamicVolume, m_pTransformCom, 0.f, 100.f, 1.f);
-	}
+	}*/
 #endif
 }
 
