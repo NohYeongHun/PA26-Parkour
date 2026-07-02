@@ -40,65 +40,7 @@ void CMapObject_Throw::Priority_Update(_float fTimeDelta)
 
 void CMapObject_Throw::Update(_float fTimeDelta)
 {
-	Calc_CombinedMatrix();
-
-	m_pDetectRigidbodyCom->Update_Rigidbody(m_pTransformCom->Get_WorldMatrix(), fTimeDelta);
-	if (m_IsGrabbed && !m_IsThrow)
-	{
-		m_pCollideRigidbodyCom->IsActivate(false);
-		if (m_fattachTime < 1.f)
-		{
-			m_fattachTime += fTimeDelta;
-			Attach_Lerp(); // Character 로부터 전달받은 뼈행렬, World행렬을 이용해 Lerp.
-		}
-		else
-			Attach_Pos();
-
-		XMStoreFloat3(&m_vStartPos, m_pTransformCom->Get_State(STATE::POSITION));
-		m_pGameInstance->GetCenterPos(&m_vTargetPos);
-
-		_vector DisplaceMent = XMLoadFloat3(&m_vTargetPos) - XMLoadFloat3(&m_vStartPos);
-
-
-		_vector vGravityAccel = XMVectorSet(0.f, -9.81f, 0.f, 0.f);
-		_vector vGravityDrop = vGravityAccel * 0.5f * m_fFlyTime * m_fFlyTime;
-		XMStoreFloat3(&m_vImpulse, (DisplaceMent - vGravityDrop) / m_fFlyTime);
-
-		_float3 Grav(0.f, -9.8f, 0.f);
-		m_pGameSystem->Req_Render_CurveTrace(m_vStartPos, m_vImpulse, Grav, &m_vTargetPos);
-	}
 	
-	if (m_IsThrow)
-	{
-		m_fThrowTime += fTimeDelta;
-		if (m_fThrowTime < m_fFlyTime)
-		{
-			_vector vt = XMLoadFloat3(&m_vImpulse) * m_fThrowTime;
-
-			_vector gt2 = 0.5f * XMVectorSet(0.f, -9.81f, 0.f, 0.f) * m_fThrowTime * m_fThrowTime;
-			_vector NewPos = XMVectorSetW(XMLoadFloat3(&m_vStartPos) + vt + gt2, 1.f);
-			m_pTransformCom->Set_State(STATE::POSITION, NewPos);
-		}
-		else
-		{
-			m_fThrowTime = 0.f;
-			m_IsThrow = false;
-			//이펙트 호출.
-			m_pCollideRigidbodyCom->IsActivate(true);
-			m_pCollideRigidbodyCom->Update_Rigidbody(m_pTransformCom->Get_WorldMatrix(), fTimeDelta);
-			_vector Pos = m_pTransformCom->Get_State(STATE::POSITION);
-			PREFAB_INFO Info;
-			_int vTemp = 1.f;
-			for (_uint i = 0; i < 10; i++)
-				m_pGameInstance->Spawn_PoolingObject(TEXT("Small_Smoke"), XMMatrixTranslationFromVector(Pos + XMVectorSet(m_pGameInstance->Rand(-vTemp, vTemp), m_pGameInstance->Rand(-vTemp, vTemp), m_pGameInstance->Rand(-vTemp, vTemp), 0.f)), &Info);
-
-			_uint iSoundChannel = m_pGameInstance->Register_Channel();
-
-			iSoundChannel = m_pGameInstance->Register_Channel();
-			m_pGameInstance->Play_Sound_Dynamic(TEXT("StoneBroken"), iSoundChannel, 1.f);
-			m_pGameInstance->Return_Channel(iSoundChannel);
-		}
-	}
 }
 
 void CMapObject_Throw::Late_Update(_float fTimeDelta)

@@ -1,7 +1,7 @@
-﻿#include"ClientPch.h"
+﻿#include "ClientPch.h"
 #include "MapObject_Destruction.h"
-#include"GameSystem.h"
-#include"MapObject_Destruction_Debris.h"
+#include "GameSystem.h"
+#include "MapObject_Destruction_Debris.h"
 
 vector<_wstring> CMapObject_Destruction::m_SoundTags;
 
@@ -57,12 +57,6 @@ HRESULT CMapObject_Destruction::Initialize_Clone(void* pArg)
 	m_vImpulsePos = pDesc->m_vImpulsePos;
 	m_vImpulsePower = pDesc->m_vImpulsePower;
 
-
-
-	m_pGameSystem->TriggerRegister(m_iTriggerIndex, [this](void* pArg) {
-		if (!m_IsDestroy)
-			Spawn_Particles();
-		});
 	m_IsDestroy = false;
 
 	return S_OK;
@@ -192,29 +186,6 @@ HRESULT CMapObject_Destruction::Ready_Component(void* pArg)
 
 	_string ModelName = pDesc->ModelName;
 
-	if (m_iTriggerIndex == 37)
-	{
-		_float3 vPointPos;
-		XMStoreFloat3(&vPointPos, m_pTransformCom->Get_State(STATE::POSITION));
-
-		m_pPullUI = m_pGameSystem->Create_GrapplePoint(vPointPos, UI_GRAPPLE_TYPE::PULL);
-		CRigidbody::BOXBODY_DESC RigidbodyBoxDesc = {};
-		RigidbodyBoxDesc.eBodyType = CRigidbody::BODY;
-		RigidbodyBoxDesc.eShape = SHAPE::BOX;
-		RigidbodyBoxDesc.eType = EMotionType::Kinematic;
-		RigidbodyBoxDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::GRAPPLE);
-		RigidbodyBoxDesc.vExtent = _float3(5.f, 5.f, 5.f); // 탐지 범위 안에 들어가있다면?
-		XMStoreFloat3(&RigidbodyBoxDesc.vPos, m_pTransformCom->Get_State(STATE::POSITION));
-
-		Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Rigidbody"),
-			TEXT("Com_BoxRigidBody"), reinterpret_cast<CComponent**>(&m_pBoxRigidbodyCom), &RigidbodyBoxDesc);
-
-		m_CallBack.pTransform = m_pTransformCom;
-		m_CallBack.eObjectType = OBJECTTYPE::ROPE_PULL;
-		m_CallBack.pCondition = &m_iTriggerIndex;
-		m_pBoxRigidbodyCom->Set_Desc(&m_CallBack); // Trigger용도 Box 정의
-	}
-
 	for (_uint i = 2; i < m_pBoneModel->Get_BoneSize() - 1; ++i)
 	{
 		_string Name = ModelName; // 예: "SM_Sev_Roc_24BS_"
@@ -256,63 +227,6 @@ HRESULT CMapObject_Destruction::Ready_Component(void* pArg)
 			return S_OK;
 	}
 	return S_OK;
-}
-
-void CMapObject_Destruction::Spawn_Particles()
-{
-	if (m_pPullUI)
-	{
-		m_pGameSystem->Toggle_GrapplePoint(m_pPullUI, false);
-		m_pPullUI = nullptr;
-
-		CAMERA_SHAKE ShakeDesc{};
-		ShakeDesc.fAmplitude = 1.f;
-		ShakeDesc.fDuration = 0.8f;
-		ShakeDesc.fFovKick = 0.f;
-		ShakeDesc.fFrequency = 2.f;
-		ShakeDesc.vRotation = _float3(0.005f, 0.075f, 0.f);
-		ShakeDesc.vTranslation;
-		m_pGameInstance->OnShake(ShakeDesc);
-	}
-
-	PREFAB_INFO Info{};
-
-	_uint SoundChannel = m_pGameInstance->Register_Channel();
-
-	_uint i = static_cast<_uint>(m_pGameInstance->Rand(0.f, 9.f));
-
-	m_pGameInstance->Play_Sound_Dynamic(CMapObject_Destruction::m_SoundTags[i], SoundChannel, 0.3f);
-	m_pGameInstance->Play_Sound_Dynamic(TEXT("Rock_Down0"), SoundChannel, 0.3f);
-	m_pGameInstance->Return_Channel(SoundChannel);
-
-	m_IsDestroy = true;
-	for(_uint i=2; i<m_pBoneModel->Get_BoneSize();++i)
-	{
-		CMapObject_Destruction_Debris::RESET_DESC ResetDesc{};
-
-		_vector vScale, vRot, vTrans;
-		_float4x4 BoneMat = *m_pBoneModel->Get_BoneMatrixPtr(i);
-		XMMatrixDecompose(&vScale, &vRot, &vTrans, XMLoadFloat4x4(&BoneMat));
-		vRot = XMQuaternionNormalize(vRot);
-		vTrans += XMVectorSet(m_pGameInstance->Rand(0.f, 3.f), m_pGameInstance->Rand(0.f, 3.f), m_pGameInstance->Rand(0.f, 3.f), 0.f);
-		_float4x4 Mat;
-		XMStoreFloat4x4(&Mat,
-			XMMatrixRotationQuaternion(vRot) *
-			XMMatrixTranslationFromVector(vTrans) *
-			m_pTransformCom->Get_WorldMatrix());
-
-		
-		m_pGameInstance->Spawn_PoolingObject(TEXT("Small_Smoke"), XMLoadFloat4x4(&Mat), &Info);
-
-		_vector Pos = XMVectorSetW(XMLoadFloat3(&m_vImpulsePos), 1.f);
-		_vector Power = XMVectorSetW(XMLoadFloat3(&m_vImpulsePower), 0.f);
-
-		_vector vDeltaPos = XMVectorSetW(XMLoadFloat3(reinterpret_cast<_float3*>(&Mat.m[3])) - Pos, 0.f);
-		
-		XMStoreFloat3(&ResetDesc.vImpulse, vDeltaPos * Power);
-		
-		m_pGameInstance->Spawn_PoolingObject(m_szDebrisName + to_wstring(i), XMLoadFloat4x4(&Mat), &ResetDesc);
-	}
 }
 
 void CMapObject_Destruction::Bind_Resources()

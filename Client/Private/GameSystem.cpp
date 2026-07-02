@@ -21,6 +21,9 @@ void CGameSystem::Ready_GameSystem(ID3D11Device* pDevice, ID3D11DeviceContext* p
 
 	m_pParser = CParser::Create(pDevice, pContext);
 	ASSERT_CRASH(m_pParser);
+
+	m_pSonoro_Manager = CSonoro_Manager::Create();
+	ASSERT_CRASH(m_pSonoro_Manager);
 }
 
 void CGameSystem::Update(_float fTimeDelta)
@@ -92,7 +95,9 @@ void CGameSystem::Clear_TriggerCallBack()
 
 void CGameSystem::Release_System()
 {
+	Safe_Release(m_pParser);
 	Safe_Release(m_pMouseController);
+	Safe_Release(m_pSonoro_Manager);
 	Release();
 }
 

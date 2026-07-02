@@ -19,9 +19,9 @@ HRESULT CLevel_Test::Initialize()
 	m_pGameInstance->SetUp_OctoTree(_float3(0.f, 0.f, 0.f), _float3(4096, 4096, 4096));
 
 	//로더에서 부른 것과 같은 거 부르기.
-	//m_pGameSystem->Clone_MapObjects(m_eCurLevel);
+	m_pGameSystem->Clone_MapObjects(m_eCurLevel);
 
-    //Ready_Layer_Player();
+    Ready_Layer_Player();
 
     /*LIGHT_DESC LightDesc{};
     LightDesc.eType = LIGHT_DESC::DIRECTION;

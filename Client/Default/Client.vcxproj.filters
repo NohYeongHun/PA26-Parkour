@@ -108,45 +108,6 @@
     <ClCompile Include="..\Private\Parser.cpp">
       <Filter>95. Parser</Filter>
     </ClCompile>
-    <ClCompile Include="..\Private\MapObject.cpp">
-      <Filter>03. GameObject\MapObject</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Burn.cpp">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Collaps.cpp">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Destruction.cpp">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Destruction_Debris.cpp">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Dome.cpp">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_DynamicSound.cpp">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_FireFly.cpp">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Instance.cpp">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Meteo.cpp">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Throw.cpp">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Turn.cpp">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Water.cpp">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClCompile>
     <ClCompile Include="..\Private\Slide_Navigation.cpp">
       <Filter>03. GameObject\MapObject\ETC</Filter>
     </ClCompile>
@@ -156,13 +117,7 @@
     <ClCompile Include="..\Private\Trigger_Box.cpp">
       <Filter>03. GameObject\MapObject\ETC</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Sonoro.cpp">
-      <Filter>03. GameObject\MapObject\Sonoro</Filter>
-    </ClCompile>
     <ClCompile Include="..\Private\Sonoro_Manager.cpp">
-      <Filter>03. GameObject\MapObject\Sonoro</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_NonSonoro.cpp">
       <Filter>03. GameObject\MapObject\Sonoro</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\Character.cpp">
@@ -176,6 +131,51 @@
     </ClCompile>
     <ClCompile Include="..\Private\MovementComponent.cpp">
       <Filter>04. Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject_Burn.cpp">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject_Collaps.cpp">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject_Destruction.cpp">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject_Destruction_Debris.cpp">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject_Dome.cpp">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject_DynamicSound.cpp">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject_FireFly.cpp">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject_Instance.cpp">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject_Meteo.cpp">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject_Throw.cpp">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject_Turn.cpp">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject_Water.cpp">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject.cpp">
+      <Filter>03. GameObject\MapObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject_NonSonoro.cpp">
+      <Filter>03. GameObject\MapObject\Sonoro</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MapObject_Sonoro.cpp">
+      <Filter>03. GameObject\MapObject\Sonoro</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -236,8 +236,32 @@
     <ClInclude Include="..\Public\Parser.h">
       <Filter>95. Parser</Filter>
     </ClInclude>
-    <ClInclude Include="..\Public\MapObject.h">
-      <Filter>03. GameObject\MapObject</Filter>
+    <ClInclude Include="..\Public\Slide_Navigation.h">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Trigger_Box.h">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Spawner.h">
+      <Filter>03. GameObject\MapObject\ETC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Sonoro_Manager.h">
+      <Filter>03. GameObject\MapObject\Sonoro</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Character.h">
+      <Filter>03. GameObject\Character</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Traceur.h">
+      <Filter>03. GameObject\Character</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurFactory.h">
+      <Filter>03. GameObject\Character\Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientPch.h">
+      <Filter>99. Define</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\MovementComponent.h">
+      <Filter>04. Component</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\MapObject_Burn.h">
       <Filter>03. GameObject\MapObject\ETC</Filter>
@@ -275,38 +299,14 @@
     <ClInclude Include="..\Public\MapObject_Water.h">
       <Filter>03. GameObject\MapObject\ETC</Filter>
     </ClInclude>
-    <ClInclude Include="..\Public\Slide_Navigation.h">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Public\Trigger_Box.h">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Public\Spawner.h">
-      <Filter>03. GameObject\MapObject\ETC</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Public\MapObject_Sonoro.h">
-      <Filter>03. GameObject\MapObject\Sonoro</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Public\Sonoro_Manager.h">
-      <Filter>03. GameObject\MapObject\Sonoro</Filter>
+    <ClInclude Include="..\Public\MapObject.h">
+      <Filter>03. GameObject\MapObject</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\MapObject_NonSonoro.h">
       <Filter>03. GameObject\MapObject\Sonoro</Filter>
     </ClInclude>
-    <ClInclude Include="..\Public\Character.h">
-      <Filter>03. GameObject\Character</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Public\Traceur.h">
-      <Filter>03. GameObject\Character</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Public\TraceurFactory.h">
-      <Filter>03. GameObject\Character\Factory</Filter>
-    </ClInclude>
-    <ClInclude Include="ClientPch.h">
-      <Filter>99. Define</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Public\MovementComponent.h">
-      <Filter>04. Component</Filter>
+    <ClInclude Include="..\Public\MapObject_Sonoro.h">
+      <Filter>03. GameObject\MapObject\Sonoro</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

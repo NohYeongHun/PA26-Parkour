@@ -31,15 +31,7 @@ HRESULT CMapObject_Meteo::Initialize_Clone(void* pArg)
 
 	m_iSoundChannel = m_pGameInstance->Register_Channel();
 	Ready_Components(pArg);
-	m_pGameSystem->TriggerRegister(m_iTriggerIndex,[this](void* pArg) {
-		m_IsTriggerd = true;
-		m_ISTrailEffect = true;
-		PREFAB_INFO Info{};
-		Info.pActive = &m_ISTrailEffect;
-		Info.pMatrixPtr = m_pTransformCom->Get_WorldMatrixPtr();
-
-		m_pGameInstance->Spawn_PoolingObject(TEXT("Meteor_Smoke"), m_pTransformCom->Get_WorldMatrix(), &Info);
-		});
+	
 	_float2 vRand = _float2(130.f, 180.f);
 	m_vRadians = _float3(XMConvertToRadians(m_pGameInstance->Rand(vRand.x, vRand.y)), XMConvertToRadians(m_pGameInstance->Rand(vRand.x, vRand.y)), XMConvertToRadians(m_pGameInstance->Rand(vRand.x, vRand.y)));
     return S_OK;
@@ -156,21 +148,6 @@ void CMapObject_Meteo::LerpPos(_float fTimeDelta)
 
 		//m_pTransformCom->Set_State(STATE::POSITION, XMLoadFloat4(&m_vSourPos));
 		m_fFall = 0.f;
-
-		if (m_iTriggerActiveIndex != -1)
-		{
-			m_pGameSystem->OnTriggerActivate(m_iTriggerActiveIndex);
-
-			if (m_pTempPtr)
-				m_pGameSystem->Toggle_GrapplePoint(m_pTempPtr, true);
-
-			if (m_pSecondTempPtr)
-				m_pGameSystem->Toggle_GrapplePoint(m_pSecondTempPtr, true);
-
-			if (m_pThirdTempPtr)
-				m_pGameSystem->Toggle_GrapplePoint(m_pThirdTempPtr, true);
-
-		}
 	}
 }
 
@@ -206,21 +183,6 @@ void CMapObject_Meteo::Ready_Components(void* pArg)
 		TEXT("Com_Shader"), reinterpret_cast<CComponent**>(&m_pShaderCom), nullptr)))
 		return;
 
-	switch ((m_iTriggerActiveIndex))
-	{
-	case 11:
-		//m_pTempPtr = m_pGameSystem->Create_GrapplePoint(_float3(3458.7f, 334.9, 1782.2f), UI_GRAPPLE_TYPE::ANCHOR);
-		//m_pSecondTempPtr = m_pGameSystem->Create_GrapplePoint(_float3(3456.3f, 338.5f, 1769.5f), UI_GRAPPLE_TYPE::ANCHOR);
-		//m_pThirdTempPtr = m_pGameSystem->Create_GrapplePoint(_float3(3454.8f, 341.61f, 1759.4), UI_GRAPPLE_TYPE::ANCHOR);
-
-		m_pTempPtr = m_pGameSystem->Create_GrapplePoint(_float3(3458.7f, 334.9, 1786.2f), UI_GRAPPLE_TYPE::ANCHOR);
-		m_pSecondTempPtr = m_pGameSystem->Create_GrapplePoint(_float3(3456.3f, 338.5f, 1764.5f), UI_GRAPPLE_TYPE::ANCHOR);
-
-		m_pGameSystem->Toggle_GrapplePoint(m_pTempPtr, false);
-		m_pGameSystem->Toggle_GrapplePoint(m_pSecondTempPtr, false);
-		//m_pGameSystem->Toggle_GrapplePoint(m_pThirdTempPtr, false);
-		break;
-	}
 }
 
 CMapObject_Meteo* CMapObject_Meteo::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)

@@ -24,7 +24,6 @@ HRESULT CMapObject_Dome::Initialize_Clone(void* pArg)
 		return E_FAIL;
 
 	Ready_Component(pArg);
-	m_pGameSystem->Register_Dome(this);
     return S_OK;
 }
 

@@ -29,9 +29,6 @@ HRESULT CMapObject_Collaps::Initialize_Clone(void* pArg)
 	Ready_Components(pArg);
 
 	// 1. 시작할때 Trigger를 GameSystem에 등록하고, 실행할때도 Index를 바탕으로 실행한다.
-	m_pGameSystem->TriggerRegister(m_iTriggerIndex, [this](void* pArg) {
-		m_IsTriggerd = true;
-		});
 
 	return S_OK;
 }
@@ -115,7 +112,7 @@ void CMapObject_Collaps::LerpPos(_float fTimeDelta)
 {
 	if (m_pPullUI)
 	{
-		m_pGameSystem->Toggle_GrapplePoint(m_pPullUI, false);
+		//m_pGameSystem->Toggle_GrapplePoint(m_pPullUI, false);
 		m_pPullUI = nullptr;
 	}
 
@@ -248,39 +245,6 @@ void CMapObject_Collaps::Ready_Components(void* pArg)
 		TEXT("Com_DestRigidbody"), reinterpret_cast<CComponent**>(&m_pDestRigidbodyCom), &RigidbodyDesc);
 
 	m_pTransformCom->Set_WorldMatrix(XMLoadFloat4x4(&pDesc->vSourWorldMatrix));
-
-	if (m_iTriggerIndex == 33)
-	{
-		_float3 vPointPos;
-		XMStoreFloat3(&vPointPos, m_pTransformCom->Get_State(STATE::POSITION));
-
-		m_pPullUI = m_pGameSystem->Create_GrapplePoint(vPointPos, UI_GRAPPLE_TYPE::PULL);
-		CRigidbody::BOXBODY_DESC RigidbodyBoxDesc = {};
-		RigidbodyBoxDesc.eBodyType = CRigidbody::BODY;
-		RigidbodyBoxDesc.eShape = SHAPE::BOX;
-		RigidbodyBoxDesc.eType = EMotionType::Kinematic;
-		RigidbodyBoxDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::GRAPPLE);
-		RigidbodyBoxDesc.vExtent = _float3(5.f, 5.f, 5.f); // 탐지 범위 안에 들어가있다면?
-		XMStoreFloat3(&RigidbodyBoxDesc.vPos, m_pTransformCom->Get_State(STATE::POSITION));
-
-		Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Rigidbody"),
-			TEXT("Com_BoxRigidBody"), reinterpret_cast<CComponent**>(&m_pBoxRigidbodyCom), &RigidbodyBoxDesc);
-
-		m_CallBack.pTransform = m_pTransformCom;
-		m_CallBack.eObjectType = OBJECTTYPE::ROPE_PULL;
-		m_CallBack.pCondition = &m_iTriggerIndex;
-		m_pBoxRigidbodyCom->Set_Desc(&m_CallBack); // Trigger용도 Box 정의
-	}
-	else if(m_iTriggerIndex == 31)
-	{
-		XMStoreFloat4x4(&m_SmokePoint, XMMatrixTranslationFromVector(XMVectorSet(3395.6f, 307.8f, 1966.6f, 1.f)));
-		XMStoreFloat4x4(&m_SmokePoint2, XMMatrixTranslationFromVector(XMVectorSet(3391.5f, 307.7f, 1971.3f, 1.f)));
-	}
-	else if (m_iTriggerIndex == 32)
-	{
-		XMStoreFloat4x4(&m_SmokePoint, XMMatrixTranslationFromVector(XMVectorSet(3367.2f, 307.9f, 1976.8f, 1.f)));
-		XMStoreFloat4x4(&m_SmokePoint2, XMMatrixTranslationFromVector(XMVectorSet(3368.9f, 307.9f, 1980.4f, 1.f)));
-	}
 }
 
 

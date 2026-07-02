@@ -44,7 +44,6 @@ void CMapObject_Burn::Update(_float fTimeDelta)
 			_uint iSoundChannel = m_pGameInstance->Register_Channel();
 			m_pGameInstance->Play_Sound_Dynamic(TEXT("Fire0"), iSoundChannel, 0.2f);
 			m_pGameInstance->Return_Channel(iSoundChannel);
-			m_pGameSystem->OnTriggerActivate(61);
 			m_IsSound = !m_IsSound;
 		}
 		m_pRigidbodyCom->Change_Layer(ENUM_CLASS(COLLISIONLAYER::NONE));

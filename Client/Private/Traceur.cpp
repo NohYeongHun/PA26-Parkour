@@ -317,6 +317,7 @@ CGameObject* CTraceur::Clone(void* pArg)
 void CTraceur::Free()
 {
 	__super::Free();
+	Safe_Release(m_pSpringCamera);
 	Safe_Release(m_pGameSystem);
 	Safe_Release(m_pRigidbodyCom);
 	Safe_Release(m_pColliderCom);
