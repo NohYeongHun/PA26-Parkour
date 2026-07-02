@@ -87,12 +87,12 @@ private:
 
 	_uint									m_iCurTime = {};
 	_uint									m_iInterval = {};
-	_bool									m_IsFog = { true };
+	_bool									m_IsFog = { false };
 	_bool									m_IsSSS = { false };		// 카툰이라 큰 차이가 없음,,
 
 	_bool									m_IsSSAO = { true };
 	_bool									m_IsOutLine = { true };
-	_bool									m_IsLight = { true };
+	_bool									m_IsLight = { false };
 
 	_float4									m_vBackBufferColor = {};
 

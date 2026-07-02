@@ -34,8 +34,9 @@ public:
 
 public:
 	_vector Get_LookVector();
-	_vector Get_LookVector_NoPitch();
-	_vector Get_RightVector_NoPitch();
+	_vector Get_LookVector_NoPitch() const;
+	_vector Get_RightVector_NoPitch() const;
+
 
 public:
 	virtual		HRESULT			Initialize_Prototype() override;

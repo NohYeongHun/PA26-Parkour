@@ -64,7 +64,7 @@ void CInputController::Update_KeyInput()
 
 }
 
-_bool CInputController::Check_AnyInput(_uint eKeyInput, KEYSTATE eState)
+_bool CInputController::Check_AnyInput(_uint eKeyInput, KEYSTATE eState) const
 {
     _uint iFlag = static_cast<_uint>(eKeyInput);
     if (eState == KEYSTATE::PRESS)
@@ -79,7 +79,7 @@ _bool CInputController::Check_AnyInput(_uint eKeyInput, KEYSTATE eState)
     return false;
 }
 
-_bool CInputController::Check_AllInput(_uint eKeyInput, KEYSTATE eState)
+_bool CInputController::Check_AllInput(_uint eKeyInput, KEYSTATE eState) const
 {
     _uint iFlag = static_cast<_uint>(eKeyInput);
 

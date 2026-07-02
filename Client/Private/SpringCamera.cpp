@@ -58,14 +58,14 @@ _vector CSpringCamera::Get_LookVector()
 	return vLook;
 }
 
-_vector CSpringCamera::Get_LookVector_NoPitch()
+_vector CSpringCamera::Get_LookVector_NoPitch() const
 {
 	_vector vLook = XMVector3Normalize(m_pTransformCom->Get_State(STATE::LOOK));
 	vLook = XMVectorSetY(vLook, 0.f);
 	return XMVector3Normalize(vLook);
 }
 
-_vector CSpringCamera::Get_RightVector_NoPitch()
+_vector CSpringCamera::Get_RightVector_NoPitch() const
 {
 	_vector vRight = XMVector3Normalize(m_pTransformCom->Get_State(STATE::RIGHT));
 	vRight = XMVectorSetY(vRight, 0.f);  // Pitch ����

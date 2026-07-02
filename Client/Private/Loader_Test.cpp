@@ -2,15 +2,15 @@
 #include "Loader_Test.h"
 
 #pragma region PLAYER
-
+#include "Traceur.h"
 #pragma endregion
 
 
 #pragma region OBJECT
-//#include "MapObject_Instance.h"
-//#include "MapObject.h"
-//#include "Trigger_Box.h"
-//#include "MapObject_Collaps.h"
+#include "MapObject_Instance.h"
+#include "MapObject.h"
+#include "Trigger_Box.h"
+#include "MapObject_Collaps.h"
 
 #pragma endregion
 
@@ -25,10 +25,11 @@ CLoader_Test::CLoader_Test(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 
 HRESULT CLoader_Test::Initialize()
 {
-	m_iNumLoadingThread = 18;
+	
+	m_iNumLoadingThread = 5;
 
 	m_pGameInstance->Add_Work([this]() {Load_Texture(); Complete_Load(); });
-	m_pGameInstance->Add_Work([this]() {Load_Model(); Complete_Load(); });
+	m_pGameInstance->Add_Work([this]() {Load_Map(); Complete_Load(); });
 	m_pGameInstance->Add_Work([this]() {Load_Shader(); Complete_Load(); });
 	m_pGameInstance->Add_Work([this]() {Load_Object(); Complete_Load(); });
     m_pGameInstance->Add_Work([this]() {Load_Player(); Complete_Load(); });
@@ -42,24 +43,11 @@ HRESULT CLoader_Test::Load_Texture()
     return S_OK;
 }
 
-HRESULT CLoader_Test::Load_Model()
+HRESULT CLoader_Test::Load_Map()
 {
-
+	m_pGameInstance->Load_Resource("../Bin/Resource/Map/Parkour/Textures/");
+	// "Parkour" 매개변수는 Client/Bin/Resource/Map/Parkour를 탐색합니다.
 	m_pGameSystem->Ready_Prototype_Map("../Bin/Resource/Map/MapData/Parkour/", m_eCurLevel, "Parkour");
-	//m_pGameInstance->Load_Resource("../Bin/Resource/Map/The_False_Sovereign/Textures/");
-	
-	//m_pGameSystem->Ready_Prototype_Map("../Bin/Resource/Map/MapData/PLAYER_TEST/", m_eCurLevel, "The_False_Sovereign");
-
-	//m_pGameSystem->Ready_Prototype_Map("../Bin/Resource/Map/MapData/Asphodel_Barrens_1102_first/", m_eCurLevel);
-	//m_pGameSystem->Ready_Prototype_Map("../Bin/Resource/Map/MapData/Total_Map_1102/", m_eCurLevel);
-	//m_pGameSystem->Ready_Prototype_Map("../Bin/Resource/Map/MapData/The_False_Sovereign_1102_final/", m_eCurLevel);
-	//m_pGameSystem->Ready_Prototype_Map("../Bin/Resource/Map/MapData/INSTANCE_TEST/", m_eCurLevel);
-
-    // Prototype_Component_Model_FalseSoverign
-    //_fmatrix PreMatrix = XMMatrixScaling(0.1f, 0.1f, 0.1f) * XMMatrixRotationAxis(XMVectorSet(0.f, 1.f, 0.f, 0.f), XMConvertToRadians(180.f));
-    //if(FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_Component_Model_FalseSoverign"),
-    //    CModel::Create(m_pDevice, m_pContext, MODELTYPE::ANIM, PreMatrix, "../Bin/Resource/Model/Player/FalseSovereign/False_SovereignTest1.dat"))))
-    //    return E_FAIL;
 
 	cout << "Model" << endl;
 
@@ -84,39 +72,17 @@ HRESULT CLoader_Test::Load_Shader()
 
 HRESULT CLoader_Test::Load_Object()
 {
- //   m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_MapObject"),
- //       CMapObject::Create(m_pDevice, m_pContext));
+    m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_MapObject"),
+        CMapObject::Create(m_pDevice, m_pContext));
 
-	//m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_MapObject_Instance"),
-	//	CMapObject_Instance::Create(m_pDevice, m_pContext));
-	//
-	//m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_TriggerBox"),
-	//	CTrigger_Box::Create(m_pDevice, m_pContext));
+	m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_MapObject_Instance"),
+		CMapObject_Instance::Create(m_pDevice, m_pContext));
+	
+	m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_TriggerBox"),
+		CTrigger_Box::Create(m_pDevice, m_pContext));
 
-	//m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_MapObject_Collaps"),
-	//	CMapObject_Collaps::Create(m_pDevice, m_pContext));
-
-	//if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::TEST), TEXT("Prototype_GameObject_Dummy"),
-	//	CDummy::Create(m_pDevice, m_pContext))))
-	//	return E_FAIL;
-
-	//if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::TEST), TEXT("Prototype_GameObject_WeaponDummy"),
-	//	CWeaponDummy::Create(m_pDevice, m_pContext))))
-	//	return E_FAIL;
-	////if(FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_MonsterTest"), CMonsterTest::Create(m_pDevice, m_pContext))))
-	////	return E_FAIL;
-
-	//// Prototype_GameObject_AttackVolume
-	//if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::TEST), TEXT("Prototype_GameObject_AttackVolume"),
-	//	CAttackVolume::Create(m_pDevice, m_pContext))))
-	//	CRASH("AttackVolume Create Failed");
-
-	//m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_MapObject_Throw"),
-	//	CMapObject_Throw::Create(m_pDevice, m_pContext));
-
-	//m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_Slide_Navigation"),
-	//	CSlide_Navigation::Create(m_pDevice, m_pContext));
-	//cout << "Object" << endl;
+	m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_MapObject_Collaps"),
+		CMapObject_Collaps::Create(m_pDevice, m_pContext));
 
     return S_OK;
 }
@@ -126,19 +92,29 @@ HRESULT CLoader_Test::Load_Object()
 
 HRESULT CLoader_Test::Load_Player()
 {
-
     // Controller 초기화
     _wstring wstrControllerTag = L"Prototype_Component_PlayerController";
     if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), wstrControllerTag,
         CInputController::Create(m_pDevice, m_pContext))))
         CRASH("PlayerInput Controller");
-    
-    /*_wstring wStrControllerTag = TEXT("Prototype_GameObject_Player");
-    if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel)
-        , wStrControllerTag
-        , CPlayer::Create(m_pDevice, m_pContext))))
-        CRASH("Prototype Create Failed");*/
 
+	// 객체
+	_wstring wStrControllerTag = TEXT("Prototype_GameObject_Traceur");
+	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel)
+		, wStrControllerTag
+		, CTraceur::Create(m_pDevice, m_pContext))))
+		CRASH("Prototype Create Failed");
+
+	// Model
+	_wstring wStrModelTag = L"Prototype_Component_Model_Traceur";
+	_string strFilePath = "../../Client/Bin/Resource/AnimModel/Traceur/User.dat";
+	_matrix	PreTransformMatrix = XMMatrixIdentity();
+	_float fSize = 0.01f;
+	PreTransformMatrix = XMMatrixScaling(fSize, fSize, fSize) * XMMatrixRotationY(XMConvertToRadians(180.f));
+
+	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), wStrModelTag,
+		CModel::Create(m_pDevice, m_pContext, MODELTYPE::ANIM, PreTransformMatrix, strFilePath.c_str()))))
+		CRASH("Prototype Create Failed");
 
     return S_OK;
 }

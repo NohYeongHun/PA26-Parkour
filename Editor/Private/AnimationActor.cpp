@@ -98,11 +98,6 @@ HRESULT CAnimationActor::Initialize_Clone(void* pArg)
 	XMStoreFloat4(&m_vInitPosition, m_pTransformCom->Get_State(STATE::POSITION));
 #endif // _DEBUG
 
-    
-
-    //m_pTransformCom->Scale(pDesc->vScale);
-    // Look 벡터 설정한 방향으로 잘갑니다 지금.
-
 	// ParentActor가 있으면 아래 Ready_Camera 실행하지않음.
 	if (m_pParentActor != nullptr)
 		return S_OK;

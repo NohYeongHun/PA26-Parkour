@@ -5,6 +5,12 @@ NS_BEGIN(Engine)
 
 class ENGINE_DLL CComponent abstract : public CBase
 {
+public:
+	typedef struct tagComponentDesc
+	{
+		class CGameObject* pOwner = { nullptr };
+	}COMPONENT_DESC;
+
 protected:
 	explicit CComponent(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
 	explicit CComponent(const CComponent& Prototype);
@@ -20,6 +26,7 @@ protected:
 	ID3D11Device*					m_pDevice = { nullptr };
 	ID3D11DeviceContext*		m_pContext = { nullptr };
 	class CGameInstance*		m_pGameInstance = { nullptr };
+	class CGameObject*			m_pOwner = { nullptr };
 
 	_bool								m_isClone = { false };
 

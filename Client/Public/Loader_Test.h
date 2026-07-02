@@ -14,7 +14,7 @@ public:
 
 private:
 	HRESULT				Load_Texture();
-	HRESULT				Load_Model();
+	HRESULT				Load_Map();
 	HRESULT				Load_Shader();
 	HRESULT				Load_Object();
 	HRESULT				Load_Player();

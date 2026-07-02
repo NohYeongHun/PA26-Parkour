@@ -79,44 +79,17 @@ namespace Client
 		LB = 1 << 5,
 		RB = 1 << 6,
 		WB = 1 << 7,
-		Q = 1 << 8,
-		E = 1 << 9,
-		R = 1 << 10,
-		T = 1 << 11,
-		LSHIFT = 1 << 12,
-		SPACE = 1 << 13,
-		D1 = 1 << 14,
-		D2 = 1 << 15,
-		D3 = 1 << 16,
-		D4 = 1 << 17,
-		D5 = 1 << 18,
-		D6 = 1 << 19,
-		G = 1 << 20,
-		F6 = 1 << 21,
+		LSHIFT = 1 << 8,
+		SPACE = 1 << 9,
+		D1 = 1 << 10,
+		D2 = 1 << 11,
+		D3 = 1 << 12,
+		D4 = 1 << 13,
+		D5 = 1 << 14,
+		D6 = 1 << 15,
+		C = 1 << 16,
+		F6 = 1 << 17,
 	};
-
-	typedef enum class ESkillType : _uint
-	{
-		NONE = 0,	    // (비용 없음)
-		RESONANCE,		// 공명 게이지
-		AUGUSTA_POINT,	// 특수 원형 게이지
-		AUGUSTA_ULTI,	// 기본 궁극기 게이지
-		AUGUSTA_SWORD,	// 특수 칼 게이지 (갯수)
-		AUGUSTA_UITI_SWORD, // 칼 사용 후 썼을때 공격 게이지?
-		SKILL_TYPE_END // CSV 파싱 실패 등을 위한 END
-	}SKILL_TYPE;
-
-	typedef enum class ECostType : unsigned int
-	{
-		NONE = 0, // Stat 아님.
-		COST1, // 1 RESONANCE
-		COST2, // 2 AUGUSTA POINT
-		COST3, // 3 AUGUSTA_SWORD
-		COST4, // 4 AUGUSTA_ULTI_SWORD
-		COST5, // 5. AUGUTA_ULTI
-		STAMINA, // 5
-		COST_TYPE_END
-	}COST_TYPE;
 
 	enum class SKILL_STATE : unsigned int
 	{

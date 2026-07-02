@@ -2,27 +2,27 @@
 #include "Level_Map.h"
 
 #include "Event_Level.h"
-#include"Edit_MapObject.h"
-#include"Edit_MapObject_Instance.h"
-#include"Edit_PreViewModel.h"
-#include"Edit_LightObject.h"
-#include"Edit_Brush.h"
-#include"Shader_Interface.h"
-#include"AnimationTool.h"
-#include"Edit_MapObject_Destruction.h"
-#include"Edit_MapObject_Destruction_Piece.h"
-#include"Edit_TriggerBox.h"
-#include"Mesh_Instance.h"
-#include"Edit_MonsterSpawnor.h"
-#include"Edit_Meteo.h"
-#include"Model_Streaming.h"
-#include"Edit_MapObject_Water.h"
-#include"Edit_MapObject_Collaps.h"
-#include"Edit_LightManager.h"
-#include"Edit_MapEffectCollector.h"
-#include"Edit_FireFly_Manager.h"
-#include"Edit_SlideZone.h"
-#include"Edit_Portal.h"
+#include "Edit_MapObject.h"
+#include "Edit_MapObject_Instance.h"
+#include "Edit_PreViewModel.h"
+#include "Edit_LightObject.h"
+#include "Edit_Brush.h"
+#include "Shader_Interface.h"
+#include "AnimationTool.h"
+#include "Edit_MapObject_Destruction.h"
+#include "Edit_MapObject_Destruction_Piece.h"
+#include "Edit_TriggerBox.h"
+#include "Mesh_Instance.h"
+#include "Edit_MonsterSpawnor.h"
+#include "Edit_Meteo.h"
+#include "Model_Streaming.h"
+#include "Edit_MapObject_Water.h"
+#include "Edit_MapObject_Collaps.h"
+#include "Edit_LightManager.h"
+#include "Edit_MapEffectCollector.h"
+#include "Edit_FireFly_Manager.h"
+#include "Edit_SlideZone.h"
+#include "Edit_Portal.h"
 
 _float3 CLevel_Map::m_vWorldPos = {};
 _float3 CLevel_Map:: m_vWorldDir = {};
@@ -31,14 +31,7 @@ _float4 CLevel_Map::m_vPickedPos = _float4(0.f,0.f,0.f,1.f);
 CLevel_Map::CLevel_Map(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
     : CLevel { pDevice, pContext }
 {
-    // ���彺�������� ���� �޽� ���� �귯�� ����� �޸�
-    // ���� Ÿ���� ����ͼ� ���ε�. ���� ��ġ�� ��ȯ.
-    // �� ���콺 ��ġ �� �ϳ� VS_IN���� ������, Range ���� ���̴� ����.
-    // ���� Ÿ���� w���� 0�̸� discard
-    // GS���̴����� �簢 ���� ����, �� �������� ���� �귯�� ����? => �簢�� ���� ���� �� ���� ���� ����?
-    // ����, Y�� ���� ȸ�� ������ġ, ����, ����..? �Է� �����ϰ� ?
-    
-    // ��ư ������ ������ �� �ְ�?
+
 }
 
 HRESULT CLevel_Map::Initialize()
@@ -57,16 +50,6 @@ HRESULT CLevel_Map::Initialize()
 	m_pAnimationTool = CAnimationTool::Create(m_pDevice, m_pContext, m_eCurLevel);
 	m_pEffectCollector = CEdit_MapEffectCollector::Create();
 	m_SaveObjects["Map_Effect"].push_back(nullptr);
-
-	//m_pGameInstance->Add_GameObject_ToLayer(m_iLevel, TEXT("Prototype_GameObject_Potal"), m_iLevel, TEXT("Potal"));
-	
-	//if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_Component_Shader_VtxAnimMesh"),
-	//    CShader::Create(m_pDevice, m_pContext, TEXT("../../Client/Bin/ShaderFiles/Shader_VtxAnimMesh.hlsl")
-	//        , VTXANIMMESH::Elements, VTXANIMMESH::iNumElements))))
-	//{
-	//    CRASH("Failed Load AnimMesh Shader");
-	//    return E_FAIL;
-	//}
 
 	SHADER_MACRO eShaderMacro = {
 	    {"THREAD_X", "64" }
@@ -475,7 +458,8 @@ void CLevel_Map::Menu_Save_Load()
     config.path = "../../Client/Bin/Resource/Map/MapData/";
     config.flags = ImGuiFileDialogFlags_ReadOnlyFileNameField;
 
-    static _char exportText[128] = ""; // ?낅젰 ??μ슜 踰꾪띁
+    static _char exportText[128] = "";
+	// 폴더명을 입력하고 Save_All을 해야 해당 폴더에 .dat 파일이 저장된다.
     ImGui::InputText("<Input>/<Input>_<Category>.dat", exportText, IM_ARRAYSIZE(exportText));
 
     if (ImGui::BeginMenu("Save"))
@@ -496,16 +480,8 @@ void CLevel_Map::Menu_Save_Load()
                 ofstream File(MapName, ios::binary);
 
                 MAP_SAVE event(File, Test);
-                //if (Pair.first.find("Instance") != std::string::npos)
-                //    m_pGameInstance->Publish(ENUM_CLASS(LEVEL::STATIC), TEXT("Save_Map_Instance"), event);
-                //else if(Pair.first.find("Destruction") != std::string::npos)
-                //    m_pGameInstance->Publish(ENUM_CLASS(LEVEL::STATIC), TEXT("Save_Map_Destruction"), event);
-				//else
-				//	m_pGameInstance->Publish(ENUM_CLASS(LEVEL::STATIC), TEXT("Save_Map"), event);
-
                 File.close();
             }
-        //?곹샇?묒슜??媛앹껜???곕줈, ?몄뒪?댁떛 媛앹껜???곕줈, ?쇰컲 留??곕줈.
 
         ImGui::EndMenu();
     }
@@ -571,7 +547,6 @@ void CLevel_Map::Menu_Save_Load()
 			_uint i = 0;
 			for (const auto& Data : UsingPrototypeNames)
 			{
-				//_uint i = strlen(Data.c_str());
 				_uint StrSize = static_cast<_uint>(strlen(Data.c_str()));
 				File2.write(reinterpret_cast<const _char*>(&StrSize), sizeof(_uint));
 				File2.write(reinterpret_cast<const _char*>(Data.c_str()), StrSize);
@@ -1514,20 +1489,11 @@ HRESULT CLevel_Map::Ready_Static_Component()
     _float fSize = 0.001f;
     PreTransformMatrix = XMMatrixScaling(fSize, fSize, fSize) * XMMatrixRotationY(XMConvertToRadians(180.0f));
 
-	//LIGHT_DESC LightDesc{};
-	//LightDesc.eType = LIGHT_DESC::DIRECTION;
-	//LightDesc.vAmbient = _float4(0.4f, 0.4f, 0.4f, 1.f);
-	//LightDesc.vDiffuse = _float4(1.f, 1.f, 1.f, 1.f);
-	//LightDesc.vDirection = _float4(1.f, -1.f, 1.f, 0.f);
-	//LightDesc.vSpecular = _float4(1.f, 1.f, 1.f, 1.f);
 	LIGHT_DESC LightDesc{};
 	LightDesc.eType = LIGHT_DESC::DIRECTION;
 
 	LightDesc.vAmbient = _float4(0.4f, 0.4f, 0.4f, 1.f);
-	//	LightDesc.vAmbient = _float4(0.2f, 0.2f, 0.2f, 1.f);
-	//	LightDesc.vDiffuse = _float4(0.6f, 0.6f, 0.8f, 1.f);
 	LightDesc.vDiffuse = _float4(0.5f, 0.55f, 0.85f, 1.f);
-	//LightDesc.vDiffuse = _float4(0.8f, 0.8f, 0.65f, 1.f);
 	LightDesc.vDirection = _float4(0.f, -1.f, 0.5f, 0.f);
 	LightDesc.vSpecular = _float4(1.f, 1.f, 1.f, 1.f);
 	m_pGameInstance->Add_Light(TEXT("Test"), LightDesc);
@@ -1536,14 +1502,6 @@ HRESULT CLevel_Map::Ready_Static_Component()
 	m_SaveObjects["Map_Object_Light"].push_back(nullptr);
 
     //?쇰컲 紐⑤뜽
-    //m_pGameInstance->Add_Prototype(m_iLevel, TEXT("Prototype_Component_Model_Wolf"), CModel::Create(m_pDevice, m_pContext, MODELTYPE::NONANIM, PreTransformMatrix, "../../Client/Bin/Resource/Dummy/Wolf/Wolf.dat"));
-
-    //?몄뒪?댁뒪 紐⑤뜽
-
-    /*m_pGameInstance->Add_Work([&](){
-        m_pGameInstance->Add_Prototype(m_iLevel, TEXT("Prototype_Component_Model_Wolf_Instance"),
-            CModel_Instance::Create(m_pDevice, m_pContext, PreTransformMatrix, "../../Client/Bin/Resource/Dummy/Wolf/Wolf.dat"));
-        });*/
 
     m_pGameInstance->Add_Work([&]() {
 
@@ -1624,20 +1582,12 @@ void CLevel_Map::Ready_Event()
 		{
 			if (event.fDistance <= m_fNearDistance)
 			{
-				/*if (m_pPickedObject) m_pPickedObject->Set_ShaderPass(0);
-				if (m_pPickedDestructObject) m_pPickedDestructObject->Set_ShaderPass(0);
-				if(m_pPickedMeteo) m_pPickedMeteo->Set_ShaderPass(0);
-				if(m_pPickedWater) m_pPickedWater->Set_ShaderPass(0);
-				if(m_pPickedCollaps) m_pPickedCollaps->Set_ShaderPass(0);*/
-
 				CGameObject* pObject = reinterpret_cast<CGameObject*>(event.pObject);
 				if (m_pPickedObject = dynamic_cast<CEdit_MapObject*>(pObject))
 				{
-					//m_pPickedObject->Set_ShaderPass(3);
 
 					if (m_pPickedDestructObject)
 					{
-						//m_pPickedDestructObject->Set_ShaderPass(0);
 						m_pPickedDestructObject = nullptr;
 					}
 
@@ -1646,27 +1596,6 @@ void CLevel_Map::Ready_Event()
 						m_pPickedObject->Add_Child(m_pChildObject);
 						m_pChildObject = nullptr;
 					}
-				}
-				else if (m_pPickedDestructObject = dynamic_cast<CEdit_MapObject_Destruction*>(pObject))
-				{
-
-					//m_pPickedDestructObject->Set_ShaderPass(3);
-					if (m_pPickedDestructObject)
-					{
-						//m_pPickedDestructObject->Set_ShaderPass(0);
-					}
-				}
-				else if (m_pPickedMeteo = dynamic_cast<CEdit_Meteo*>(pObject))
-				{
-					//m_pPickedMeteo->Set_ShaderPass(3);
-				}
-				else if (m_pPickedWater = dynamic_cast<CEdit_MapObject_Water*>(pObject))
-				{
-					//m_pPickedWater->Set_ShaderPass(3);
-				}
-				else if (m_pPickedCollaps = dynamic_cast<CEdit_MapObject_Collaps*>(pObject))
-				{
-					//m_pPickedCollaps->Set_ShaderPass(3);
 				}
 			}
 		}

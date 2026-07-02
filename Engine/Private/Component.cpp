@@ -1,6 +1,7 @@
 ﻿#include "EnginePch.h"
 #include "Component.h"
 #include "GameInstance.h"
+#include "GameObject.h"
 
 CComponent::CComponent(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	: m_pDevice { pDevice }, m_pContext { pContext },
@@ -28,6 +29,12 @@ HRESULT CComponent::Initialize_Prototype()
 
 HRESULT CComponent::Initialize_Clone(void* pArg)
 {
+	COMPONENT_DESC* pDesc = static_cast<COMPONENT_DESC*>(pArg);
+	if (nullptr == pDesc)
+		return S_OK;
+
+	m_pOwner = pDesc->pOwner;
+
 	return S_OK;
 }
 
@@ -39,7 +46,6 @@ HRESULT CComponent::Render()
 void CComponent::Free()
 {
 	__super::Free();
-
 	Safe_Release(m_pDevice);
 	Safe_Release(m_pContext);
 	Safe_Release(m_pGameInstance);

@@ -5,6 +5,7 @@
 #include "Event_Level.h"
 #include "SpringCamera.h"
 #include "Mouse.h"
+#include "MovementComponent.h"
 
 #include "Level_Loading.h"
 #include "Level_Test.h"
@@ -206,7 +207,24 @@ void CMainApp::Ready_Prototype_ForStatic()
 	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Shader_VtxSkyBox"),
 		CShader::Create(m_pDevice, m_pContext, TEXT("../Bin/ShaderFiles/Shader_VtxSkyBox.hlsl"), VTXMESH::Elements, VTXMESH::iNumElements))))
 		CRASH("Shader_VtxSkyBox");
+
+	// DeferredShader_Map
+	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_DeferredShader_Map"),
+		CDeferredShader::Create(m_pDevice, m_pContext, TEXT("../Bin/ShaderFiles/Shader_VtxMesh.hlsl"), VTXMESH::Elements, VTXMESH::iNumElements, TEXT("Shader_Map")))))
+		CRASH("DeferredShader_Map");
+
+	// DeferredShader_Map
+	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_DeferredShader_Map_Instance"),
+		CDeferredShader::Create(m_pDevice, m_pContext, TEXT("../Bin/ShaderFiles/Shader_VtxMesh_Instance.hlsl"), VTXMESHINSTANCE::Elements, VTXMESHINSTANCE::iNumElements, TEXT("Shader_Map_Instance")))))
+		CRASH("DeferredShader_Map");
 #pragma endregion
+
+#pragma region COMPONENT
+	//if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Movement"),
+	//	CMovementComponent::Create(m_pDevice, m_pContext))))
+	//	CRASH("Faild to Add Prototype MovementComponent");
+#pragma endregion
+
 
 #pragma region COLLIDER
 	// Rigidbody

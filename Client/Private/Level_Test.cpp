@@ -2,6 +2,7 @@
 #include "GameSystem.h"
 #include "Level_Test.h"
 #include "MapObject.h"
+#include "Traceur.h"
 
 //#include "Player.h"
 
@@ -18,11 +19,11 @@ HRESULT CLevel_Test::Initialize()
 	m_pGameInstance->SetUp_OctoTree(_float3(0.f, 0.f, 0.f), _float3(4096, 4096, 4096));
 
 	//로더에서 부른 것과 같은 거 부르기.
-	m_pGameSystem->Clone_MapObjects(m_eCurLevel);
+	//m_pGameSystem->Clone_MapObjects(m_eCurLevel);
 
-    // Ready_Layer_Player();
+    //Ready_Layer_Player();
 
-    LIGHT_DESC LightDesc{};
+    /*LIGHT_DESC LightDesc{};
     LightDesc.eType = LIGHT_DESC::DIRECTION;
     LightDesc.vAmbient = _float4(0.2f, 0.2f, 0.2f, 1.f);
     LightDesc.vDiffuse = _float4(1.f, 1.f, 1.f, 1.f);
@@ -31,10 +32,10 @@ HRESULT CLevel_Test::Initialize()
 
     m_pGameInstance->Add_Light(TEXT("Test"), LightDesc);
     m_pGameInstance->SetUp_ShadowLight(TEXT("Test"));
-    m_pGameInstance->SetUp_CameraNF();
+    m_pGameInstance->SetUp_CameraNF();*/
 
 	// Test
-	_uint iLevel = m_pGameInstance->Get_CurrentLevel();
+	_uint iLevel = m_pGameInstance->Get_CurrentLevel(); 
 
     return S_OK;
 }
@@ -57,41 +58,6 @@ void CLevel_Test::Render()
 {
 }
 
-//void CLevel_Test::Ready_Layer_Player()
-//{
-//    _float3 vScale{}, vRotation{}, vPosition{};
-//    vScale = { 1.f, 1.f, 1.f };
-//    vRotation = { 0.f, 0.f, 0.f };
-//    vPosition = { 0.f, -10.f, 50.f };
-//    //vPosition = { 3455.f, 160.f, 2951.f };
-//
-//    CPlayer::PLAYER_DESC Desc{};
-//    Desc.eCurLevel = m_eCurLevel;
-//    Desc.vScale = vScale;
-//    Desc.vRotation = vRotation;
-//    Desc.vPosition = vPosition;
-//	Desc.iPlayerCount = CPlayer::CHARACTERTYPE::TYPE_END;
-//	Desc.wStrInputControllerTag = TEXT("Prototype_Component_PlayerController");
-//    // 0. vector 크기 정의
-//    Desc.PlayerSpecs.resize(CPlayer::CHARACTERTYPE::TYPE_END);
-//
-//	// 1. Rover(주인공) 캐릭터 정의
-//	Desc.PlayerSpecs[CPlayer::CHARACTERTYPE::ROVER].CharacterDesc = PlayerData::GetRoverCloneData(vScale, vRotation, vPosition, m_eCurLevel);
-//	Desc.PlayerSpecs[CPlayer::CHARACTERTYPE::ROVER].strActorTag = TEXT("Prototype_GameObject_Actor_Rover");
-//
-//    // 2. Augusta 정의.
-//    Desc.PlayerSpecs[CPlayer::CHARACTERTYPE::AUGUSTA].CharacterDesc = PlayerData::GetAugustaCloneData(vScale, vRotation, vPosition, m_eCurLevel);
-//    Desc.PlayerSpecs[CPlayer::CHARACTERTYPE::AUGUSTA].strActorTag = TEXT("Prototype_GameObject_Actor_Augusta");
-//
-//	// 3. Galbrena 정의
-//	Desc.PlayerSpecs[CPlayer::CHARACTERTYPE::GALBRENA].CharacterDesc = PlayerData::GetGalbrenaCloneData(vScale, vRotation, vPosition, m_eCurLevel);
-//	Desc.PlayerSpecs[CPlayer::CHARACTERTYPE::GALBRENA].strActorTag = TEXT("Prototype_GameObject_Actor_Galbrena");
-//
-//    // 4. Player(Character 모음) 생성.
-//    if (FAILED(m_pGameInstance->Add_GameObject_ToLayer(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_Player"),
-//        ENUM_CLASS(m_eCurLevel), TEXT("Layer_Players"), &Desc)))
-//        CRASH("Failed Ready Player");
-//}
 
 //void CLevel_Test::Ready_Skybox()
 //{
@@ -105,13 +71,6 @@ void CLevel_Test::Render()
 //		TEXT("Layer_BackGround"), &SkyboxDesc)))
 //		CRASH("Skybox");
 //}
-
-
-
-
-
-
-
 
 
 
@@ -205,6 +164,31 @@ void CLevel_Test::Read_Map_Dat(const _string pFilePath)
     }
     m_pGameInstance->Wait_Thread_End();
     File.close();
+}
+
+void CLevel_Test::Ready_Layer_Player()
+{
+	_float3 vScale{}, vRotation{}, vPosition{};
+	vScale = { 1.f, 1.f, 1.f };
+	vRotation = { 0.f, 0.f, 0.f };
+	vPosition = { 3.f, 1.f, 3.f };
+
+	CCharacter::CHARACTER_DESC Desc{};
+	Desc.eCurLevel = m_eCurLevel;
+	Desc.modelData = make_pair(m_eCurLevel, TEXT("Prototype_Component_Model_Traceur"));
+	Desc.shaderData = make_pair(LEVEL::STATIC, TEXT("Prototype_Component_Shader_VtxAnimMesh"));
+	Desc.colliderData = make_pair(LEVEL::STATIC, TEXT("Prototype_Component_Collider"));
+	Desc.inputControllerData = make_pair(m_eCurLevel, TEXT("Prototype_Component_PlayerController"));
+
+	Desc.fRotationPerSec = XMConvertToRadians(90.f);
+	Desc.fSpeedPerSec = 10.f;
+	Desc.vScale = vScale;
+	Desc.vRotation = vRotation;
+	Desc.vPosition = vPosition;
+
+	if (FAILED(m_pGameInstance->Add_GameObject_ToLayer(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_Traceur"),
+		ENUM_CLASS(m_eCurLevel), TEXT("Layer_Traceur"), &Desc)))
+		CRASH("Failed Ready Player");
 }
 
 CLevel_Test* CLevel_Test::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)

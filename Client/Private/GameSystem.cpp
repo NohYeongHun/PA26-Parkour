@@ -1,7 +1,12 @@
 ﻿#include "ClientPch.h"
 #include "GameSystem.h"
-#include "MouseController.h"
 #include "Parser.h"
+
+#include "MouseController.h"
+
+#include "Sonoro_Manager.h"
+
+
 
 IMPLEMENT_SINGLETON(CGameSystem)
 
@@ -49,6 +54,34 @@ void CGameSystem::Clone_MapObjects(LEVEL eLevel)
 {
 	m_pParser->Clone_MapObjects(eLevel);
 }
+
+#pragma region SONORO
+void CGameSystem::Set_Sonora_LightDesc(SONORA eType, const LIGHT_DESC& Desc)
+{
+	m_pSonoro_Manager->Set_Sonora_LightDesc(eType, Desc);
+}
+_bool* CGameSystem::Add_To_Management(OBJECTTYPE eType, CMapObject_Sonoro* pObjects, _bool** SonoroMode)
+{
+	return m_pSonoro_Manager->Add_To_Management(eType, pObjects, SonoroMode);
+}
+
+_bool* CGameSystem::Add_To_Management(OBJECTTYPE eType, CMapObject_NonSonoro* pObjects, _bool** SonoroMode)
+{
+	return m_pSonoro_Manager->Add_To_Management(eType, pObjects, SonoroMode);
+}
+
+_bool* CGameSystem::Add_To_Management(INSTANCETYPE eType, CMapObject_Instance* pObjects, _bool** SonoroMode)
+{
+	return m_pSonoro_Manager->Add_To_Management(eType, pObjects, SonoroMode);
+}
+
+_bool CGameSystem::IsSonoro()
+{
+	return m_pSonoro_Manager->IsSonoro();
+}
+
+#pragma endregion
+
 
 void CGameSystem::Clear_TriggerCallBack()
 {

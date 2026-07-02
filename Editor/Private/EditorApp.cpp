@@ -13,7 +13,6 @@
 #include "Level_ASM.h"
 #include "Level_Camera.h"
 #include "Level_SFX.h"
-//Dummy
 #include "EditDummy_Wolf.h"
 #include "EditDummy_Augusta.h"
 #include "EditDummy_Map.h"
@@ -249,19 +248,6 @@ void CEditorApp::Ready_Event()
 		CVIBuffer_Rect_Instance::Create(m_pDevice, m_pContext, 10))))
 		CRASH("VIBuffer_Rect");
 
-	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Shader_VAMesh"),
-		CShader::Create(m_pDevice, m_pContext, TEXT("../../Client/Bin/ShaderFiles/Shader_VtxVaMesh.hlsl"), VTX_VAMESH::Elements, VTX_VAMESH::iNumElements))))
-		CRASH("Shader_VAMesh");
-
-	// Shader_SFX
-	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Shader_SFX_Burst"),
-		CShader::Create(m_pDevice, m_pContext, TEXT("../../Client/Bin/ShaderFiles/Shader_SFX_Burst.hlsl"), VTXPOSTEX::Elements, VTXPOSTEX::iNumElements))))
-		CRASH("Shader_ScreenEffect");
-
-	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Shader_SFX_Burst_Instance"),
-		CShader::Create(m_pDevice, m_pContext, TEXT("../../Client/Bin/ShaderFiles/Shader_SFX_Burst_Instance.hlsl"), VTXRECTINSTANCE::Elements, VTXRECTINSTANCE::iNumElements))))
-		CRASH("Shader_ScreenEffect");
-
 
 	SHADER_MACRO eShaderMacro = {
 		{"THREAD_X", "64" }
@@ -297,17 +283,17 @@ void CEditorApp::Ready_Event()
 
 void CEditorApp::Ready_Dummies()
 {
-	if(FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_GameObject_Dummy_Wolf"), CEditDummy_Wolf::Create(m_pDevice, m_pContext))))
-	   CRASH("Failed Add Prototype Dummy Wolf");
+	//if(FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_GameObject_Dummy_Wolf"), CEditDummy_Wolf::Create(m_pDevice, m_pContext))))
+	//   CRASH("Failed Add Prototype Dummy Wolf");
 
-	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_GameObject_Dummy_Augu"), CEditDummy_Augusta::Create(m_pDevice, m_pContext))))
-		CRASH("Failed Add Prototype Dummy Augu");
+	//if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_GameObject_Dummy_Augu"), CEditDummy_Augusta::Create(m_pDevice, m_pContext))))
+	//	CRASH("Failed Add Prototype Dummy Augu");
 
-	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_GameObject_Dummy_Map"), CEditDummy_Map::Create(m_pDevice, m_pContext))))
-		CRASH("Failed Add Prototype Dummy Map");
+	//if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_GameObject_Dummy_Map"), CEditDummy_Map::Create(m_pDevice, m_pContext))))
+	//	CRASH("Failed Add Prototype Dummy Map");
 
-	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_GameObject_Dummy_Target"), CEditDummy_Target::Create(m_pDevice, m_pContext))))
-		CRASH("Failed Add Prototype Dummy Target");
+	//if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_GameObject_Dummy_Target"), CEditDummy_Target::Create(m_pDevice, m_pContext))))
+	//	CRASH("Failed Add Prototype Dummy Target");
 }
 
 void CEditorApp::Ready_Sound()

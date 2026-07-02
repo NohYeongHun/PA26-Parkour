@@ -32,8 +32,8 @@ CModel::CModel(const CModel& Prototype)
 	m_iRootBoneIndex{ Prototype.m_iRootBoneIndex },
 	m_iNumAnimations{ Prototype.m_iNumAnimations },
 	m_AnimationNameToIndex{ Prototype.m_AnimationNameToIndex },
-	m_Buffers{ Prototype.m_Buffers },
-	m_SRVs{ Prototype.m_SRVs },
+	//m_Buffers{ Prototype.m_Buffers },
+	//m_SRVs{ Prototype.m_SRVs },
 	m_isRibAnimation{ Prototype.m_isRibAnimation },
 	m_ShapeKeyNames{ Prototype.m_ShapeKeyNames },
 	m_ShapeKeyIndices{ Prototype.m_ShapeKeyIndices },
@@ -54,24 +54,24 @@ CModel::CModel(const CModel& Prototype)
 		m_Animations.emplace(Pair.first, Pair.second->Clone());
 
 	//  Prototype 생성 Buffer와 Instance 생성 Buffer가 다르기 때문에 nullptr 체크를 해줍니다.
-	for (auto& pBuffer : m_Buffers)
-	{
-		if (nullptr != pBuffer)
-			Safe_AddRef(pBuffer);
-	}
+	//for (auto& pBuffer : m_Buffers)
+	//{
+	//	if (nullptr != pBuffer)
+	//		Safe_AddRef(pBuffer);
+	//}
 
-	//  SRV는 Prototype, Instance 모두 동일하게 사용.
-	for (auto& pSRV : m_SRVs)
-	{
-		if (nullptr != pSRV)
-			Safe_AddRef(pSRV);
-	}
+	////  SRV는 Prototype, Instance 모두 동일하게 사용.
+	//for (auto& pSRV : m_SRVs)
+	//{
+	//	if (nullptr != pSRV)
+	//		Safe_AddRef(pSRV);
+	//}
 
-	// 크기만 지정.
-	m_UAVs.resize(Prototype.m_UAVs.size());
+	//// 크기만 지정.
+	//m_UAVs.resize(Prototype.m_UAVs.size());
 
-	// 가중치 배열은 Instance 각각이 소유 => 복제본마다 다를 수 있음.
-	m_ShapeKeyWeights.resize(Prototype.m_ShapeKeyWeights.size(), 0.f);
+	//// 가중치 배열은 Instance 각각이 소유 => 복제본마다 다를 수 있음.
+	//m_ShapeKeyWeights.resize(Prototype.m_ShapeKeyWeights.size(), 0.f);
 
 
 
@@ -349,29 +349,29 @@ HRESULT CModel::Initialize_Prototype(MODELTYPE eType, _fmatrix PreTransformMatri
 	m_RootMatrix = XMMatrixIdentity();
 
 
-	if (MODELTYPE::ANIM == m_eType || MODELTYPE::CHARACTER == m_eType)
+	/*if (MODELTYPE::ANIM == m_eType || MODELTYPE::CHARACTER == m_eType)
 	{
 		if (FAILED(Ready_Shared_Buffers()))
 			return E_FAIL;
 
-	}
+	}*/
 	return S_OK;
 }
 
 HRESULT CModel::Initialize_Clone(void* pArg)
 {
-	if ((MODELTYPE::ANIM == m_eType) || (MODELTYPE::CHARACTER == m_eType))
-	{
-		// 0. Copy Resource 용도 멤버 변수 벡터 생성
-		m_vLocalMatrices.resize(m_Bones.size());
+	//if ((MODELTYPE::ANIM == m_eType) || (MODELTYPE::CHARACTER == m_eType))
+	//{
+	//	// 0. Copy Resource 용도 멤버 변수 벡터 생성
+	//	m_vLocalMatrices.resize(m_Bones.size());
 
-		// 1. Rib Prefix 추가 
-		
+	//	// 1. Rib Prefix 추가 
+	//	
 
-		// 2. Instance 전용 버퍼 생성.
-		if (FAILED(Ready_Instance_Buffers()))
-			return E_FAIL;
-	}
+	//	// 2. Instance 전용 버퍼 생성.
+	//	if (FAILED(Ready_Instance_Buffers()))
+	//		return E_FAIL;
+	//}
 
 	return S_OK;
 }
@@ -470,6 +470,47 @@ _bool CModel::Play_Animation_CPU(const _string& strAnimationName, _float fTimeDe
 		pBone->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_PreTransformMatrix), m_Bones);
 
 
+
+
+	return false;
+}
+
+_bool CModel::Play_Animation_CPU(const _string& strAnimationName, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc)
+{
+	// Animation 종료 시, 다음 Animation 처음 KeyFrame과 Blend => 사실상 안쓰고 있음.
+	auto iter = m_Animations.find(strAnimationName);
+	if (iter == m_Animations.end())
+		return false;
+
+	_float fTrackPosition = {};
+
+	if (m_strPreAnimation != strAnimationName)
+	{
+		m_isChangeAnimation = true;
+		m_strPreAnimation = strAnimationName;
+		Clear_Animation(strAnimationName);
+	}
+
+	// Bone Local Matrix 계산 
+	_bool IsAnimationEnd = iter->second->Update_TransformationMatrices_All(playDesc.fTimeDelta, m_Bones, &fTrackPosition);
+	if (nullptr != playDesc.pTrackPosition)
+		*playDesc.pTrackPosition = fTrackPosition;
+
+
+	// Root Node Translation 조정
+	if (true == rootMotionDesc.isEnable)
+		Compute_RootAnimation(rootMotionDesc.fRate, rootMotionDesc.isRotate, rootMotionDesc.isTranslate);
+
+
+	// 애니메이션이 끝났다면? Clear 작업을 진행하고 Animation을 클리어해줍니다.
+	if (IsAnimationEnd)
+	{
+		Clear_Animation(strAnimationName);
+		return true; // 애니메이션 종료
+	}
+
+	for (auto& pBone : m_Bones)
+		pBone->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_PreTransformMatrix), m_Bones);
 
 
 	return false;

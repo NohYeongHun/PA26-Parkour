@@ -95,6 +95,7 @@ HRESULT CEdit_MapObject::Initialize_Clone(void* pArg)
 		*event.vMax = XMVectorMax(*event.vMax, Center + Extents);
 		});
 
+	// 일반 Map Object 파일 Save 로직.
 	m_pGameInstance->Subscribe<MAP_SAVE>(ENUM_CLASS(LEVEL::STATIC), TEXT("Save_Map"), [this](const MAP_SAVE& event) {
 		if (!m_isActivate)
 			return;

@@ -19,6 +19,21 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Burn.cpp" />
+    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Collaps.cpp" />
+    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Destruction.cpp" />
+    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Destruction_Debris.cpp" />
+    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Dome.cpp" />
+    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_DynamicSound.cpp" />
+    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_FireFly.cpp" />
+    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Instance.cpp" />
+    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Meteo.cpp" />
+    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_NonSonoro.cpp" />
+    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Sonoro.cpp" />
+    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Throw.cpp" />
+    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Turn.cpp" />
+    <ClCompile Include="..\..\..\Reference\Client\Private\MapObject_Water.cpp" />
+    <ClCompile Include="..\Private\Character.cpp" />
     <ClCompile Include="..\Private\GameSystem.cpp" />
     <ClCompile Include="..\Private\Level_Loading.cpp" />
     <ClCompile Include="..\Private\Level_Test.cpp" />
@@ -28,8 +43,15 @@
     <ClCompile Include="..\Private\MapObject.cpp" />
     <ClCompile Include="..\Private\Mouse.cpp" />
     <ClCompile Include="..\Private\MouseController.cpp" />
+    <ClCompile Include="..\Private\MovementComponent.cpp" />
     <ClCompile Include="..\Private\Parser.cpp" />
+    <ClCompile Include="..\Private\Slide_Navigation.cpp" />
+    <ClCompile Include="..\Private\Sonoro_Manager.cpp" />
+    <ClCompile Include="..\Private\Spawner.cpp" />
     <ClCompile Include="..\Private\SpringCamera.cpp" />
+    <ClCompile Include="..\Private\Traceur.cpp" />
+    <ClCompile Include="..\Private\TraceurFactory.cpp" />
+    <ClCompile Include="..\Private\Trigger_Box.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientPch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -37,6 +59,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Public\Character.h" />
     <ClInclude Include="..\Public\Client_CharacterEnum.h" />
     <ClInclude Include="..\Public\Client_Define.h" />
     <ClInclude Include="..\Public\Client_Enum.h" />
@@ -49,10 +72,31 @@
     <ClInclude Include="..\Public\Loader_Test.h" />
     <ClInclude Include="..\Public\MainApp.h" />
     <ClInclude Include="..\Public\MapObject.h" />
+    <ClInclude Include="..\Public\MapObject_Burn.h" />
+    <ClInclude Include="..\Public\MapObject_Collaps.h" />
+    <ClInclude Include="..\Public\MapObject_Destruction.h" />
+    <ClInclude Include="..\Public\MapObject_Destruction_Debris.h" />
+    <ClInclude Include="..\Public\MapObject_Dome.h" />
+    <ClInclude Include="..\Public\MapObject_DynamicSound.h" />
+    <ClInclude Include="..\Public\MapObject_FireFly.h" />
+    <ClInclude Include="..\Public\MapObject_Instance.h" />
+    <ClInclude Include="..\Public\MapObject_Meteo.h" />
+    <ClInclude Include="..\Public\MapObject_NonSonoro.h" />
+    <ClInclude Include="..\Public\MapObject_Sonoro.h" />
+    <ClInclude Include="..\Public\MapObject_Throw.h" />
+    <ClInclude Include="..\Public\MapObject_Turn.h" />
+    <ClInclude Include="..\Public\MapObject_Water.h" />
     <ClInclude Include="..\Public\Mouse.h" />
     <ClInclude Include="..\Public\MouseController.h" />
+    <ClInclude Include="..\Public\MovementComponent.h" />
     <ClInclude Include="..\Public\Parser.h" />
+    <ClInclude Include="..\Public\Slide_Navigation.h" />
+    <ClInclude Include="..\Public\Sonoro_Manager.h" />
+    <ClInclude Include="..\Public\Spawner.h" />
     <ClInclude Include="..\Public\SpringCamera.h" />
+    <ClInclude Include="..\Public\Traceur.h" />
+    <ClInclude Include="..\Public\TraceurFactory.h" />
+    <ClInclude Include="..\Public\Trigger_Box.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="ClientPch.h" />
     <ClInclude Include="framework.h" />
