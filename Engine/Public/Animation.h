@@ -45,7 +45,8 @@ public:
 
 	_bool				Update_TransformationMatrices_All(_float fTimeDelta, const vector<class CBone*>& Bones, _float* pTrackPosition = nullptr);
 
-	_bool				Blend_TransformationMatrices(_float fTimeDelta, const vector<class CBone*>& Bones, _float fTrackLength);
+	//_bool				Blend_TransformationMatrices(_float fTimeDelta, const vector<class CBone*>& Bones, _float fTrackLength);
+	_bool				Blend_TransformationMatrices(_float fTimeDelta, const vector<class CBone*>& Bones, _float fWeight);
 
 	_bool			Update_TrackPosition(_float fTimeDelta, _float* pTrackPosition);
 

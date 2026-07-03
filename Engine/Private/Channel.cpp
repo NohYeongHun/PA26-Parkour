@@ -117,9 +117,7 @@ void CChannel::Update_RibTransformationMatrix(_float fCurrentTrackPosition, cons
 		_matrix LerpMatrix = {};
 		LerpMatrix = XMMatrixAffineTransformation(vLerpScale, XMVectorSet(0.f, 0.f, 0.f, 1.f), vLerpRotation, vLerpPosition);
 
-		// 1. ���� ���� ������ �����ɴϴ�.
 		_matrix PrevMatrix = XMLoadFloat4x4(Bones[m_iBoneIndex]->Get_TransformationMatrix());
-		// 2. ������ �������� �߰��� �����ϴ� ��.
 		_matrix FinalMatrix = PrevMatrix * LerpMatrix;
 		Bones[m_iBoneIndex]->Set_TransformationMatrix(FinalMatrix);
 	}
@@ -187,8 +185,37 @@ void CChannel::Update_TransformationMatrix_All(_float fCurrentTrackPosition, con
 	}
 }
 
-void CChannel::Blend_TransformationMatrix(_float fCurrentTrackPosition, const vector<class CBone*>& Bones, _float fTrackLength)
+//void CChannel::Blend_TransformationMatrix(_float fCurrentTrackPosition, const vector<class CBone*>& Bones, _float fTrackLength)
+//{
+//	if (0.f == fCurrentTrackPosition)
+//	{
+//		_matrix PreBoneMatrix = XMLoadFloat4x4(Bones[m_iBoneIndex]->Get_TransformationMatrix());
+//		_vector vLeftScale{}, vLeftRotation{}, vLeftPosition{};
+//		XMMatrixDecompose(&vLeftScale, &vLeftRotation, &vLeftPosition, PreBoneMatrix);
+//		XMStoreFloat3(&m_BlendScale, vLeftScale);
+//		XMStoreFloat4(&m_BlendRotation, vLeftRotation);
+//		XMStoreFloat3(&m_BlendPosition, vLeftPosition);
+//	}
+//
+//	_float3 vRightScale = m_KeyFrames[0].vScale;
+//	_float4 vRightRotation = m_KeyFrames[0].vRotation;
+//	_float3 vRightPosition = m_KeyFrames[0].vTranslation;
+//
+//	_float fRatio = fCurrentTrackPosition / fTrackLength;
+//
+//	_vector vLerpScale = XMVectorLerp(XMLoadFloat3(&m_BlendScale), XMLoadFloat3(&vRightScale), fRatio);
+//	_vector vLerpRotation = XMQuaternionSlerp(XMLoadFloat4(&m_BlendRotation), XMLoadFloat4(&vRightRotation), fRatio);
+//	_vector vLerpPosition = XMVectorSetW(XMVectorLerp(XMLoadFloat3(&m_BlendPosition), XMLoadFloat3(&vRightPosition), fRatio), 1.f);
+//
+//	_matrix LerpMatrix = {};
+//	LerpMatrix = XMMatrixAffineTransformation(vLerpScale, XMVectorSet(0.f, 0.f, 0.f, 1.f), vLerpRotation, vLerpPosition);
+//
+//	Bones[m_iBoneIndex]->Set_TransformationMatrix(LerpMatrix);
+//}
+
+void CChannel::Blend_TransformationMatrix(_float fCurrentTrackPosition, const vector<class CBone*>& Bones, _float fWeight)
 {
+	// 현재 Channel에 해당하는 Bone의 행렬 정보를 분해해서 스냅샷.
 	if (0.f == fCurrentTrackPosition)
 	{
 		_matrix PreBoneMatrix = XMLoadFloat4x4(Bones[m_iBoneIndex]->Get_TransformationMatrix());
@@ -203,7 +230,7 @@ void CChannel::Blend_TransformationMatrix(_float fCurrentTrackPosition, const ve
 	_float4 vRightRotation = m_KeyFrames[0].vRotation;
 	_float3 vRightPosition = m_KeyFrames[0].vTranslation;
 
-	_float fRatio = fCurrentTrackPosition / fTrackLength;
+	_float fRatio = fWeight;
 
 	_vector vLerpScale = XMVectorLerp(XMLoadFloat3(&m_BlendScale), XMLoadFloat3(&vRightScale), fRatio);
 	_vector vLerpRotation = XMQuaternionSlerp(XMLoadFloat4(&m_BlendRotation), XMLoadFloat4(&vRightRotation), fRatio);

@@ -346,6 +346,7 @@ namespace Engine
 		_float* pTrackPosition = nullptr;
 		_string strAnimationName;
 		_float fTimeDelta = 0.f;
+		_float fBlendDuration = 0.2f;
 		_bool isFacial = false;
 	}ANIMATION_PLAY_DESC;
 

@@ -470,29 +470,45 @@ _bool CModel::Play_Animation_CPU(const _string& strAnimationName, _float fTimeDe
 		pBone->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_PreTransformMatrix), m_Bones);
 
 
-
-
 	return false;
 }
 
 _bool CModel::Play_Animation_CPU(const _string& strAnimationName, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc)
 {
-	// Animation 종료 시, 다음 Animation 처음 KeyFrame과 Blend => 사실상 안쓰고 있음.
 	auto iter = m_Animations.find(strAnimationName);
 	if (iter == m_Animations.end())
 		return false;
 
-	_float fTrackPosition = {};
-
-	if (m_strPreAnimation != strAnimationName)
+	// 1. 전환 감지
+	if (m_strCurAnimation != strAnimationName)
 	{
-		m_isChangeAnimation = true;
-		m_strPreAnimation = strAnimationName;
-		Clear_Animation(strAnimationName);
+		if (false == m_strCurAnimation.empty())
+		{
+			m_strPreAnimation = m_strCurAnimation;
+			m_isBlending = true;
+			m_fBlendElapsed = 0.f;
+			m_fBlendWeight = 0.f;
+		}
+
+		m_strCurAnimation = strAnimationName;
+		Clear_Animation(strAnimationName); // 새 애니메이션 시간을 초기화합니다.
 	}
 
+	_float fTrackPosition = {};
+
 	// Bone Local Matrix 계산 
-	_bool IsAnimationEnd = iter->second->Update_TransformationMatrices_All(playDesc.fTimeDelta, m_Bones, &fTrackPosition);
+	_bool IsAnimationEnd = false;
+
+	if (m_isBlending)
+	{
+		m_fBlendElapsed += playDesc.fTimeDelta;
+		m_fBlendWeight = Saturate(m_fBlendElapsed / playDesc.fBlendDuration);
+		if(iter->second->Blend_TransformationMatrices(playDesc.fTimeDelta, m_Bones, m_fBlendWeight))
+			m_isBlending = false;
+	}
+	else
+		IsAnimationEnd = iter->second->Update_TransformationMatrices_All(playDesc.fTimeDelta, m_Bones, &fTrackPosition);
+
 	if (nullptr != playDesc.pTrackPosition)
 		*playDesc.pTrackPosition = fTrackPosition;
 
@@ -515,6 +531,47 @@ _bool CModel::Play_Animation_CPU(const _string& strAnimationName, const ANIMATIO
 
 	return false;
 }
+
+//_bool CModel::Play_Animation_CPU(const _string& strAnimationName, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc)
+//{
+//	// Animation 종료 시, 다음 Animation 처음 KeyFrame과 Blend => 사실상 안쓰고 있음.
+//	auto iter = m_Animations.find(strAnimationName);
+//	if (iter == m_Animations.end())
+//		return false;
+//
+//	_float fTrackPosition = {};
+//
+//	if (m_strPreAnimation != strAnimationName)
+//	{
+//		m_isChangeAnimation = true;
+//		m_strPreAnimation = strAnimationName;
+//		Clear_Animation(strAnimationName);
+//	}
+//
+//	// Bone Local Matrix 계산 
+//	_bool IsAnimationEnd = iter->second->Update_TransformationMatrices_All(playDesc.fTimeDelta, m_Bones, &fTrackPosition);
+//	if (nullptr != playDesc.pTrackPosition)
+//		*playDesc.pTrackPosition = fTrackPosition;
+//
+//
+//	// Root Node Translation 조정
+//	if (true == rootMotionDesc.isEnable)
+//		Compute_RootAnimation(rootMotionDesc.fRate, rootMotionDesc.isRotate, rootMotionDesc.isTranslate);
+//
+//
+//	// 애니메이션이 끝났다면? Clear 작업을 진행하고 Animation을 클리어해줍니다.
+//	if (IsAnimationEnd)
+//	{
+//		Clear_Animation(strAnimationName);
+//		return true; // 애니메이션 종료
+//	}
+//
+//	for (auto& pBone : m_Bones)
+//		pBone->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_PreTransformMatrix), m_Bones);
+//
+//
+//	return false;
+//}
 
 _bool CModel::Play_Animation_GPU(CComputeShader* pComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc)
 {

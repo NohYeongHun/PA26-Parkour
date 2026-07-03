@@ -26,7 +26,8 @@ public:
 	void					Update_TransformationMatrix(_float fCurrentTrackPosition, const vector<class CBone*>& Bones, _uint* pCurrentFrameIndex);
 	void					Update_RibTransformationMatrix(_float fCurrentTrackPosition, const vector<class CBone*>& Bones, _uint* pCurrentFrameIndex);
 	void					Update_TransformationMatrix_All(_float fCurrentTrackPosition, const vector<class CBone*>& Bones, _uint* pCurrentFrameIndex);
-	void					Blend_TransformationMatrix(_float fCurrentTrackPosition, const vector<class CBone*>& Bones, _float fTrackLength);
+	//void					Blend_TransformationMatrix(_float fCurrentTrackPosition, const vector<class CBone*>& Bones, _float fTrackLength);
+	void					Blend_TransformationMatrix(_float fCurrentTrackPosition, const vector<class CBone*>& Bones, _float fWeight);
 private:
 	_char						m_szName[MAX_PATH] = {};
 
@@ -35,9 +36,9 @@ private:
 	_uint						m_iNumKeyFrame = {};
 	vector<KEYFRAME>			m_KeyFrames;
 
-	_float3					m_BlendScale;
-	_float4					m_BlendRotation;
-	_float3					m_BlendPosition;
+	_float3					m_BlendScale = {};
+	_float4					m_BlendRotation = {};
+	_float3					m_BlendPosition = {};
 
 public:
 	static		CChannel*	Create(ifstream& InputFile, const vector<class CBone*>& Bones);

@@ -271,23 +271,39 @@ _bool CAnimation::Update_TransformationMatrices_All(_float fTimeDelta, const vec
 	return false;
 }
 
-_bool CAnimation::Blend_TransformationMatrices(_float fTimeDelta, const vector<class CBone*>& Bones, _float fTrackLength)
-{
-	if (m_fCurrentTrackPosition > fTrackLength)
-	{
-		m_fCurrentTrackPosition = 0.f;
-		return true;
-	}
+//_bool CAnimation::Blend_TransformationMatrices(_float fTimeDelta, const vector<class CBone*>& Bones, _float fTrackLength)
+//{
+//	if (m_fCurrentTrackPosition > fTrackLength)
+//	{
+//		m_fCurrentTrackPosition = 0.f;
+//		return true;
+//	}
+//
+//	for (size_t i = 0; i < m_iNumChannels; ++i)
+//	{
+//		m_Channels[i]->Blend_TransformationMatrix(m_fCurrentTrackPosition, Bones, fTrackLength);
+//	}
+//
+//	m_fCurrentTrackPosition += m_fTickPerSecond * fTimeDelta;
+//	return false;
+//}
 
+/*
+	1. 현재 fWeight가 1.f를 넘으면 멈춥니다.
+	2. 현재 TrackPosition은 계속해서 증가되어야 합니다.
+*/
+_bool CAnimation::Blend_TransformationMatrices(_float fTimeDelta, const vector<class CBone*>& Bones, _float fWeight)
+{
 	for (size_t i = 0; i < m_iNumChannels; ++i)
 	{
-		m_Channels[i]->Blend_TransformationMatrix(m_fCurrentTrackPosition, Bones, fTrackLength);
+		m_Channels[i]->Blend_TransformationMatrix(m_fCurrentTrackPosition, Bones, fWeight);
 	}
+	
+	m_fCurrentTrackPosition = m_fTickPerSecond * fTimeDelta;
 
-	m_fCurrentTrackPosition += m_fTickPerSecond * fTimeDelta;
-
-	return false;
+	return fWeight >= 1.f;
 }
+
 
 _bool CAnimation::Update_TrackPosition(_float fTimeDelta, _float* pTrackPosition)
 {
