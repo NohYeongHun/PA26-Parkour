@@ -299,7 +299,7 @@ _bool CAnimation::Blend_TransformationMatrices(_float fTimeDelta, const vector<c
 		m_Channels[i]->Blend_TransformationMatrix(m_fCurrentTrackPosition, Bones, fWeight);
 	}
 	
-	m_fCurrentTrackPosition = m_fTickPerSecond * fTimeDelta;
+	m_fCurrentTrackPosition += m_fTickPerSecond * fTimeDelta;
 
 	return fWeight >= 1.f;
 }

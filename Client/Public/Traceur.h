@@ -31,6 +31,7 @@ private:
 	// Components
 	class CRigidbody* m_pRigidbodyCom = { nullptr };
 	class CCollider* m_pColliderCom = { nullptr };
+	class CMovementComponent* m_pMoveCom = { nullptr };
 
 private:
 	// GameObjects
@@ -46,13 +47,15 @@ private:
 	// Priority Update
 	void PreUpdate_Input(_float fTimeDelta);
 	void Save_PreviousPosition();
-	void Handle_Input();
+	void Handle_Input(_float fTimeDelta);
 
 private:
 	// Update
 	void Update_Physics(_float fTimeDelta);
 	
 	void Update_Camera(_float fTimeDelta);
+
+	void Sync_Transform();
 
 private:
 	// Late Update

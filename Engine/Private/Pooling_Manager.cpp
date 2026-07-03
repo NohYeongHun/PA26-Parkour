@@ -12,7 +12,8 @@ CPooling_Manager::CPooling_Manager()
 
 HRESULT CPooling_Manager::Initialize()
 {
-	m_iNumThread = max(6, thread::hardware_concurrency());
+	//m_iNumThread = max(6, thread::hardware_concurrency());
+	m_iNumThread = 1;
 	m_Threads.reserve(m_iNumThread);
 	m_RenderThreads.reserve(m_iNumThread);
 

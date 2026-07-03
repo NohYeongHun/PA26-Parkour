@@ -27,7 +27,7 @@ HRESULT CLevel_Animation::Initialize()
 		CShader::Create(m_pDevice, m_pContext, TEXT("../../Client/Bin/ShaderFiles/Shader_VtxAnimMeshCharacter.hlsl")
 			, VTXANIMMESH::Elements, VTXANIMMESH::iNumElements))))
 	{
-		CRASH("Failed Load AnimMesh Shader");
+		CRASH("Failed Load AnimMeshCharacter Shader");
 		return E_FAIL;
 	}
 

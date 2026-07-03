@@ -301,7 +301,8 @@ HRESULT CModel::Initialize_Prototype(MODELTYPE eType, _fmatrix PreTransformMatri
 	m_eType = eType;
 	XMStoreFloat4x4(&m_PreTransformMatrix, PreTransformMatrix);
 
-	m_fPreScale = 0.01f; // 기본
+	//m_fPreScale = 0.01f; // 기본
+	m_fPreScale = 1.f; // 기본
 	_matrix matConversion = XMMatrixIdentity();
 
 	ifstream InputFile(pFilePath, ios::binary);
@@ -897,6 +898,13 @@ void CModel::Compute_RootAnimation(_float fRootMotionRate, _bool isRootMotionRot
 
 	// 이동 변화량 계산
 	_vector vLocalTranslate = vConvertedTranslation - XMLoadFloat4(&m_vPreRootPosition);
+
+#ifdef _DEBUG
+	_float4 vLocalDebugTranslate{};
+	XMStoreFloat4(&vLocalDebugTranslate, vLocalTranslate);
+	OutPutDebugFloat4(TEXT("Debug Local Translate"), vLocalDebugTranslate);
+#endif // _DEBUG
+
 	// 회전 변화량 계산
 	_vector vRotationDelta = XMQuaternionMultiply(vConvertedRotation, XMQuaternionInverse(XMLoadFloat4(&m_vPreRootRotation)));
 
@@ -922,6 +930,18 @@ void CModel::Compute_RootAnimation(_float fRootMotionRate, _bool isRootMotionRot
 		vRotationDelta,                  // 회전 델타
 		vLocalTranslate * m_fPreScale * fRootMotionRate // 이동 델타
 	);
+
+#ifdef _DEBUG
+	_float4 vDebugTranslate{};
+	XMStoreFloat4(&vDebugTranslate, vLocalTranslate * m_fPreScale * fRootMotionRate);
+	OutPutDebugFloat4(TEXT("Debug vDebugTranslate"), vDebugTranslate);
+
+#endif
+#ifdef _DEBUG
+	//_float4x4 vDebugMatrix;
+	//XMStoreFloat4x4(&vDebugMatrix, m_RootMatrix);
+	//OutPutDebugMatrix(TEXT("Root Matrix"), vDebugMatrix);
+#endif // _DEBUG
 
 	// 다음 프레임을 위해 '변환된' T, R 값을 저장합니다.
 	XMStoreFloat4(&m_vPreRootPosition, vConvertedTranslation);
@@ -1379,6 +1399,7 @@ HRESULT CModel::Ready_Bone(ifstream& InputFile, _int iParentIndex)
 
 	_int iIndex = m_Bones.size() - 1;
 	// Root Bone Index 저장
+	//if (0 == strcmp(szName, "Root") || 0 == strcmp(szName,"mixamorig:Hips"))
 	if (0 == strcmp(szName, "Root"))
 		m_iRootBoneIndex = iIndex;
 

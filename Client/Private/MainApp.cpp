@@ -220,9 +220,9 @@ void CMainApp::Ready_Prototype_ForStatic()
 #pragma endregion
 
 #pragma region COMPONENT
-	//if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Movement"),
-	//	CMovementComponent::Create(m_pDevice, m_pContext))))
-	//	CRASH("Faild to Add Prototype MovementComponent");
+	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Movement"),
+		CMovementComponent::Create(m_pDevice, m_pContext))))
+		CRASH("Faild to Add Prototype MovementComponent");
 #pragma endregion
 
 

@@ -1,11 +1,15 @@
 ﻿#include "ClientPch.h"
 #include "Traceur.h"
-#include "Rigidbody.h"
-#include "Collider.h"
-#include "SpringCamera.h"
 #include "GameSystem.h"
 
+#include "SpringCamera.h"
+
+#include "Rigidbody.h"
+#include "Collider.h"
+#include "MovementComponent.h"
+
 #include "TraceurFactory.h"
+
 
 CTraceur::CTraceur(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	: CCharacter{ pDevice, pContext }
@@ -55,7 +59,7 @@ void CTraceur::Priority_Update(_float fTimeDelta)
 	PreUpdate_Input(fTimeDelta);
 	Save_PreviousPosition();
 
-	Handle_Input();
+	Handle_Input(fTimeDelta);
 }
 
 void CTraceur::Update(_float fTimeDelta)
@@ -65,6 +69,7 @@ void CTraceur::Update(_float fTimeDelta)
 	/* 임시 */
 	m_AnimPlayDesc.fTimeDelta = fTimeDelta;
 	_bool IsPlayAnimationEnd = m_pModelCom->Play_Animation_CPU(m_AnimPlayDesc.strAnimationName, m_AnimPlayDesc, m_RootModtionDesc);
+	m_pModelCom->Sync_RootNode(m_pTransformCom, m_AnimPlayDesc.fTimeDelta);
 
 	// 1. StateMachine => 이동량, 회전량 생성
 
@@ -73,6 +78,9 @@ void CTraceur::Update(_float fTimeDelta)
 
 	// 3. Camera Update
 	Update_Camera(fTimeDelta);
+
+	// Last. Sync_Transform;
+	Sync_Transform();
 	
 }
 
@@ -132,25 +140,54 @@ void CTraceur::Save_PreviousPosition()
 	m_pTransformCom->Save_PreviousPosition();
 }
 
-void CTraceur::Handle_Input()
+void CTraceur::Handle_Input(_float fTimeDelta)
 {
+#ifdef _DEBUG
 	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D1), KEYSTATE::UP))
 	{
 		m_AnimPlayDesc.strAnimationName = "Run";
+		m_AnimPlayDesc.fBlendDuration = 0.2f;
+		m_pColliderCom->Set_Gravity(true);
 	}
 
 	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D2), KEYSTATE::UP))
 	{
 		m_AnimPlayDesc.strAnimationName = "Idle";
+		m_AnimPlayDesc.fBlendDuration = 0.2f;
+		m_pColliderCom->Set_Gravity(true);
 	}
 
-
-#ifdef _DEBUG
 	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D3), KEYSTATE::UP))
 	{
-		Print_Transform();
-		Print_CameraLook();
+		m_AnimPlayDesc.strAnimationName = "ForwardShortJump";
+		m_AnimPlayDesc.fBlendDuration = 0.f;
+		m_pColliderCom->Set_Gravity(false);
 	}
+
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::W), KEYSTATE::PRESS))
+	{
+		m_pMoveCom->Move_Direction(m_pInputControllerCom, m_pSpringCamera, fTimeDelta, 0.2f);
+	}
+
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::A), KEYSTATE::PRESS))
+	{
+		m_pMoveCom->Move_Direction(m_pInputControllerCom, m_pSpringCamera, fTimeDelta, 0.2f);
+	}
+
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::S), KEYSTATE::PRESS))
+	{
+		m_pMoveCom->Move_Direction(m_pInputControllerCom, m_pSpringCamera, fTimeDelta, 0.2f);
+	}
+
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D), KEYSTATE::PRESS))
+	{
+		m_pMoveCom->Move_Direction(m_pInputControllerCom, m_pSpringCamera, fTimeDelta, 0.2f);
+	}
+
+	/*if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::SPACE), KEYSTATE::PRESS))
+	{
+		m_pMoveCom->Move_Direction(m_pInputControllerCom, m_pSpringCamera, fTimeDelta, 0.2f);
+	}*/
 #endif // _DEBUG
 
 }
@@ -172,7 +209,7 @@ void CTraceur::Update_Rigidbodies(_float fTimeDelta)
 
 void CTraceur::Update_Physics(_float fTimeDelta)
 {
-	Update_Rigidbodies(fTimeDelta);
+	//Update_Rigidbodies(fTimeDelta);
 	Update_Collider(fTimeDelta);
 }
 
@@ -182,6 +219,12 @@ void CTraceur::Update_Camera(_float fTimeDelta)
 		return;
 
 	m_pSpringCamera->Update_Target(m_pTransformCom->Get_State(STATE::POSITION), 1.2f);
+}
+
+// 변경된 위치를 Transform에 반영해 줍니다.
+void CTraceur::Sync_Transform()
+{
+	m_pColliderCom->Sync_Position(m_pTransformCom);
 }
 
 void CTraceur::Ready_Render()
@@ -196,7 +239,7 @@ HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 		return E_FAIL;
 
 	/* 감지 콜라이더 */
-	Engine::CRigidbody::BOXBODY_DESC RigidbodyDesc = {};
+	/*Engine::CRigidbody::BOXBODY_DESC RigidbodyDesc = {};
 	RigidbodyDesc.eBodyType = Engine::CRigidbody::BODY;
 	RigidbodyDesc.eShape = SHAPE::BOX;
 	RigidbodyDesc.eType = EMotionType::Kinematic;
@@ -210,11 +253,11 @@ HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 
 	m_pRigidbodyCom->SetUp_CallBack(COLLIDE_STATE::DURING, [this](_uint iLayer, void* pDesc, const ContactManifold& Manifold) {
 		OnCollider_During(iLayer, pDesc, Manifold);
-		});
+		});*/
 
-	m_vColliderOffSet = { 0.f, 2.f, 0.f };
+	m_vColliderOffSet = { 0.f, 0.8f, 0.f };
 	m_fColliderRadius = 0.4f;
-	m_fColliderHeight = 0.9f;
+	m_fColliderHeight = 0.8f;
 
 	/* 실제 콜라이더 */
 	Engine::CCollider::COLLIDER_DESC ColliderDesc{};
@@ -224,10 +267,17 @@ HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 	ColliderDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::PLAYER);
 	ColliderDesc.fHeight = m_fColliderHeight;
 	ColliderDesc.fRadius = m_fColliderRadius;
-	if (FAILED(CGameObject::Add_Component(ENUM_CLASS(LEVEL::STATIC)
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC)
 		, TEXT("Prototype_Component_Collider"), TEXT("Com_Collider"), reinterpret_cast<CComponent**>(&m_pColliderCom), &ColliderDesc)))
 		CRASH("Collider");
 
+
+	/* MoveComp */
+	CMovementComponent::COMPONENT_DESC MoveCompDesc{};
+	MoveCompDesc.pOwner = this;
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC)
+		, TEXT("Prototype_Component_Movement"), TEXT("Com_Move"), reinterpret_cast<CComponent**>(&m_pMoveCom), &MoveCompDesc)))
+		CRASH("Move");
 
 	return S_OK;
 }
@@ -321,4 +371,5 @@ void CTraceur::Free()
 	Safe_Release(m_pGameSystem);
 	Safe_Release(m_pRigidbodyCom);
 	Safe_Release(m_pColliderCom);
+	Safe_Release(m_pMoveCom);
 }

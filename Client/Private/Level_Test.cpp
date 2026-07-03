@@ -16,7 +16,7 @@ CLevel_Test::CLevel_Test(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 HRESULT CLevel_Test::Initialize()
 {
 	// SetUp OctoTree
-	m_pGameInstance->SetUp_OctoTree(_float3(0.f, 0.f, 0.f), _float3(4096, 4096, 4096));
+	m_pGameInstance->SetUp_OctoTree(_float3(0.f, 0.f, 0.f), _float3(1024, 1024, 1024));
 
 	//로더에서 부른 것과 같은 거 부르기.
 	m_pGameSystem->Clone_MapObjects(m_eCurLevel);
