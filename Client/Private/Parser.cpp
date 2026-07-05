@@ -36,7 +36,6 @@ void CParser::Ready_Prototype_Map(const _char* pFilePath, LEVEL eLevel, const _c
 
 void CParser::Read_Map_Prototype(const _string pDataFilePath, LEVEL eLevel, const _char* pModelFilePath)
 {
-	//넘어오는 건 폴더 경로.
 	_string ProjectPath = filesystem::current_path().parent_path().parent_path().string();
 	ProjectPath += "/Client/Bin/Resource/Map/";
 	ProjectPath += pModelFilePath;
@@ -46,54 +45,54 @@ void CParser::Read_Map_Prototype(const _string pDataFilePath, LEVEL eLevel, cons
 	_wstring PrototypeName = L"Prototype_Component_Model_";
 	_wstring InstancePrototypeName = L"Prototype_Component_Model_Instance_";
 
+	struct FileCandidate {
+		_string FullPath;
+		_string ParentStem;
+	};
+	vector<FileCandidate> Candidates;
+	for (const auto& entry2 : filesystem::recursive_directory_iterator(ProjectPath)) {
+		const auto& p = entry2.path();
+		if (p.extension() != ".dat")                                   continue;
+		if (p.string().find("MapData") != _string::npos)              continue;
+		if (p.string().find("Test") != _string::npos)              continue;
+		if (p.string().find("Anim") != _string::npos)              continue;
+		Candidates.push_back({ p.string(), p.parent_path().stem().string() });
+	}
+
 	_string FilePath;
 	for (const auto& entry : filesystem::directory_iterator(pDataFilePath)) {
 		if (!entry.is_regular_file())
 			continue;
 		FilePath = entry.path().string();
-		if (FilePath.find("Prototype") == std::string::npos && FilePath.find("Instance") == std::string::npos
-			&& FilePath.find("MonsterSpawnor") == std::string::npos && FilePath.find("FireFly") == std::string::npos)
+		if (FilePath.find("Prototype") == _string::npos && FilePath.find("Instance") == _string::npos
+			&& FilePath.find("MonsterSpawnor") == _string::npos && FilePath.find("FireFly") == _string::npos)
 			continue;
 
 		_string strFilePath = FilePath;
 		ifstream File(strFilePath, ios::binary);
 
 		_uint NameLength = {};
-
 		_char Name[MAX_PATH] = {};
-		if (FilePath.find("Prototype") != std::string::npos)
+		if (FilePath.find("Prototype") != _string::npos)
 		{
 			while (File.read(reinterpret_cast<char*>(&NameLength), sizeof(_uint)))
 			{
 				memset(Name, 0, sizeof(Name));
 				File.read(reinterpret_cast<_char*>(&Name), NameLength);
-				//여기서 프로토타입 생성.
+
 				_uint ProtoMax = Name[strlen(Name) - 1] - '0' + 1;
 				_string ModelName = Name;
 				ModelName.pop_back();
 
-				for (const auto& entry2 : filesystem::recursive_directory_iterator(ProjectPath)) {
-					if (entry2.path().string().find("MapData") != std::string::npos)
+				// ★ 디스크 I/O 없이 메모리 목록에서만 검색
+				for (const auto& Candidate : Candidates) {
+					if (Candidate.FullPath.find(ModelName) == _string::npos)
 						continue;
 
-					if (entry2.path().string().find("Test") != std::string::npos)
-						continue;
-
-					if (entry2.path().string().find(ModelName) == std::string::npos)
-						continue;
-
-					if (entry2.path().extension() != ".dat")
-						continue;
-
-					if (entry2.path().string().find("Anim") != std::string::npos)
-						continue;
-
-					_string Path = entry2.path().string();
-					_string Prototype = entry2.path().stem().string();
-					//파서 수정중
-
-					if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(eLevel), PrototypeName + StringToWString(entry2.path().parent_path().stem().string()),
-						CModel_Streaming::Create(m_pDevice, m_pContext, entry2.path().parent_path().string().c_str()))))
+					if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(eLevel),
+						PrototypeName + StringToWString(Candidate.ParentStem),
+						CModel_Streaming::Create(m_pDevice, m_pContext,
+							filesystem::path(Candidate.FullPath).parent_path().string().c_str()))))
 						CRASH("Prototype Create Failed");
 				}
 			}

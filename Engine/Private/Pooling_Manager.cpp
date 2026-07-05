@@ -191,6 +191,16 @@ void CPooling_Manager::Wait_Thread_End()
 	}
 }
 
+void CPooling_Manager::Drain_Works()
+{
+	lock_guard<mutex> lock(m_Mutex);
+	while (!m_Works.empty())
+	{
+		m_Works.pop();
+		m_iRemainWork.fetch_sub(1, memory_order_release);
+	}
+}
+
 void CPooling_Manager::Work_Thread()
 {
 	while (true)
@@ -246,6 +256,7 @@ CPooling_Manager* CPooling_Manager::Create()
 void CPooling_Manager::Free()
 {
     __super::Free();
+	
 
     for (auto& Pair : m_PoolingObjects)
     {

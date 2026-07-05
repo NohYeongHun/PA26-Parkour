@@ -34,6 +34,7 @@ public:
 		return 0 == iLiveWork && 0 == iRemainWork; }
 
 	void									Wait_Thread_End();
+	void	Drain_Works();
 
 private:
 	class CGameInstance*				m_pGameInstance = { nullptr };

@@ -38,22 +38,17 @@ void CLevel_Loading::Update(_float fTimeDelta)
 		m_pLoader->Update(fTimeDelta);
 	}
 
-	//this_thread::sleep_for(chrono::milliseconds(1));
 	if (false == m_isFinished && true == m_pGameInstance->IsWorkFinish())
 	{
-		cout << "Finish" << endl;
-
 		_float fProgress = m_pLoader->Get_Progress();
-		if(1.01f < fProgress)
-			m_isFinished =  true;
+		if (0.99f < fProgress)
+		{
+			m_isFinished = true;
+			cout << "Loading End" << endl;
+			CHANGE_LEVEL_EVENT event{ m_eNextLevel, false };
+			m_pGameInstance->Publish(ENUM_CLASS(STATIC::STATIC), TEXT("Event_Change_Level"), event);
+		}
 	}
-
-    if (true == m_isFinished)
-    {
-		cout << "Loading End" << endl;
-        CHANGE_LEVEL_EVENT event{ m_eNextLevel, false };
-        m_pGameInstance->Publish(ENUM_CLASS(STATIC::STATIC), TEXT("Event_Change_Level"), event);
-    }
 }
 
 void CLevel_Loading::Render()

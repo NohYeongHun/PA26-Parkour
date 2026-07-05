@@ -1315,8 +1315,8 @@ HRESULT CGameInstance::Clear_Memory()
 
 void CGameInstance::Release_Engine()
 {
+	m_pPooling_Manager->Drain_Works();
 	Wait_Thread_End();
-
 	Safe_Release(m_pPooling_Manager);
 	Safe_Release(m_pRenderer);
 	Safe_Release(m_pModel_Manager);
