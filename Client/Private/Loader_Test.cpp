@@ -7,11 +7,8 @@
 
 
 #pragma region OBJECT
-#include "MapObject_Instance.h"
 #include "MapObject.h"
 #include "Trigger_Box.h"
-#include "MapObject_Collaps.h"
-
 #pragma endregion
 
 
@@ -75,14 +72,8 @@ HRESULT CLoader_Test::Load_Object()
     m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_MapObject"),
         CMapObject::Create(m_pDevice, m_pContext));
 
-	m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_MapObject_Instance"),
-		CMapObject_Instance::Create(m_pDevice, m_pContext));
-	
 	m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_TriggerBox"),
 		CTrigger_Box::Create(m_pDevice, m_pContext));
-
-	m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_MapObject_Collaps"),
-		CMapObject_Collaps::Create(m_pDevice, m_pContext));
 
     return S_OK;
 }
