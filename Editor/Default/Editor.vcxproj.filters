@@ -437,9 +437,6 @@
       <Filter>03. GameObject\Sequence\SFX</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\Edit_TriggerBox.h" />
-    <ClInclude Include="..\Public\Edit_MapObject_Destruction.h">
-      <Filter>03. GameObject\MapObject\Destruction</Filter>
-    </ClInclude>
     <ClInclude Include="..\Public\EditorProp.h">
       <Filter>03. GameObject\Actor\Anim</Filter>
     </ClInclude>
@@ -707,9 +704,6 @@
       <Filter>03. GameObject\Sequence\SFX</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\Edit_TriggerBox.cpp" />
-    <ClCompile Include="..\Private\Edit_MapObject_Destruction.cpp">
-      <Filter>03. GameObject\MapObject\Destruction</Filter>
-    </ClCompile>
     <ClCompile Include="..\Private\EditorProp.cpp">
       <Filter>03. GameObject\Actor\Anim</Filter>
     </ClCompile>

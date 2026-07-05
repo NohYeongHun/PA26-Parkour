@@ -178,8 +178,8 @@ HRESULT CEdit_MapObject::Initialize_Clone(void* pArg)
 	m_iNumObject = CEdit_MapObject::g_iNumObjects++;
 
 	XMStoreFloat4x4(&m_DefaultMat, m_pTransformCom->Get_WorldMatrix());
-	if (m_eObjectType == OBJECTTYPE::SONORA)
-		m_IsRender = false;
+	/*if (m_eObjectType == OBJECTTYPE::SONORA)
+		m_IsRender = false;*/
 
 	return S_OK;
 }
@@ -192,10 +192,10 @@ void CEdit_MapObject::Priority_Update(_float fTimeDelta)
 
 		m_fMode = true;
 		m_IsFlying = true;
-		if (m_eObjectType == OBJECTTYPE::SONORA)
+		/*if (m_eObjectType == OBJECTTYPE::SONORA)
 		{
 			m_IsRender = false;
-		}
+		}*/
 
 		_float fDistance = XMVectorGetX(XMVector3Length(XMVectorSetY(m_pTransformCom->Get_State(STATE::POSITION), 0.f) - XMVectorSetY(XMLoadFloat4(m_pGameInstance->Get_CamPos()), 0.f)));
 
@@ -215,17 +215,6 @@ void CEdit_MapObject::Priority_Update(_float fTimeDelta)
 	{
 		m_fMode = false;
 		m_IsFlying = false;
-		if (m_eObjectType == OBJECTTYPE::NONSONORA || m_eObjectType == OBJECTTYPE::NONSONORA_FLOOR)
-		{
-			m_IsRender = true;
-			m_pTransformCom->Set_WorldMatrix(XMLoadFloat4x4(&m_DefaultMat));
-			//m_pRigidbodyCom->IsActivate(true);
-		}
-		else if (m_eObjectType == OBJECTTYPE::SONORA)
-		{
-			m_IsRender = false;
-			//m_pRigidbodyCom->IsActivate(false);
-		}
 	}
 
 	if (m_fMode)
@@ -236,25 +225,6 @@ void CEdit_MapObject::Priority_Update(_float fTimeDelta)
 			if (m_IsFlying)
 			{
 				m_fFlyingTime += fTimeDelta;
-				if (m_fFlyingTime < 2.f)
-				{
-					if (m_eObjectType == OBJECTTYPE::NONSONORA)
-						m_pTransformCom->Set_State(STATE::POSITION, m_pTransformCom->Get_State(STATE::POSITION) + XMVectorSet(0.f, 0.4f, 0.f, 0.f));
-				}
-				else
-				{
-					m_IsFlying = false;
-					m_fFlyingTime = 0.f;
-					if (m_eObjectType == OBJECTTYPE::NONSONORA || m_eObjectType == OBJECTTYPE::NONSONORA_FLOOR)
-					{
-						m_IsRender = false;
-						//m_pRigidbodyCom->Set_Position(m_pTransformCom->Get_State(STATE::POSITION) + XMVectorSet(0.f, 1000.f, 0.f, 0.f));
-					}
-					else if (m_eObjectType == OBJECTTYPE::SONORA)
-					{
-						m_IsRender = true;
-					}
-				}
 			}
 		}
 		else
@@ -266,12 +236,6 @@ void CEdit_MapObject::Priority_Update(_float fTimeDelta)
 		m_fMode = false;
 		m_IsFlying = false;
 		m_fFlyingTime = 0.f;
-
-		if (m_eObjectType == OBJECTTYPE::NONSONORA || m_eObjectType == OBJECTTYPE::NONSONORA_FLOOR)
-			m_IsRender = false;
-		else if (m_eObjectType == OBJECTTYPE::SONORA)
-			m_IsRender = true;
-
 		m_fTotalTime = 0.f;
 	}
 }
@@ -396,7 +360,7 @@ void CEdit_MapObject::Set_ImGuiOption()
 
 	//현재 자기 타입 볼 수 있게, 타입 변경할 수 있게 하기.
 
-	const _char* pObejceTType[] = { "Default","Sonoro","InterAction","MonsterSpawn","Destruction","NonRigid" ,"TriggerBox","NonSonoro","Sonoro_Floor" ,"Meteo","Water","Collaps","Throw" ,"Burn" ,"Dome" ,"Turn" };
+	const _char* pObejceTType[] = { "Default","Grapple" };
 	if (ImGui::BeginCombo("Object_Type", pObejceTType[ENUM_CLASS(m_eObjectType)]))
 	{
 		for (_uint i = 0; i < ENUM_CLASS(OBJECTTYPE::END); ++i)
@@ -469,6 +433,87 @@ void CEdit_MapObject::Set_ImGuiOption()
 }
 
 
+//void CEdit_MapObject::Set_ImGuiOption()
+//{
+//#ifdef _DEBUG
+//	ImGui::Text(m_ModelName);
+//	ImGui::SameLine();
+//
+//	//현재 자기 타입 볼 수 있게, 타입 변경할 수 있게 하기.
+//
+//	const _char* pObejceTType[] = { "Default","Sonoro","InterAction","MonsterSpawn","Destruction","NonRigid" ,"TriggerBox","NonSonoro","Sonoro_Floor" ,"Meteo","Water","Collaps","Throw" ,"Burn" ,"Dome" ,"Turn" };
+//	if (ImGui::BeginCombo("Object_Type", pObejceTType[ENUM_CLASS(m_eObjectType)]))
+//	{
+//		for (_uint i = 0; i < ENUM_CLASS(OBJECTTYPE::END); ++i)
+//		{
+//			if (ImGui::Selectable(pObejceTType[i]))
+//			{
+//				m_eObjectType = static_cast<OBJECTTYPE>(i);
+//			}
+//		}
+//		ImGui::EndCombo();
+//	}
+//
+//	About_Parent();
+//
+//	About_Transform();
+//
+//	m_pMapInterface->Set_ShaderPass(m_pShaderCom, &m_iShaderPassIndex);
+//	ImGui::SameLine();
+//	m_pMapInterface->Set_LOD(&m_iLODIndex, &m_iNumLOD);
+//
+//	if (ImGui::Button("Set Texture"))
+//	{
+//		if (!m_IsCustomTexture)
+//		{
+//			m_EntireDiffuseTextureName.clear();
+//			m_EntireNormalTextureName.clear();
+//			m_EntireMaskTextureName.clear();
+//
+//		}
+//		m_IsCustomTexture = !m_IsCustomTexture;
+//	}
+//
+//	ImGui::SameLine();
+//	ImGui::Checkbox("Custom Tex", &m_TexMode);
+//
+//	if (ImGui::Button("Copy"))
+//		Copy_MapObject();
+//
+//	if (ImGui::Button("Destroy"))
+//		m_isActivate = false;
+//
+//	if (ImGui::Button("Destroy_All"))
+//	{
+//		m_isActivate = false;
+//		for (auto& pChild : m_ChildObjects)
+//			pChild->SetActivate(false);
+//	}
+//
+//	About_Texture();
+//
+//	/*if (ImGui::BeginCombo("Sound Tag", m_SoundTags[m_iPickedSoundTag].c_str()))
+//	{
+//		for (_uint i = 0; i < ENUM_CLASS(OBJECTTYPE::END); ++i)
+//		{
+//			if (ImGui::Selectable(m_SoundTags[i].c_str()))
+//			{
+//				m_iPickedSoundTag = i;
+//			}
+//		}
+//		ImGui::EndCombo();
+//	}
+//	ImGui::InputFloat("Sound Volume", &m_fDynamicVolume);
+//
+//	if (ImGui::Button("Play Sound"))
+//	{
+//		m_pGameInstance->Stop_Sound_Dynamic(ENUM_CLASS(CHANNEL::ENEMY_VOICE));
+//		m_pGameInstance->Play_Sound_Dynamic(StringToWString(m_SoundTags[m_iPickedSoundTag]), ENUM_CLASS(CHANNEL::ENEMY_VOICE), m_fDynamicVolume, m_pTransformCom, 0.f, 100.f, 1.f);
+//	}*/
+//#endif
+//}
+
+
 HRESULT CEdit_MapObject::Ready_Component(void* pArg)
 {
 	//m_pGameInstance->Wait_Thread_End();
@@ -503,35 +548,6 @@ HRESULT CEdit_MapObject::Ready_Component(void* pArg)
 	if (FAILED(__super::Add_Component(pDesc->iLevel, TEXT("Prototype_Component_Shader_NonAnimMesh"),
 		TEXT("Com_Shader"), reinterpret_cast<CComponent**>(&m_pShaderCom), nullptr)))
 		return E_FAIL;
-
-
-	if (pDesc->eObjectType != OBJECTTYPE::NONRIGID)
-	{
-
-		/*CRigidbody::MESHBODY_DESC RigidbodyDesc = {};
-		RigidbodyDesc.vScale = m_pTransformCom->Get_Scaled();
-		XMStoreFloat4(&RigidbodyDesc.vQuat, m_pTransformCom->Get_Quaternion());
-		RigidbodyDesc.eShape = SHAPE::MESH;
-		XMStoreFloat3(&RigidbodyDesc.vPos, m_pTransformCom->Get_State(STATE::POSITION));
-		RigidbodyDesc.eType = EMotionType::Static;
-		RigidbodyDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::MAP);
-		RigidbodyDesc.pModel = m_pModelCom;*/
-
-
-		//Sync_BoundingBox(m_pModelCom->Get_BoundingBox(), m_pTransformCom->Get_WorldMatrix());
-		//CRigidbody::BOXBODY_DESC RigidbodyDesc{};
-		////RigidbodyDesc.vScale = m_pTransformCom->Get_Scaled();
-		////XMStoreFloat4(&RigidbodyDesc.vQuat, m_pTransformCom->Get_Quaternion());
-		//RigidbodyDesc.eShape = SHAPE::BOX;
-		//RigidbodyDesc.vPos = m_pModelCom->Get_BoundingBox()->Center;
-		//RigidbodyDesc.eType = EMotionType::Static;
-		//RigidbodyDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::MAP);
-		//RigidbodyDesc.vExtent = m_pModelCom->Get_BoundingBox()->Extents;
-
-		//Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Rigidbody"),
-		//	TEXT("Com_Rigidbody"), reinterpret_cast<CComponent**>(&m_pRigidbodyCom), &RigidbodyDesc);
-	}
-
 
 
 	m_pMapInterface = CMap_Interface::Create(m_pDevice, m_pContext);

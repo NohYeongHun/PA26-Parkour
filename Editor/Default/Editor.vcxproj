@@ -196,7 +196,6 @@
     <ClInclude Include="..\Public\Editor_Enum.h" />
     <ClInclude Include="..\Public\Editor_Struct.h" />
     <ClInclude Include="..\Public\Edit_Brush.h" />
-    <ClInclude Include="..\Public\Edit_MapObject_Destruction.h" />
     <ClInclude Include="..\Public\Edit_Meteo.h" />
     <ClInclude Include="..\Public\Edit_MonsterSpawnor.h" />
     <ClInclude Include="..\Public\Edit_TriggerBox.h" />
@@ -296,7 +295,6 @@
     </ClCompile>
     <ClCompile Include="..\Private\EditorPropWeapon.cpp" />
     <ClCompile Include="..\Private\Edit_Brush.cpp" />
-    <ClCompile Include="..\Private\Edit_MapObject_Destruction.cpp" />
     <ClCompile Include="..\Private\Edit_Meteo.cpp" />
     <ClCompile Include="..\Private\Edit_MonsterSpawnor.cpp" />
     <ClCompile Include="..\Private\Edit_TriggerBox.cpp" />
