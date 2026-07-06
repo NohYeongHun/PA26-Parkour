@@ -21,7 +21,20 @@ HRESULT CEnvironmentQueryComponent::Initialize_Clone(void* pArg)
 	if (FAILED(__super::Initialize_Clone(pArg)))
 		return E_FAIL;
 
+	if (nullptr == m_pOwner)
+		return E_FAIL;
+
+	m_pOwnerTransformCom = dynamic_cast<CTransform*>(m_pOwner->Get_Component(TEXT("Com_Transform")));
+	if (nullptr == m_pOwnerTransformCom)
+		return E_FAIL;
+	
+
 	return S_OK;
+}
+
+void CEnvironmentQueryComponent::Execute(_float fTimeDelta)
+{
+
 }
 
 CEnvironmentQueryComponent* CEnvironmentQueryComponent::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
@@ -53,4 +66,5 @@ Engine::CComponent* CEnvironmentQueryComponent::Clone(void* pArg)
 void CEnvironmentQueryComponent::Free()
 {
 	__super::Free();
+	m_pOwnerTransformCom = nullptr;
 }

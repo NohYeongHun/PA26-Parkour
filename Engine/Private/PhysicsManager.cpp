@@ -258,6 +258,8 @@ _bool CPhysicsManager::Box_Cast(const CRigidbody* pRigidbodyCom, const _fvector&
 			Result.HitBodyID = Hit.mBodyID2;
 			XMStoreFloat4(&Result.vHitPoint,
 				XMVectorSet(Hit.mContactPointOn2.GetX(), Hit.mContactPointOn2.GetY(), Hit.mContactPointOn2.GetZ(), 1.f));
+			XMStoreFloat4(&Result.vHitNormal,
+				XMVectorSet(Hit.mPenetrationAxis.GetX(), Hit.mPenetrationAxis.GetY(), Hit.mPenetrationAxis.GetZ(), 0.f));
 
 			OutHits.push_back(Result);
 

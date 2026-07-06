@@ -399,6 +399,7 @@ namespace Engine
 	typedef struct tagBoxCastHit
 	{
 		_float4 vHitPoint;
+		_float4 vHitNormal; // 현재 면이 위를 향한 면인가?
 		_float fFraction;
 		BodyID HitBodyID;
 	}BOX_CAST_HIT;

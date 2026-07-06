@@ -222,10 +222,7 @@ void CTraceur::Update_Physics(_float fTimeDelta)
 	Update_Collider(fTimeDelta);
 	
 	Update_Rigidbodies(fTimeDelta);
-	//m_pGameInstance->Box_Cast(m_pRigidbodyCom->Get_Body()->GetShape(), m_pTransformCom->Get_State(STATE::POSITION), 
-	//	m_pTransformCom->Get_Quaternion(), m_pTransformCom->Get_State(STATE::LOOK), 3.f, ENUM_CLASS(COLLISIONLAYER::PARKOUR), m_OutHits);
-	
-	m_pGameInstance->Box_Cast(m_pRigidbodyCom, m_pTransformCom->Get_State(STATE::POSITION), 3.f, ENUM_CLASS(COLLISIONLAYER::PARKOUR), m_OutHits);
+	m_pGameInstance->Box_Cast(m_pRigidbodyCom, m_pTransformCom->Get_State(STATE::LOOK), 2.f, ENUM_CLASS(COLLISIONLAYER::PARKOUR), m_OutHits);
 }
 
 void CTraceur::Update_Camera(_float fTimeDelta)
@@ -259,7 +256,7 @@ HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 	RigidbodyDesc.eShape = SHAPE::BOX;
 	RigidbodyDesc.eType = EMotionType::Kinematic;
 	RigidbodyDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::DETECT);
-	RigidbodyDesc.vExtent = _float3(1.f, 1.f, 1.f);
+	RigidbodyDesc.vExtent = _float3(2.f, 2.f, 2.f);
 	XMStoreFloat3(&RigidbodyDesc.vPos, m_pTransformCom->Get_State(STATE::POSITION));
 
 	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Rigidbody"),
