@@ -208,92 +208,16 @@ _bool CPhysicsManager::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndP
 	return fOriginFraction > result.mFraction && result.mFraction > 0.f ? true : false;
 }
 
-//_bool CPhysicsManager::Box_Cast(const Shape* pShape, const _fvector& vPos, const _fvector& vQuat, const _fvector& vDir
-//	, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits)
-//{
-//	if (nullptr == pShape)
-//		return false;
-//
-//	OutHits.clear();
-//
-//	RVec3 startPos = LoadVec3(vPos);
-//	Quat startRot = LoadQuat(vQuat);
-//	RMat44 StartTransform = RMat44::sRotationTranslation(startRot, startPos);
-//	//RMat44 StartTransform = pBody->GetWorldTransform();
-//
-//	// 방향
-//	Vec3 Direction = LoadVec3(vDir).Normalized() * fDistance;
-//	// ShapeCast 객체
-//	RShapeCast ShapeCastIn = RShapeCast::sFromWorldTransform(
-//		pShape, Vec3::sReplicate(1.f), StartTransform, Direction
-//	);
-//
-//	ShapeCastSettings CastSettings;
-//
-//	SpecifiedObjectLayerFilter ObjectLayerFilter{ ObjectLayer{iObjectLayer} };
-//
-//	// 충돌한 객체 후보군을 모을 곳
-//	AllHitCollisionCollector<CastShapeCollector> Collector;
-//	m_pPhysicsSystem->GetNarrowPhaseQuery().CastShape(
-//		ShapeCastIn, CastSettings, RVec3::sZero(), Collector,
-//		*m_pRayFilter, ObjectLayerFilter);
-//
-//	_bool isHit = Collector.HadHit();
-//	_float fEndFraction = 1.f;
-//
-//#ifdef _DEBUG
-//	vector<_float3> HitPointsDebug;
-//#endif
-//
-//	if (isHit)
-//	{
-//		Collector.Sort();
-//		fEndFraction = Collector.mHits[0].mFraction;
-//
-//		OutHits.reserve(OutHits.size() + Collector.mHits.size());
-//		for (const ShapeCastResult& Hit : Collector.mHits)
-//		{
-//			BOX_CAST_HIT Result{};
-//			Result.fFraction = Hit.mFraction;
-//			Result.HitBodyID = Hit.mBodyID2;
-//			XMStoreFloat4(&Result.vHitPoint,
-//				XMVectorSet(Hit.mContactPointOn2.GetX(), Hit.mContactPointOn2.GetY(), Hit.mContactPointOn2.GetZ(), 1.f));
-//
-//			OutHits.push_back(Result);
-//
-//#ifdef _DEBUG
-//			HitPointsDebug.push_back(_float3(Result.vHitPoint.x, Result.vHitPoint.y, Result.vHitPoint.z));
-//#endif
-//		}
-//	}
-//
-//#ifdef _DEBUG
-//	{
-//		BOX_CAST_DEBUG Debug{};
-//		Debug.pShape = pShape;
-//		Debug.StartMatrix = StartTransform;
-//		Debug.EndMatrix = StartTransform.PostTranslated(Direction * fEndFraction);
-//		Debug.isHit = isHit;
-//		Debug.HitPoints = move(HitPointsDebug);
-//		m_BoxCastDebugs.push_back(move(Debug));
-//	}
-//#endif
-//
-//	return isHit;
-//}
-
-_bool CPhysicsManager::Box_Cast(const CRigidbody* pRigidbodyCom, const _fvector& vPos, const _fvector& vQuat, const _fvector& vDir
-	, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits)
+_bool CPhysicsManager::Box_Cast(const CRigidbody* pRigidbodyCom, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits)
 {
 	if (nullptr == pRigidbodyCom)
 		return false;
 
-	/*RVec3 startPos = LoadVec3(vPos);
-	Quat startRot = LoadQuat(vQuat);
-	RMat44 StartTransform = RMat44::sRotationTranslation(startRot, startPos);*/
 	const Body* pBody = pRigidbodyCom->Get_Body();
 	if (nullptr == pBody)
 		return false;
+
+	OutHits.clear();
 	RMat44 StartTransform = pBody->GetWorldTransform();
 
 	// 방향

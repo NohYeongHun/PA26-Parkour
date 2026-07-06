@@ -70,11 +70,14 @@ _bool CFrustrum::IsIn_LocalSpace(_fmatrix WorldMatrix, _fvector vLocalPosition, 
 
 _bool CFrustrum::IsIn_WorldSpace( const BoundingBox* pBoundingBox )
 {
-
 	for (_uint i = 0; i < 6; i++)
 	{
-		PlaneIntersectionType Result = pBoundingBox->Intersects(XMLoadFloat4(&m_vWorldPlanes[i]));
-		
+		XMVECTOR vPlane = XMPlaneNormalize(XMLoadFloat4(&m_vWorldPlanes[i]));
+		if (XMVector3IsNaN(vPlane))
+			continue;
+
+		PlaneIntersectionType Result = pBoundingBox->Intersects(vPlane);
+
 		if (Result == PlaneIntersectionType::FRONT)
 			return false;
 	}

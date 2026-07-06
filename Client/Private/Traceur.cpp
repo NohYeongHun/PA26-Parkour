@@ -157,6 +157,13 @@ void CTraceur::Save_PreviousPosition()
 void CTraceur::Handle_Input(_float fTimeDelta)
 {
 #ifdef _DEBUG
+
+	ACTORDIR eDir = CMovementComponent::Calculate_Direction(m_pInputControllerCom);
+	_vector vCamForward = m_pSpringCamera->Get_LookVector_NoPitch();
+	_vector vCamRight = m_pSpringCamera->Get_RightVector_NoPitch();
+	_vector vMoveDir = CMovementComponent::Calc_WorldDir(eDir, vCamForward, vCamRight);
+	m_pMoveCom->Move(vMoveDir, fTimeDelta, 0.2f); // 속도는 멤버 변수
+
 	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D1), KEYSTATE::UP))
 	{
 		m_AnimPlayDesc.strAnimationName = "Run";
@@ -178,25 +185,7 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 		m_pColliderCom->Set_Gravity(false);
 	}
 
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::W), KEYSTATE::PRESS))
-	{
-		m_pMoveCom->Move_Direction(m_pInputControllerCom, m_pSpringCamera, fTimeDelta, 0.2f);
-	}
-
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::A), KEYSTATE::PRESS))
-	{
-		m_pMoveCom->Move_Direction(m_pInputControllerCom, m_pSpringCamera, fTimeDelta, 0.2f);
-	}
-
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::S), KEYSTATE::PRESS))
-	{
-		m_pMoveCom->Move_Direction(m_pInputControllerCom, m_pSpringCamera, fTimeDelta, 0.2f);
-	}
-
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D), KEYSTATE::PRESS))
-	{
-		m_pMoveCom->Move_Direction(m_pInputControllerCom, m_pSpringCamera, fTimeDelta, 0.2f);
-	}
+	
 
 	/*if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::SPACE), KEYSTATE::PRESS))
 	{
@@ -235,8 +224,8 @@ void CTraceur::Update_Physics(_float fTimeDelta)
 	Update_Rigidbodies(fTimeDelta);
 	//m_pGameInstance->Box_Cast(m_pRigidbodyCom->Get_Body()->GetShape(), m_pTransformCom->Get_State(STATE::POSITION), 
 	//	m_pTransformCom->Get_Quaternion(), m_pTransformCom->Get_State(STATE::LOOK), 3.f, ENUM_CLASS(COLLISIONLAYER::PARKOUR), m_OutHits);
-	m_pGameInstance->Box_Cast(m_pRigidbodyCom, m_pTransformCom->Get_State(STATE::POSITION),
-		m_pTransformCom->Get_Quaternion(), m_pTransformCom->Get_State(STATE::LOOK), 3.f, ENUM_CLASS(COLLISIONLAYER::PARKOUR), m_OutHits);
+	
+	m_pGameInstance->Box_Cast(m_pRigidbodyCom, m_pTransformCom->Get_State(STATE::POSITION), 3.f, ENUM_CLASS(COLLISIONLAYER::PARKOUR), m_OutHits);
 }
 
 void CTraceur::Update_Camera(_float fTimeDelta)
