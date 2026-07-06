@@ -233,10 +233,10 @@ void CTraceur::Update_Physics(_float fTimeDelta)
 	Update_Collider(fTimeDelta);
 	
 	Update_Rigidbodies(fTimeDelta);
-	m_pGameInstance->Box_Cast(m_pRigidbodyCom->Get_Body()->GetShape(), m_pTransformCom->Get_State(STATE::POSITION), 
-		m_pTransformCom->Get_Quaternion(), m_pTransformCom->Get_State(STATE::LOOK), 3.f, ENUM_CLASS(COLLISIONLAYER::PARKOUR), m_OutHits);
-	//m_pGameInstance->Box_Cast(m_pRigidbodyCom, m_pTransformCom->Get_State(STATE::POSITION),
+	//m_pGameInstance->Box_Cast(m_pRigidbodyCom->Get_Body()->GetShape(), m_pTransformCom->Get_State(STATE::POSITION), 
 	//	m_pTransformCom->Get_Quaternion(), m_pTransformCom->Get_State(STATE::LOOK), 3.f, ENUM_CLASS(COLLISIONLAYER::PARKOUR), m_OutHits);
+	m_pGameInstance->Box_Cast(m_pRigidbodyCom, m_pTransformCom->Get_State(STATE::POSITION),
+		m_pTransformCom->Get_Quaternion(), m_pTransformCom->Get_State(STATE::LOOK), 3.f, ENUM_CLASS(COLLISIONLAYER::PARKOUR), m_OutHits);
 }
 
 void CTraceur::Update_Camera(_float fTimeDelta)
