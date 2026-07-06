@@ -14,10 +14,13 @@ public:
 	virtual HRESULT		Initialize_Clone(void* pArg) override;
 
 public:
-	ACTORDIR Calculate_Direction(const class CInputController* pInputController) const;
-	_vector Calculate_Move_Direction(const class CSpringCamera* pSpringCamera, ACTORDIR eDir) const;
-	void Move_Direction(const CInputController* pInputController, const CSpringCamera* pSpringCamera, _float fTimeDelta, _float fSpeed) const;
-	void Move_Direction(_fvector vDir, _float fTimeDelta, _float fSpeed);
+	// 정적 유틸 함수.
+	static ACTORDIR Calculate_Direction(const class CInputController* pInputController);
+	static _vector  Calc_WorldDir(ACTORDIR eDir, _fvector vCamForward, _fvector vCamRight);
+
+public:
+	void Move(_fvector vWorldDir, _float fTimeDelta, _float fSpeed);
+
 
 	
 private:

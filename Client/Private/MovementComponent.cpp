@@ -32,9 +32,7 @@ HRESULT CMovementComponent::Initialize_Clone(void* pArg)
 	return S_OK;
 }
 
-
-
-ACTORDIR CMovementComponent::Calculate_Direction(const CInputController* pInputController) const
+ACTORDIR CMovementComponent::Calculate_Direction(const CInputController* pInputController)
 {
 	if (nullptr == pInputController)
 		return ACTORDIR::END;
@@ -56,49 +54,32 @@ ACTORDIR CMovementComponent::Calculate_Direction(const CInputController* pInputC
 	return ACTORDIR::END;
 }
 
-_vector CMovementComponent::Calculate_Move_Direction(const CSpringCamera* pSpringCamera, ACTORDIR eDir) const
+_vector CMovementComponent::Calc_WorldDir(ACTORDIR eDir, _fvector vCamForward, _fvector vCamRight)
 {
-	if (nullptr == pSpringCamera)
-		return XMVectorZero();
-
-	_vector vLook = pSpringCamera->Get_LookVector_NoPitch();
-	_vector vRight = pSpringCamera->Get_RightVector_NoPitch();
 
 	switch (eDir)
 	{
-		case ACTORDIR::U:   return vLook;
-		case ACTORDIR::D:   return -vLook;
-		case ACTORDIR::L:   return -vRight;
-		case ACTORDIR::R:   return vRight;
-		case ACTORDIR::LU:  return XMVector3Normalize(vLook - vRight);
-		case ACTORDIR::LD:  return XMVector3Normalize(-vLook - vRight);
-		case ACTORDIR::RU:  return XMVector3Normalize(vLook + vRight);
-		case ACTORDIR::RD:  return XMVector3Normalize(-vLook + vRight);
+		case ACTORDIR::U:   return vCamForward;
+		case ACTORDIR::D:   return -vCamForward;
+		case ACTORDIR::L:   return -vCamRight;
+		case ACTORDIR::R:   return vCamRight;
+		case ACTORDIR::LU:  return XMVector3Normalize(vCamForward - vCamRight);
+		case ACTORDIR::LD:  return XMVector3Normalize(-vCamForward - vCamRight);
+		case ACTORDIR::RU:  return XMVector3Normalize(vCamForward + vCamRight);
+		case ACTORDIR::RD:  return XMVector3Normalize(-vCamForward + vCamRight);
 		default: return XMVectorZero();
 	}
 
 	return XMVectorZero();
 }
 
-void CMovementComponent::Move_Direction(const CInputController* pInputController, const CSpringCamera* pSpringCamera,  _float fTimeDelta, _float fSpeed) const
+void CMovementComponent::Move(_fvector vWorldDir, _float fTimeDelta, _float fSpeed)
 {
-	if (nullptr == pInputController || 
-		nullptr == pSpringCamera || 
-		nullptr == m_pTransformCom)
+	if (XMVector3Equal(vWorldDir, XMVectorZero()))
 		return;
 
-	ACTORDIR eDir = Calculate_Direction(pInputController);
-	_vector vMoveDir = Calculate_Move_Direction(pSpringCamera, eDir);
-	m_pTransformCom->LookLerp(vMoveDir, fTimeDelta, 10.f);
-	m_pTransformCom->Go_Dir(vMoveDir * fSpeed, fTimeDelta);
-}
-
-void CMovementComponent::Move_Direction(_fvector vDir, _float fTimeDelta, _float fSpeed)
-{
-	if (nullptr == m_pTransformCom)
-		return;
-
-	m_pTransformCom->Go_Dir(vDir * fSpeed, fTimeDelta);
+	m_pTransformCom->LookLerp(vWorldDir, fTimeDelta, 10.f);
+	m_pTransformCom->Go_Dir(vWorldDir * fSpeed, fTimeDelta);
 }
 
 
