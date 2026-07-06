@@ -16,6 +16,7 @@ public:
 		EMotionType	eType;
 		_uint				iLayer;
 		BODYTYPE		eBodyType = { BODYTYPE::BODY };
+		_bool IsSensor = { false };
 	}RIGIDBODY_DESC;
 
 	typedef struct tagSphereBodyDesc : public RIGIDBODY_DESC {
@@ -52,6 +53,7 @@ public:
 	void							Set_Transform(const _fmatrix& Matrix);
 	// Data (void*)
 	void							Set_Desc(void* pData) { m_tCollisionData.pDesc = pData; }
+	const Body* Get_Body() const { return m_pBody; }
 
 public:
 	virtual		HRESULT			Initialize_Prototype()			override;
@@ -73,15 +75,17 @@ public:
 	void							IsActivate(_bool isActive);
 	void							Change_MotionType(EMotionType eType);
 
+public:
+
 private:
-	_bool							m_isActive = { true };
-	SHAPE						m_eShape = {};
+	_bool					m_isActive = { true };
+	SHAPE					m_eShape = {};
 	COLLISION_DATA			m_tCollisionData = {};
-	Body*							m_pBody = {nullptr};
-	BodyID						m_BodyID;
-	Body**						m_ppMeshBodies = { nullptr };
-	BodyID*						m_pMeshBodyIDs = { nullptr };
-	_uint							m_iNumMesh = {};
+	Body*					m_pBody = {nullptr};
+	BodyID					m_BodyID;
+	Body**					m_ppMeshBodies = { nullptr };
+	BodyID*					m_pMeshBodyIDs = { nullptr };
+	_uint					m_iNumMesh = {};
 
 	BodyInterface*				m_pBodyInterface = { nullptr };
 

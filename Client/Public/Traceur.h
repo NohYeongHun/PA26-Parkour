@@ -42,6 +42,8 @@ private:
 	_float m_fTrackPosition;
 	ANIMATION_PLAY_DESC m_AnimPlayDesc{}; 
 	ROOTMOTION_DESC m_RootModtionDesc{};
+	vector<BOX_CAST_HIT> m_OutHits{};
+
 
 private:
 	// Priority Update
@@ -64,13 +66,13 @@ private:
 private:
 	HRESULT Ready_Components(const CHARACTER_DESC* pDesc);
 	HRESULT Ready_Variables(const CHARACTER_DESC* pDesc);
-	HRESULT Bind_Resources();
+	HRESULT Bind_Matrices();
 
 private:
 	// Helper
 	void Update_Collider(_float fTimeDelta);
 	void Update_Rigidbodies(_float fTimeDelta);  // SENSOR
-	
+	void Process_CollideParkour(const CALLBACK_CLIENT* pCallDesc, const ContactManifold& Manifold);
 
 #ifdef _DEBUG
 

@@ -56,16 +56,22 @@ public:
 	void					Clear_Resource();
 
 public:
-	HRESULT			Initialize(_uint iNumObjectLayer);
+	HRESULT				Initialize(_uint iNumObjectLayer);
 	void				Update(_float fTimeDelta);
 	void				Late_Update();
 #ifdef _DEBUG
 	void				Render();
-	void				DrawShape(const Shape* pShape, RMat44 Matrix);
+	void				DrawShape(const Shape* pShape, RMat44 Matrix, Color BodyColor = Color(0.f, 255.f, 0.f, 1.f));
 	void				DrawRay(const _fvector& vStartPos, const _fvector& vEndPos);
+	void				DrawBoxCast(const Shape* pShape, const RMat44& StartMatrix, const RMat44& EndMatrix, _bool isHit, const vector<_float3>& HitPoints);
+	_bool				IsParkourDebug() { return m_isParkourDebug; }
 #endif
 
 	_bool				Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, _float4* pOut);
+	//_bool				Box_Cast(const class CRigidbody* pRigidbodyCom, const _fvector& vPos, const _fvector& vQuat, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits);
+	_bool				Box_Cast(const Shape* pShape, const _fvector& vPos, const _fvector& vQuat, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits);
+	
+	
 
 private:
 	class CGameInstance*		m_pGameInstance = { nullptr };
@@ -101,8 +107,20 @@ private:
 #ifdef _DEBUG
 	DebugRenderer*	m_pDebugRenderer = { nullptr };
 	BodyManager::DrawSettings m_DrawSetting;
-	_bool					m_isRenderAll = { false };
+	_bool m_isRenderAll = { false };
+	_bool m_isParkourDebug = { false };
+	_uint m_iHighlightLayer = {};
 	vector<pair<_float3, _float3>>	m_RayPoint;
+
+	struct BOX_CAST_DEBUG
+	{
+		const Shape*			pShape;
+		RMat44					StartMatrix;
+		RMat44					EndMatrix;
+		_bool					isHit;
+		vector<_float3>			HitPoints;
+	};
+	vector<BOX_CAST_DEBUG>	m_BoxCastDebugs;
 #endif
 
 public:

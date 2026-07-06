@@ -33,7 +33,7 @@ public:
 	const _float4x4* Get_WorldMatrixPtr() { return &m_WorldMatrix; }
 	void		Set_WorldMatrix(const _fmatrix& Matrix) { XMStoreFloat4x4(&m_WorldMatrix, Matrix); }
 
-	_vector	Get_Quaternion() {
+	_vector	Get_Quaternion() const {
 		_vector vScale{}, vQuat{}, vTrans{};
 		XMMatrixDecompose(&vScale, &vQuat, &vTrans, XMLoadFloat4x4(&m_WorldMatrix));
 		return vQuat;

@@ -360,7 +360,7 @@ void CEdit_MapObject::Set_ImGuiOption()
 
 	//현재 자기 타입 볼 수 있게, 타입 변경할 수 있게 하기.
 
-	const _char* pObejceTType[] = { "Default","Grapple" };
+	const _char* pObejceTType[] = { "Default","Parkour" };
 	if (ImGui::BeginCombo("Object_Type", pObejceTType[ENUM_CLASS(m_eObjectType)]))
 	{
 		for (_uint i = 0; i < ENUM_CLASS(OBJECTTYPE::END); ++i)

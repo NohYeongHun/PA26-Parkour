@@ -785,16 +785,33 @@ _bool CGameInstance::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos
 {
 	return m_pPhysicsManager->Ray_Cast(vStartPos, vEndPos, pOut);
 }
-#ifdef _DEBUG
-void CGameInstance::DrawShape(const Shape* pShape, RMat44 Matrix)
+
+_bool CGameInstance::Box_Cast(const Shape* pShape, const _fvector& vPos, const _fvector& vQuat, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits)
 {
-	m_pPhysicsManager->DrawShape(pShape, Matrix);
+	return m_pPhysicsManager->Box_Cast(pShape, vPos, vQuat, vDir, fDistance, iObjectLayer, OutHits);
+}
+
+//_bool CGameInstance::Box_Cast(const CRigidbody* pRigidbodyCom, const _fvector& vPos, const _fvector& vQuat, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits)
+//{
+//	return m_pPhysicsManager->Box_Cast(pRigidbodyCom, vPos, vQuat, vDir, fDistance, iObjectLayer, OutHits);
+//}
+
+#ifdef _DEBUG
+void CGameInstance::DrawShape(const Shape* pShape, RMat44 Matrix, Color BodyColor)
+{
+	m_pPhysicsManager->DrawShape(pShape, Matrix, BodyColor);
 }
 void CGameInstance::DrawRay(const _fvector& vStartPos, const _fvector& vEndPos)
 {
 	m_pPhysicsManager->DrawRay(vStartPos, vEndPos);
 }
+
+_bool CGameInstance::IsParkourDebug()
+{
+	return m_pPhysicsManager->IsParkourDebug();
+}
 #endif
+
 #pragma endregion
 
 #pragma region PIPELINE

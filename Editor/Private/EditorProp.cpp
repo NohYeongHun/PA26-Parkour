@@ -67,8 +67,6 @@ void CEditorProp::Activate(_bool IsActive)
 
     if (IsActive)
         m_pRigidbodyCom->Change_Layer(ENUM_CLASS(COLLISIONLAYER::NONE));
-    else
-        m_pRigidbodyCom->Change_Layer(ENUM_CLASS(COLLISIONLAYER::ATTACK));
         
 }
 
@@ -97,8 +95,6 @@ void CEditorProp::Collider_Active(const _wstring& wStrColliderTag, _bool IsActiv
 {
 	if (!IsActive)
 		m_pRigidbodyCom->Change_Layer(ENUM_CLASS(COLLISIONLAYER::NONE));
-	else
-		m_pRigidbodyCom->Change_Layer(ENUM_CLASS(COLLISIONLAYER::ATTACK));
 }
 void CEditorProp::Effect_Active(const _wstring& wStrEffectTag)
 {
@@ -112,8 +108,7 @@ void CEditorProp::Collider_Active(_bool isActive)
 {
     if (!isActive)
         m_pRigidbodyCom->Change_Layer(ENUM_CLASS(COLLISIONLAYER::NONE));
-    else 
-        m_pRigidbodyCom->Change_Layer(ENUM_CLASS(COLLISIONLAYER::ATTACK));
+    
 }
 #pragma endregion
 

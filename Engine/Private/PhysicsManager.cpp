@@ -4,6 +4,8 @@
 #include "ContactListenerImpl.h"
 #include "CharacterContactListenerImpl.h"
 
+#include "Rigidbody.h"
+#include "Jolt/Physics/Collision/CollisionCollectorImpl.h"
 #include "GameInstance.h"
 
 CPhysicsManager::CPhysicsManager(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
@@ -136,6 +138,9 @@ void CPhysicsManager::Update(_float fTimeDelta)
 #ifdef _DEBUG
 	if (m_pGameInstance->Get_DIKeyState(DIK_DELETE) == KEYSTATE::DOWN)
 		m_isRenderAll = !m_isRenderAll;
+
+	if (m_pGameInstance->Get_DIKeyState(DIK_END) == KEYSTATE::DOWN)
+		m_isParkourDebug = !m_isParkourDebug;
 #endif
 	m_pContactListener->Clear_Resource();
 	m_pPhysicsSystem->Update(fTimeDelta, 1, m_pAllocator, m_pJobSystem);
@@ -203,7 +208,161 @@ _bool CPhysicsManager::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndP
 	return fOriginFraction > result.mFraction && result.mFraction > 0.f ? true : false;
 }
 
+_bool CPhysicsManager::Box_Cast(const Shape* pShape, const _fvector& vPos, const _fvector& vQuat, const _fvector& vDir
+	, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits)
+{
+	if (nullptr == pShape)
+		return false;
+
+	OutHits.clear();
+
+	RVec3 startPos = LoadVec3(vPos);
+	Quat startRot = LoadQuat(vQuat);
+	RMat44 StartTransform = RMat44::sRotationTranslation(startRot, startPos);
+	//RMat44 StartTransform = pBody->GetWorldTransform();
+
+	// 방향
+	Vec3 Direction = LoadVec3(vDir).Normalized() * fDistance;
+	// ShapeCast 객체
+	RShapeCast ShapeCastIn = RShapeCast::sFromWorldTransform(
+		pShape, Vec3::sReplicate(1.f), StartTransform, Direction
+	);
+
+	ShapeCastSettings CastSettings;
+
+	SpecifiedObjectLayerFilter ObjectLayerFilter{ ObjectLayer{iObjectLayer} };
+
+	// 충돌한 객체 후보군을 모을 곳
+	AllHitCollisionCollector<CastShapeCollector> Collector;
+	m_pPhysicsSystem->GetNarrowPhaseQuery().CastShape(
+		ShapeCastIn, CastSettings, RVec3::sZero(), Collector,
+		*m_pRayFilter, ObjectLayerFilter);
+
+	_bool isHit = Collector.HadHit();
+	_float fEndFraction = 1.f;
+
 #ifdef _DEBUG
+	vector<_float3> HitPointsDebug;
+#endif
+
+	if (isHit)
+	{
+		Collector.Sort();
+		fEndFraction = Collector.mHits[0].mFraction;
+
+		OutHits.reserve(OutHits.size() + Collector.mHits.size());
+		for (const ShapeCastResult& Hit : Collector.mHits)
+		{
+			BOX_CAST_HIT Result{};
+			Result.fFraction = Hit.mFraction;
+			Result.HitBodyID = Hit.mBodyID2;
+			XMStoreFloat4(&Result.vHitPoint,
+				XMVectorSet(Hit.mContactPointOn2.GetX(), Hit.mContactPointOn2.GetY(), Hit.mContactPointOn2.GetZ(), 1.f));
+
+			OutHits.push_back(Result);
+
+#ifdef _DEBUG
+			HitPointsDebug.push_back(_float3(Result.vHitPoint.x, Result.vHitPoint.y, Result.vHitPoint.z));
+#endif
+		}
+	}
+
+#ifdef _DEBUG
+	{
+		BOX_CAST_DEBUG Debug{};
+		Debug.pShape = pShape;
+		Debug.StartMatrix = StartTransform;
+		Debug.EndMatrix = StartTransform.PostTranslated(Direction * fEndFraction);
+		Debug.isHit = isHit;
+		Debug.HitPoints = move(HitPointsDebug);
+		m_BoxCastDebugs.push_back(move(Debug));
+	}
+#endif
+
+	return isHit;
+}
+
+//_bool CPhysicsManager::Box_Cast(const CRigidbody* pRigidbodyCom, const _fvector& vPos, const _fvector& vQuat, const _fvector& vDir
+//	, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits)
+//{
+//	if (nullptr == pRigidbodyCom)
+//		return false;
+//
+//	RVec3 startPos = LoadVec3(vPos);
+//	Quat startRot = LoadQuat(vQuat);
+//	RMat44 StartTransform = RMat44::sRotationTranslation(startRot, startPos);
+//	const Body* pBody = pRigidbodyCom->Get_Body();
+//	if (nullptr == pBody)
+//		return false;
+//	//RMat44 StartTransform = pBody->GetWorldTransform();
+//
+//	// 방향
+//	Vec3 Direction = LoadVec3(vDir).Normalized() * fDistance;
+//	// ShapeCast 객체
+//	RefConst<Shape> pShape = pBody->GetShape();
+//	RShapeCast ShapeCastIn = RShapeCast::sFromWorldTransform(
+//		pShape, Vec3::sReplicate(1.f), StartTransform, Direction
+//	);
+//
+//	ShapeCastSettings CastSettings;
+//
+//	SpecifiedObjectLayerFilter ObjectLayerFilter{ ObjectLayer{iObjectLayer} };
+//
+//	// 충돌한 객체 후보군을 모을 곳
+//	AllHitCollisionCollector<CastShapeCollector> Collector;
+//	m_pPhysicsSystem->GetNarrowPhaseQuery().CastShape(
+//		ShapeCastIn, CastSettings, RVec3::sZero(), Collector,
+//		*m_pRayFilter, ObjectLayerFilter);
+//
+//	_bool isHit = Collector.HadHit();
+//	_float fEndFraction = 1.f;
+//
+//#ifdef _DEBUG
+//	vector<_float3> HitPointsDebug;
+//#endif
+//
+//	if (isHit)
+//	{
+//		Collector.Sort();
+//		fEndFraction = Collector.mHits[0].mFraction;
+//
+//		OutHits.reserve(OutHits.size() + Collector.mHits.size());
+//		for (const ShapeCastResult& Hit : Collector.mHits)
+//		{
+//			BOX_CAST_HIT Result{};
+//			Result.fFraction = Hit.mFraction;
+//			Result.HitBodyID = Hit.mBodyID2;
+//			XMStoreFloat4(&Result.vHitPoint,
+//				XMVectorSet(Hit.mContactPointOn2.GetX(), Hit.mContactPointOn2.GetY(), Hit.mContactPointOn2.GetZ(), 1.f));
+//
+//			OutHits.push_back(Result);
+//
+//#ifdef _DEBUG
+//			HitPointsDebug.push_back(_float3(Result.vHitPoint.x, Result.vHitPoint.y, Result.vHitPoint.z));
+//#endif
+//		}
+//	}
+//
+//#ifdef _DEBUG
+//	{
+//		BOX_CAST_DEBUG Debug{};
+//		Debug.pShape = pShape;
+//		Debug.StartMatrix = StartTransform;
+//		Debug.EndMatrix = StartTransform.PostTranslated(Direction * fEndFraction);
+//		Debug.isHit = isHit;
+//		Debug.HitPoints = move(HitPointsDebug);
+//		m_BoxCastDebugs.push_back(move(Debug));
+//	}
+//#endif
+//
+//	return isHit;
+//}
+
+
+
+
+#ifdef _DEBUG 
+// => Debug 용도 Render 함수들.
 void CPhysicsManager::Render()
 {
 	// Ray Render
@@ -211,22 +370,53 @@ void CPhysicsManager::Render()
 		DrawRay(XMLoadFloat3(&m_RayPoint[i].first), XMLoadFloat3(&m_RayPoint[i].second));
 	m_RayPoint.clear();
 
+	// Box Cast Render (파쿠르 디버그 토글에 종속) END키를 켰을때만?
+	if (true == m_isParkourDebug)
+	{
+		for (const BOX_CAST_DEBUG& Debug : m_BoxCastDebugs)
+			DrawBoxCast(Debug.pShape, Debug.StartMatrix, Debug.EndMatrix, Debug.isHit, Debug.HitPoints);
+	}
+	m_BoxCastDebugs.clear();
+
 	if (false == m_isRenderAll)
 		return;
+
 	static_cast<CDebugRender*>(m_pDebugRenderer)->Begin();
 	m_pPhysicsSystem->DrawBodies(m_DrawSetting, m_pDebugRenderer);
 	static_cast<CDebugRender*>(m_pDebugRenderer)->End();
 }
-void CPhysicsManager::DrawShape(const Shape* pShape, RMat44 Matrix)
+void CPhysicsManager::DrawShape(const Shape* pShape, RMat44 Matrix, Color BodyColor)
 {
 	static_cast<CDebugRender*>(m_pDebugRenderer)->Begin();
-	pShape->Draw(m_pDebugRenderer, Matrix, Vec3(1.f, 1.f, 1.f), Color(0.f, 255.f, 0.f, 1.f), false, true);
+	pShape->Draw(m_pDebugRenderer, Matrix, Vec3(1.f, 1.f, 1.f), BodyColor, false, true);
 	static_cast<CDebugRender*>(m_pDebugRenderer)->End();
 }
 void CPhysicsManager::DrawRay(const _fvector& vStartPos, const _fvector& vEndPos)
 {
 	static_cast<CDebugRender*>(m_pDebugRenderer)->Begin();
 	m_pDebugRenderer->DrawLine(LoadVec3(vStartPos), LoadVec3(vEndPos), Color(255.f, 0.f, 0.f, 1.f));
+	static_cast<CDebugRender*>(m_pDebugRenderer)->End();
+}
+void CPhysicsManager::DrawBoxCast(const Shape* pShape, const RMat44& StartMatrix, const RMat44& EndMatrix, _bool isHit, const vector<_float3>& HitPoints)
+{
+	if (nullptr == pShape)
+		return;
+
+	Color EndColor = isHit ? Color(255.f, 0.f, 0.f, 1.f) : Color(0.f, 255.f, 0.f, 1.f);
+
+	static_cast<CDebugRender*>(m_pDebugRenderer)->Begin();
+
+	// 시작 포즈 (흰색 와이어프레임)
+	pShape->Draw(m_pDebugRenderer, StartMatrix, Vec3(1.f, 1.f, 1.f), Color(255.f, 255.f, 255.f, 1.f), false, true);
+	// 스윕 종료 포즈 (히트 시 빨강, 아니면 초록)
+	pShape->Draw(m_pDebugRenderer, EndMatrix, Vec3(1.f, 1.f, 1.f), EndColor, false, true);
+	// 스윕 경로 (노란 화살표)
+	m_pDebugRenderer->DrawArrow(StartMatrix.GetTranslation(), EndMatrix.GetTranslation(), Color(255.f, 255.f, 0.f, 1.f), 0.05f);
+
+	// 히트 지점 마커
+	for (const _float3& vPoint : HitPoints)
+		m_pDebugRenderer->DrawMarker(LoadVec3(vPoint), Color(255.f, 0.f, 0.f, 1.f), 0.15f);
+
 	static_cast<CDebugRender*>(m_pDebugRenderer)->End();
 }
 #endif
@@ -250,7 +440,6 @@ void CPhysicsManager::SetUp_PhysicsSystem()
 	m_pCharacterContactListener = new CharacterContactListenerImpl(&m_pPhysicsSystem->GetBodyInterface());
 
 	Vec3 vGravity = Vec3(0, -9.81f, 0);
-	//Vec3 vGravity = Vec3(0, -5.81f, 0);
 	m_pPhysicsSystem->SetGravity(vGravity);
 }
 

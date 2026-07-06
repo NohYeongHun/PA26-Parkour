@@ -1758,6 +1758,28 @@ PS_OUT_LIGHT PS_MAIN_METEOR(PS_IN In)
     return Out;
 }
 
+PS_OUT_LIGHT PS_MAIN_PARKOUR(PS_IN In)
+{
+    PS_OUT_LIGHT Out = (PS_OUT_LIGHT)0;
+
+    vector vMask = g_MaskTexture[0].Sample(DefaultSampler, In.vTexcoord);
+
+    Out.vDiffuse = float4(0.f, 0.f, 1.f, 1.f);
+    Out.vDiffuse.w = 1.f;
+
+    Out.vPBR.y = g_fGlobalStaticRoughness;
+    Out.vPBR.x = g_fGlobalStaticMetallic;
+
+    Out.vDepth.x = In.vProjPos.z / In.vProjPos.w;
+    Out.vDepth.y = In.vProjPos.w;
+
+    Out.vSSS.z = In.vProjPos.z / In.vProjPos.w;
+    Out.vSSS.w = In.vProjPos.w;
+
+    Out.vDepth.w = 1.f;
+    return Out;
+}
+
 technique11 DefaultTechnique
 {
     pass DefaultPass // 0
@@ -2065,6 +2087,17 @@ technique11 DefaultTechnique
     }
 
     pass Meteor_Color// 28
+    {
+        SetRasterizerState(RS_Cull_None);
+        SetDepthStencilState(DSS_Default, 0);
+        SetBlendState(BS_Default, float4(0.f, 0.f, 0.f, 0.f), 0xFFFFFFFF);
+
+        VertexShader = compile vs_5_0 VS_MAIN();
+        GeometryShader = NULL;
+        PixelShader = compile ps_5_0 PS_MAIN_METEOR();
+    }
+
+    pass Parkour_Color // 29
     {
         SetRasterizerState(RS_Cull_None);
         SetDepthStencilState(DSS_Default, 0);

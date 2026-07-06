@@ -165,6 +165,23 @@ void CRigidbody::Change_MotionType(EMotionType eType)
 	m_pBodyInterface->SetMotionType(m_BodyID, eType, EActivation::Activate);
 }
 
+//_bool CRigidbody::Box_Cast(const _fvector& vStartPos, const _fvector& vDir, _float fDistance, vector<BOX_CAST_HIT>& OutHits)
+//{
+//	if (nullptr == m_pBody)
+//		return false;
+//
+//	OutHits.clear();
+//
+//	RefConst<Shape> pShape = m_pBody->GetShape();
+//	RMat44 StartTransform = m_pBody->GetWorldTransform();
+//
+//	Vec3 Direction = LoadVec3(vDir).Normalized() * fDistance;
+//	RShapeCast ShapeCastIn = RShapeCast::sFromWorldTransform(
+//		pShape, Vec3::sReplicate(1.f), StartTransform, Direction);
+//
+//	ShapeCastSettings CastSettings;
+//}
+
 const JPH::Array<Vec3> CRigidbody::ConvertToArrayVec3(CModel* pModel)
 {
 	JPH::Array<Vec3> Vertices;
@@ -235,6 +252,9 @@ void CRigidbody::Make_MeshShape(void* pArg)
 		// SetUp UserData (CollisionData)
 		m_tCollisionData.pComponent = this;
 		bodySetting.mUserData = reinterpret_cast<uint64>(&m_tCollisionData);
+
+		// Sensor에 감지될 타입은 true로 설정한다.
+
 		m_ppMeshBodies[i] = m_pGameInstance->Register_Body(bodySetting, &m_pBodyInterface);
 		m_pMeshBodyIDs[i] = m_ppMeshBodies[i]->GetID();
 	}

@@ -83,25 +83,25 @@ void CEditDummy_Target::Render_Shadow()
 
 HRESULT CEditDummy_Target::Ready_Component(_fmatrix PreTransformMatrix)
 {
-	m_pModelCom = CModel::Create(m_pDevice, m_pContext, MODELTYPE::NONANIM, PreTransformMatrix, "../../Client/Bin/Resource/Dummy/Wolf/Wolf.dat");
-	ASSERT_CRASH(m_pModelCom);
+	//m_pModelCom = CModel::Create(m_pDevice, m_pContext, MODELTYPE::NONANIM, PreTransformMatrix, "../../Client/Bin/Resource/Dummy/Wolf/Wolf.dat");
+	//ASSERT_CRASH(m_pModelCom);
 
-	m_pShaderCom = CShader::Create(m_pDevice, m_pContext, TEXT("../../Client/Bin/ShaderFiles/Shader_VtxMesh.hlsl"), VTXMESH::Elements, VTXMESH::iNumElements);
-	ASSERT_CRASH(m_pShaderCom);
+	//m_pShaderCom = CShader::Create(m_pDevice, m_pContext, TEXT("../../Client/Bin/ShaderFiles/Shader_VtxMesh.hlsl"), VTXMESH::Elements, VTXMESH::iNumElements);
+	//ASSERT_CRASH(m_pShaderCom);
 
-	// Com_Collider
-	CCollider::COLLIDER_DESC ColliderDesc = {};
-	XMStoreFloat3(&ColliderDesc.vPos, m_pTransformCom->Get_State(STATE::POSITION));
-	ColliderDesc.vOffset = _float3(0.f, 20.f, 0.f);
-	ColliderDesc.eType = EMotionType::Kinematic;
-	ColliderDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::ENEMY);
-	ColliderDesc.fHeight = 10.f;
-	ColliderDesc.fRadius = 20.f; //m_pGameInstance->Rand(5.f, 20.f);
-	Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Collider"),
-		TEXT("Com_Collider"), reinterpret_cast<CComponent**>(&m_pColliderCom), &ColliderDesc);
-	ASSERT_CRASH(m_pColliderCom);
+	//// Com_Collider
+	//CCollider::COLLIDER_DESC ColliderDesc = {};
+	//XMStoreFloat3(&ColliderDesc.vPos, m_pTransformCom->Get_State(STATE::POSITION));
+	//ColliderDesc.vOffset = _float3(0.f, 20.f, 0.f);
+	//ColliderDesc.eType = EMotionType::Kinematic;
+	//ColliderDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::ENEMY);
+	//ColliderDesc.fHeight = 10.f;
+	//ColliderDesc.fRadius = 20.f; //m_pGameInstance->Rand(5.f, 20.f);
+	//Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Collider"),
+	//	TEXT("Com_Collider"), reinterpret_cast<CComponent**>(&m_pColliderCom), &ColliderDesc);
+	//ASSERT_CRASH(m_pColliderCom);
 
-	m_pColliderCom->Set_Desc(m_pTransformCom);
+	//m_pColliderCom->Set_Desc(m_pTransformCom);
 
 	return S_OK;
 }

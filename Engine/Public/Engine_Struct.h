@@ -394,6 +394,18 @@ namespace Engine
 	}SEQUENCE_ITEM_DATA;
 #pragma endregion
 
+
+#pragma region PHYSICS
+	typedef struct tagBoxCastHit
+	{
+		_float4 vHitPoint;
+		_float fFraction;
+		BodyID HitBodyID;
+	}BOX_CAST_HIT;
+
+#pragma endregion
+
+
 #pragma region FONT
 	typedef struct tFontGlyph
 	{
@@ -495,3 +507,4 @@ namespace Engine
 	//////////////////////
 }
 #endif // Engine_Struct_h__
+
