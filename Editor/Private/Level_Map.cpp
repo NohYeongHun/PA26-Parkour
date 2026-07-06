@@ -385,7 +385,7 @@ void CLevel_Map::Menu_Object_Type()
 {
     ImGui::Begin("Type");
 
-	const _char* pObejceTType[] = { "Default","Grapple"};
+	const _char* pObejceTType[] = { "Default","Parkour"};
 
     if (ImGui::BeginCombo("Object_Type", pObejceTType[m_eObjectType]))
     {

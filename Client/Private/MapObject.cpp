@@ -25,12 +25,10 @@ HRESULT CMapObject::Initialize_Clone(void* pArg)
 		return E_FAIL;
 
 	MAP_LOAD* pDesc = static_cast<MAP_LOAD*>(pArg);
-
 	m_pTransformCom->Set_WorldMatrix(XMLoadFloat4x4(pDesc->WorldMatrix));
-	Ready_Component(pArg);
+	Ready_Components(pDesc);
 	m_iNumLOD = m_pModelCom->Get_LastLODIndex();
 	m_pGameInstance->Add_To_OctoTree(this, m_pBoundingBox);
-
 	Sync_Sectors();
 
 	// Env Map Bake
@@ -45,7 +43,6 @@ void CMapObject::Priority_Update(_float fTimeDelta)
 
 void CMapObject::Update(_float fTimeDelta)
 {
-
 }
 
 void CMapObject::Late_Update(_float fTimeDelta)
@@ -106,7 +103,18 @@ void CMapObject::Render(ID3D11DeviceContext* pDeferredContext, _uint iIndex)
 		m_pShaderCom->Bind_Value("g_HasNormal", &HasNormal, sizeof(_bool), pEffect);
 		m_pShaderCom->Bind_Value("g_HasMask", &HasMask, sizeof(_bool), pEffect);
 
+		
+#ifdef _DEBUG
+		if (m_pGameInstance->IsParkourDebug() && m_IsParkour)
+			m_pShaderCom->Begin(m_iDebugShaderParkour, pDeferredContext, pEffect);
+		else 
+			m_pShaderCom->Begin(m_iShaderPassIndex, pDeferredContext, pEffect);
+#else
 		m_pShaderCom->Begin(m_iShaderPassIndex, pDeferredContext, pEffect);
+#endif
+		
+		
+
 
 		m_pModelCom->Render(m_iLODIndex, i, pDeferredContext);
 	}
@@ -197,15 +205,20 @@ void CMapObject::Set_RenderTime(_uint iLODIndex, _float m_fTotalPlayTime)
 	m_pModelCom->Set_RenderTime(iLODIndex, m_fTotalPlayTime);
 }
 
-void CMapObject::Ready_Component(void* pArg)
+void CMapObject::Ready_Components(const MAP_LOAD* pDesc)
 {
-	MAP_LOAD* pDesc = static_cast<MAP_LOAD*>(pArg);
+	if (nullptr == pDesc)
+		return;
 
 	_tchar Model[MAX_PATH] = TEXT("Prototype_Component_Model_");
 	lstrcat(Model, StringToWString(pDesc->ModelName).c_str());
 
 	m_iShaderPassIndex = pDesc->iShaderPassIndex;
 
+#ifdef _DEBUG
+	m_iDebugShaderParkour = 29;
+#endif // _DEBUG
+	
 
 	// DeferredShader
 	if (FAILED(__super::Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_DeferredShader_Map"),
@@ -238,16 +251,48 @@ void CMapObject::Ready_Component(void* pArg)
 	RigidbodyDesc.eShape = SHAPE::MESH;
 	XMStoreFloat3(&RigidbodyDesc.vPos, m_pTransformCom->Get_State(STATE::POSITION));
 	RigidbodyDesc.eType = EMotionType::Static;
-	RigidbodyDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::MAP);
-	RigidbodyDesc.pModel = m_pModelCom;
 
+	switch (pDesc->eObjectType)
+	{
+	case OBJECTTYPE::DEFAULT:
+		{
+			RigidbodyDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::MAP);	
+		}
+		break;
+	case OBJECTTYPE::PARKOUR:
+		{
+			RigidbodyDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::PARKOUR);
+			m_IsParkour = true;
+		}
+		break;
+	}
+		
+	
+	RigidbodyDesc.pModel = m_pModelCom;
+	
 	Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Rigidbody"),
 		TEXT("Com_Rigidbody"), reinterpret_cast<CComponent**>(&m_pRigidbodyCom), &RigidbodyDesc);
 
+	
 	m_pGameInstance->Add_EnvMap_StaticObject(this);
-
 	if (FAILED(m_pGameInstance->Add_Render_ShadowMapObject(this)))
 		CRASH("Failed");
+
+
+	// 센서에 탐지될 정보를 저장합니다.
+	if (m_IsParkour)
+	{
+		m_CallBack.pTransform = m_pTransformCom;
+		m_CallBack.eObjectType = OBJECTTYPE::PARKOUR;
+		m_pRigidbodyCom->Set_Desc(&m_CallBack);
+	}
+
+}
+
+
+void CMapObject::Bind_Resource()
+{
+
 }
 
 CMapObject* CMapObject::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)

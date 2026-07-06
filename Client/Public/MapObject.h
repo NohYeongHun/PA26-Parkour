@@ -54,8 +54,22 @@ private:
 
 	_uint						m_iShaderPassIndex = {};
 	_bool						m_IsRender = { true };
+	_bool						m_IsParkour = { false };
+
 private:
-	void						Ready_Component(void* pArg);
+	CALLBACK_CLIENT m_CallBack = {};
+
+
+#ifdef _DEBUG
+private:
+	_uint	m_iDebugShaderParkour = {};
+#endif // _DEBUG
+
+private:
+	void						Ready_Components(const MAP_LOAD* pDesc);
+
+private:
+	void Bind_Resource();
 
 public:
 	static		CMapObject* Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);

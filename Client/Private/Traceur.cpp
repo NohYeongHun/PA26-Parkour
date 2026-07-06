@@ -58,7 +58,6 @@ void CTraceur::Priority_Update(_float fTimeDelta)
 	__super::Priority_Update(fTimeDelta);
 	PreUpdate_Input(fTimeDelta);
 	Save_PreviousPosition();
-
 	Handle_Input(fTimeDelta);
 }
 
@@ -93,8 +92,8 @@ void CTraceur::Late_Update(_float fTimeDelta)
 
 void CTraceur::Render()
 {
-	if(FAILED(Bind_Resources()))
-		CRASH("Failed to Bind Resources")
+	if(FAILED(Bind_Matrices()))
+		CRASH("Failed to Bind Matrices")
 
 	_uint iNumMesh = m_pModelCom->Get_NumMesh();
 	for (_uint i = 0; i < iNumMesh; ++i)
@@ -116,8 +115,23 @@ void CTraceur::Render()
 	}
 }
 
+// 객체 생성시에 pDesc에 등록된 정보를 가져올 수 있습니다.
 void CTraceur::OnCollider_During(_uint iLayer, void* pDesc, const ContactManifold& Manifold)
 {
+	// 탐지된 레이어가 PARKOUR가 아닌 경우 return;
+	if (ENUM_CLASS(COLLISIONLAYER::PARKOUR) != iLayer)
+		return;
+
+	// 여기서는 객체가 
+	COLLISIONLAYER eLayer = static_cast<COLLISIONLAYER>(iLayer);
+	CALLBACK_CLIENT* pCallDesc = static_cast<CALLBACK_CLIENT*>(pDesc);
+
+	switch (eLayer)
+	{
+	case COLLISIONLAYER::PARKOUR:
+		Process_CollideParkour(pCallDesc, Manifold);
+		break;
+	}
 }
 
 void CTraceur::OnCollider_Enter(_uint iLayer, void* pDesc, const ContactManifold& Manifold)
@@ -207,10 +221,22 @@ void CTraceur::Update_Rigidbodies(_float fTimeDelta)
 	m_pRigidbodyCom->Update_Rigidbody(WorldMatrix, fTimeDelta);
 }
 
+void CTraceur::Process_CollideParkour(const CALLBACK_CLIENT* pCallDesc, const ContactManifold& Manifold)
+{
+	CTransform* pTargetTransform = static_cast<CTransform*>(pCallDesc->pTransform);
+	if (nullptr == pTargetTransform)
+		return;
+}
+
 void CTraceur::Update_Physics(_float fTimeDelta)
 {
-	//Update_Rigidbodies(fTimeDelta);
 	Update_Collider(fTimeDelta);
+	
+	Update_Rigidbodies(fTimeDelta);
+	m_pGameInstance->Box_Cast(m_pRigidbodyCom->Get_Body()->GetShape(), m_pTransformCom->Get_State(STATE::POSITION), 
+		m_pTransformCom->Get_Quaternion(), m_pTransformCom->Get_State(STATE::LOOK), 3.f, ENUM_CLASS(COLLISIONLAYER::PARKOUR), m_OutHits);
+	//m_pGameInstance->Box_Cast(m_pRigidbodyCom, m_pTransformCom->Get_State(STATE::POSITION),
+	//	m_pTransformCom->Get_Quaternion(), m_pTransformCom->Get_State(STATE::LOOK), 3.f, ENUM_CLASS(COLLISIONLAYER::PARKOUR), m_OutHits);
 }
 
 void CTraceur::Update_Camera(_float fTimeDelta)
@@ -239,21 +265,21 @@ HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 		return E_FAIL;
 
 	/* 감지 콜라이더 */
-	/*Engine::CRigidbody::BOXBODY_DESC RigidbodyDesc = {};
+	Engine::CRigidbody::BOXBODY_DESC RigidbodyDesc = {};
 	RigidbodyDesc.eBodyType = Engine::CRigidbody::BODY;
 	RigidbodyDesc.eShape = SHAPE::BOX;
 	RigidbodyDesc.eType = EMotionType::Kinematic;
 	RigidbodyDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::DETECT);
-	RigidbodyDesc.vExtent = _float3(30.f, 30.f, 30.f);
+	RigidbodyDesc.vExtent = _float3(1.f, 1.f, 1.f);
 	XMStoreFloat3(&RigidbodyDesc.vPos, m_pTransformCom->Get_State(STATE::POSITION));
 
 	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Rigidbody"),
 		TEXT("Com_Rigidbody"), reinterpret_cast<CComponent**>(&m_pRigidbodyCom), &RigidbodyDesc)))
 		CRASH("Rigidbody");
 
-	m_pRigidbodyCom->SetUp_CallBack(COLLIDE_STATE::DURING, [this](_uint iLayer, void* pDesc, const ContactManifold& Manifold) {
+	/*m_pRigidbodyCom->SetUp_CallBack(COLLIDE_STATE::DURING, [this](_uint iLayer, void* pDesc, const ContactManifold& Manifold) {
 		OnCollider_During(iLayer, pDesc, Manifold);
-		});*/
+	});*/
 
 	m_vColliderOffSet = { 0.f, 0.8f, 0.f };
 	m_fColliderRadius = 0.4f;
@@ -304,7 +330,7 @@ HRESULT CTraceur::Ready_Variables(const CHARACTER_DESC* pDesc)
 	return S_OK;
 }
 
-HRESULT CTraceur::Bind_Resources()
+HRESULT CTraceur::Bind_Matrices()
 {
 	if (FAILED(m_pTransformCom->Bind_Matrix(m_pShaderCom, "g_WorldMatrix")))
 		CRASH("Failed Bind Matrix");

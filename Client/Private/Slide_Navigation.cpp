@@ -44,34 +44,34 @@ void CSlide_Navigation::Render()
 
 void CSlide_Navigation::Ready_Component(void* pArg)
 {
-	SLIDE_NAVIGATION_DESC* pDesc = static_cast<SLIDE_NAVIGATION_DESC*>(pArg);
-	CRigidbody::BOXBODY_DESC RigidbodyDesc = {};
-	RigidbodyDesc.eBodyType = CRigidbody::BODY;
-	RigidbodyDesc.eShape = SHAPE::BOX;
-	RigidbodyDesc.eType = EMotionType::Kinematic;
-	RigidbodyDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::SLIDE);
-	RigidbodyDesc.vExtent = pDesc->vExtends; // 탐지 범위는 적절하게. 설정해주기.
-	m_pTransformCom->Set_WorldMatrix(XMLoadFloat4x4(&pDesc->WorldMat));
-	XMStoreFloat3(&RigidbodyDesc.vPos, m_pTransformCom->Get_State(STATE::POSITION));
+	//SLIDE_NAVIGATION_DESC* pDesc = static_cast<SLIDE_NAVIGATION_DESC*>(pArg);
+	//CRigidbody::BOXBODY_DESC RigidbodyDesc = {};
+	//RigidbodyDesc.eBodyType = CRigidbody::BODY;
+	//RigidbodyDesc.eShape = SHAPE::BOX;
+	//RigidbodyDesc.eType = EMotionType::Kinematic;
+	//RigidbodyDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::SLIDE);
+	//RigidbodyDesc.vExtent = pDesc->vExtends; // 탐지 범위는 적절하게. 설정해주기.
+	//m_pTransformCom->Set_WorldMatrix(XMLoadFloat4x4(&pDesc->WorldMat));
+	//XMStoreFloat3(&RigidbodyDesc.vPos, m_pTransformCom->Get_State(STATE::POSITION));
 
-	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Rigidbody"),
-		TEXT("Com_Rigidbody"), reinterpret_cast<CComponent**>(&m_pRigidbodyCom), &RigidbodyDesc)))
-		CRASH("Rigidbody");
+	//if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Rigidbody"),
+	//	TEXT("Com_Rigidbody"), reinterpret_cast<CComponent**>(&m_pRigidbodyCom), &RigidbodyDesc)))
+	//	CRASH("Rigidbody");
 
-	m_CallBack.IsStart = pDesc->IsStart;
-	if (m_CallBack.IsStart)
-	{
-		vector<_float3> WayPoint;
-		for (_uint i = 0; i < pDesc->iPathSize; ++i)
-		{
-			_float3 CurrentPath = _float3(pDesc->pPath[i].x, pDesc->pPath[i].y, pDesc->pPath[i].z);
-			WayPoint.push_back(CurrentPath);
-		}
-		m_CallBack.eSlideData.WayPoints = move(WayPoint);
-	}
-	m_CallBack.pTransform = m_pTransformCom;
+	//m_CallBack.IsStart = pDesc->IsStart;
+	//if (m_CallBack.IsStart)
+	//{
+	//	vector<_float3> WayPoint;
+	//	for (_uint i = 0; i < pDesc->iPathSize; ++i)
+	//	{
+	//		_float3 CurrentPath = _float3(pDesc->pPath[i].x, pDesc->pPath[i].y, pDesc->pPath[i].z);
+	//		WayPoint.push_back(CurrentPath);
+	//	}
+	//	m_CallBack.eSlideData.WayPoints = move(WayPoint);
+	//}
+	//m_CallBack.pTransform = m_pTransformCom;
 
-	m_pRigidbodyCom->Set_Desc(&m_CallBack);
+	//m_pRigidbodyCom->Set_Desc(&m_CallBack);
 }
 
 CSlide_Navigation* CSlide_Navigation::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)

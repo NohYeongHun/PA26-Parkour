@@ -195,10 +195,12 @@ void CParser::Read_Map_Dat(LEVEL eLevel, const _string pFilePath)
 
 			switch (pDesc.eObjectType)
 			{
-			case OBJECTTYPE::GRAPPLE:
-				// TODO: 그래플 전용 오브젝트 클래스 구현 전까지 기본 MapObject로 임시 처리
-				m_pGameInstance->Clone_Prototype(pDesc.iLevel, TEXT("Prototype_GameObject_MapObject")
-					, PROTOTYPE::GAMEOBJECT, &pDesc);
+			case OBJECTTYPE::PARKOUR:
+				if (FAILED(m_pGameInstance->Add_GameObject_ToLayer(ENUM_CLASS(eLevel), TEXT("Prototype_GameObject_MapObject"),
+					ENUM_CLASS(eLevel), TEXT("Layer_Parkour"), &pDesc)))
+					CRASH("Failed Ready Parkour Object");
+				/*m_pGameInstance->Clone_Prototype(pDesc.iLevel, TEXT("Prototype_GameObject_MapObject")
+					, PROTOTYPE::GAMEOBJECT, &pDesc);*/
 				break;
 
 			default: // OBJECTTYPE::DEFAULT
