@@ -8,9 +8,9 @@ NS_BEGIN(Client)
 
 enum class HEIGHT_HIT_FLAG {
 	NONE = 0,
-	KNEE = 1 << 0, // 무릎 이상
-	CHEST = 1 << 1, // 
-	HEAD = 1 << 2,
+	KNEE = 1 << 0, // 무릎 높이
+	CHEST = 1 << 1, // 가슴 높이
+	HEAD = 1 << 2, // 머리 높이
 	ALL = 0x7,
 	END
 };
@@ -34,10 +34,16 @@ public:
 	}LINE_TRACE_HIT;
 
 private:
-	static constexpr _float FHEAD_RATIO		 = 1.1f; // 머리
-	static constexpr _float FCHEST_RATIO	 = 0.8f; // 가슴팍
-	static constexpr _float FKNEE_RATIO		 = 0.35f;  // 무릎
-	static constexpr _float FMAX_REACH_RATIO = 1.5f;  // 손 뻗은 최대 높이.
+	static constexpr _float FHEAD_RATIO		 = 1.1f;
+	static constexpr _float FCHEST_RATIO	 = 0.8f;
+	static constexpr _float FKNEE_RATIO		 = 0.35f;
+	static constexpr _float FMAX_REACH_RATIO = 1.5f;
+
+	// 두께 탐지
+	static constexpr _uint  FDEPTH_SAMPLE_COUNT    = 3;
+	static constexpr _float FVAULT_MAX_DEPTH_MULT  = 2.0f; // Vault 가능 최대 두께 (반지름 배율)
+	static constexpr _float FMANTLE_MIN_DEPTH_MULT = 1.0f; // Mantle 가능 최소 두께 (반지름 배율)
+	static constexpr _float FMAX_CLIMBABLE_HEIGHT_RATIO = FMAX_REACH_RATIO;
 
 protected:
 	explicit CEnvironmentQueryComponent(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
@@ -51,58 +57,42 @@ public:
 public:
 	const ENV_QUERY_RESULT& Get_QueryResult() const { return m_EnvQueryResult; }
 
-public:
-	void Change_TargetLayer(COLLISIONLAYER eLayer) { m_eTargetLayer = eLayer; }
-	
-
-public:
-	void Execute(_float fTimeDelta);
-	_bool Detect_Obstacle(_float fTimeDelta);
-	void Collect_RayInfo(_float fTimeDelta);
+	void Execute();
 
 private:
-	// Component => 참조할
+	_bool Detect_Obstacle();
+	void Collect_RayInfo();
+	void Classify_HitFlag();
+	void Extract_Geometry();
+	void Judge_Condition();
+
+	LINE_TRACE_HIT Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos);
+
+#ifdef _DEBUG
+	void Print_Debug();
+#endif // _DEBUG
+
+private:
+	// Owner에게서 참조하는 컴포넌트
 	class CTransform* m_pOwnerTransformCom = { nullptr };
 	class CCollider* m_pOwnerColliderCom = { nullptr };
 
 private:
-	_float m_fShapeTraceDistance = { 4.f };
-	_float m_fLineTraceDistance = { 4.f };
+	_float m_fShapeTraceDistance = { 2.f };
+	_float m_fLineTraceDistance = { 2.f };
 	COLLISIONLAYER m_eTargetLayer = { COLLISIONLAYER::END };
-
-private:
-	LINE_TRACE_HIT m_KneeHit{}; // 무릎 부분 Hit 체크
-	LINE_TRACE_HIT m_ChestHit{};
-	LINE_TRACE_HIT m_HeadHit{};
-
-private:
-	ENV_QUERY_RESULT m_EnvQueryResult{};
-
-#ifdef _DEBUG
-private:
-	void Print_Debug();
-#endif // _DEBUG
-
-
-private:
-	_uint m_iHeightFlag = {};
-
-
-
-private:
-	SHAPE_CAST_HIT m_OutHit{};
 
 private:
 	// ShapeCast로 탐지한 Object의 태그.
 	PARKOUR_FLAG m_eObjectParkourFlag = { PARKOUR_FLAG::END };
-	// 이번 프레임에 유효한 후보군
-	_uint m_iCandidateFlag = {};
 
-private:
-	LINE_TRACE_HIT Ray_Cast(const _fvector& vStartPos, const _fvector& vDir);
-	void Classify_HitFlag();
-	void Start_DownRayCast();
-	void Judge_Condition();
+	LINE_TRACE_HIT m_KneeHit{};
+	LINE_TRACE_HIT m_ChestHit{};
+	LINE_TRACE_HIT m_HeadHit{};
+
+	// 수평 레이 Hit 패턴
+	_uint m_iHeightFlag = {};
+	ENV_QUERY_RESULT m_EnvQueryResult{};
 
 public:
 	static	CEnvironmentQueryComponent* Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
@@ -110,4 +100,3 @@ public:
 	virtual void Free() override;
 };
 NS_END
-

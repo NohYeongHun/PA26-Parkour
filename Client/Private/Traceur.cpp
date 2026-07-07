@@ -213,7 +213,7 @@ void CTraceur::Update_EnvQuery(_float fTimeDelta)
 		return;
 	
 	// 주변 환경을 탐지합니다.
-	m_pEnvQueryCom->Execute(fTimeDelta);
+	m_pEnvQueryCom->Execute();
 }
 
 void CTraceur::Sync_Camera(_float fTimeDelta)
