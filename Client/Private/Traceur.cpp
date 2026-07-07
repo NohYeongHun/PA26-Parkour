@@ -78,17 +78,18 @@ void CTraceur::Update(_float fTimeDelta)
 
 	// 3. 환경 탐지.
 	Update_EnvQuery(fTimeDelta);
-	// 4. Camera Update
-	Update_Camera(fTimeDelta);
-
-	// Last. Sync_Transform;
-	Sync_Transform();
 	
+	// 4. 해당 위치를 이용한 카메라 이동.
+	Sync_Camera(fTimeDelta);
 }
 
 void CTraceur::Late_Update(_float fTimeDelta)
 {
 	__super::Late_Update(fTimeDelta);
+	// 1. 물리 반영된 위치로 지정
+	Sync_Transform();
+
+	
 
 	Ready_Render();
 }
@@ -175,6 +176,17 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 		m_pColliderCom->Set_Gravity(false);
 	}
 
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D4), KEYSTATE::PRESS))
+	{
+		m_pColliderCom->Set_Gravity(false);
+		m_pTransformCom->Go_Dir(XMVectorSet(0.f, 1.f, 0.f, 0.f), fTimeDelta);
+		
+	}
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D5), KEYSTATE::PRESS))
+	{
+		m_pColliderCom->Set_Gravity(true);
+	}
+
 	
 #endif // _DEBUG
 
@@ -204,7 +216,7 @@ void CTraceur::Update_EnvQuery(_float fTimeDelta)
 	m_pEnvQueryCom->Execute(fTimeDelta);
 }
 
-void CTraceur::Update_Camera(_float fTimeDelta)
+void CTraceur::Sync_Camera(_float fTimeDelta)
 {
 	if (nullptr == m_pSpringCamera)
 		return;
@@ -217,6 +229,8 @@ void CTraceur::Sync_Transform()
 {
 	m_pColliderCom->Sync_Position(m_pTransformCom);
 }
+
+
 
 void CTraceur::Ready_Render()
 {

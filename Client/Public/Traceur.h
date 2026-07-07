@@ -57,12 +57,12 @@ private:
 	// Update
 	void Update_Physics(_float fTimeDelta);
 	void Update_EnvQuery(_float fTimeDelta);
-	void Update_Camera(_float fTimeDelta);
-
-	void Sync_Transform();
+	void Sync_Camera(_float fTimeDelta);
 
 private:
 	// Late Update
+	void Sync_Transform();
+	
 	void Ready_Render();
 
 private:
