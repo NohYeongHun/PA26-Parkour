@@ -56,5 +56,6 @@ namespace Client
 	{
 		void* pTransform = { nullptr };  // Transform;
 		OBJECTTYPE eObjectType{ OBJECTTYPE::END }; 
+		PARKOUR_FLAG eParkourFlag = { PARKOUR_FLAG::END };
 	}CALLBACK_CLIENT;
 }

@@ -36,11 +36,17 @@ public:
 	virtual	void	Late_Update(_float fTimeDelta) override;
 	virtual	void	Render() override;
 
+public:
+	void	Move(ACTORDIR eDir, const _fvector& vCamForward, const _fvector& vCamRight, _float fTimeDelta, _float fSpeed);
+
 protected:
+	// Component
 	class CModel* m_pModelCom = { nullptr };
 	class CShader* m_pShaderCom = { nullptr };
 	class CInputController* m_pInputControllerCom = { nullptr };
+	class CMovementComponent* m_pMoveCom = { nullptr };
 
+protected:
 	
 
 protected:
@@ -57,6 +63,7 @@ protected:
 
 protected:
 	HRESULT Ready_Components(const CHARACTER_DESC* pDesc);
+	HRESULT Ready_MovementComponents(const CHARACTER_DESC* pDesc);
 
 public:
 	virtual		CGameObject* Clone(void* pArg) = 0;

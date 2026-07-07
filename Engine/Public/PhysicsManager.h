@@ -64,11 +64,14 @@ public:
 	void				DrawShape(const Shape* pShape, RMat44 Matrix, Color BodyColor = Color(0.f, 255.f, 0.f, 1.f));
 	void				DrawRay(const _fvector& vStartPos, const _fvector& vEndPos);
 	void				DrawBoxCast(const Shape* pShape, const RMat44& StartMatrix, const RMat44& EndMatrix, _bool isHit, const vector<_float3>& HitPoints);
+
+	void				DrawShapeCast(const Shape* pShape, const RMat44& StartMatrix, const RMat44& EndMatrix, _bool isHit, const vector<_float3>& HitPoints);
 	_bool				IsParkourDebug() { return m_isParkourDebug; }
 #endif
 
 	_bool				Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, _float4* pOut);
 	_bool				Box_Cast(const class CRigidbody* pRigidbodyCom, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits);
+	_bool				Shape_Cast(RefConst<Shape> pShape,  const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<SHAPE_CAST_HIT>& OutHits);
 	
 	
 
@@ -119,7 +122,19 @@ private:
 		_bool					isHit;
 		vector<_float3>			HitPoints;
 	};
+
+	struct SHAPE_CAST_DEBUG
+	{
+		const Shape* pShape;
+		RMat44					StartMatrix;
+		RMat44					EndMatrix;
+		_bool					isHit;
+		vector<_float3>			HitPoints;
+	};
+
+
 	vector<BOX_CAST_DEBUG>	m_BoxCastDebugs;
+	vector<SHAPE_CAST_DEBUG> m_ShapeCastDebugs;
 #endif
 
 public:

@@ -307,28 +307,28 @@ void CRenderer::Render_LOD(_uint iLODIndex)
 	for (_uint iLOD = 0; iLOD < 4; ++iLOD)
 	//_uint iLOD = 0;
 	{
-		size_t iNumObjects = max(1, m_StaticObjects[iReadIndex][iLOD].size() / m_iNumThread);
+		_uint iNumObjects = static_cast<_uint>(max(1, m_StaticObjects[iReadIndex][iLOD].size() / m_iNumThread));
 		for (_uint i = 0; i < m_iNumThread; ++i)
 		{
 			_uint iStartIndex = i * iNumObjects;
-			_uint iEndIndex = min((i + 1) * iNumObjects, m_StaticObjects[iReadIndex][iLOD].size());
+			_uint iEndIndex = static_cast<_uint>(min((i + 1) * iNumObjects, m_StaticObjects[iReadIndex][iLOD].size()));
 			if (i == m_iNumThread - 1)
 				//iEndIndex = m_pGameInstance->Render_ObjectsNum(iLOD);
-				iEndIndex = m_StaticObjects[iReadIndex][iLOD].size();
+				iEndIndex = static_cast<_uint>(m_StaticObjects[iReadIndex][iLOD].size());
 
 			m_pGameInstance->Add_Render_Work([this, iLOD, iStartIndex, iEndIndex, iReadIndex, i]() {
 				//쓰레드 개수로 분할해서 해야한다ㅇㅇ
 				if (iStartIndex < iEndIndex)
 				{
 					m_pDeferredContext[i]->ClearState();
-					Setting_Viewport(m_pDeferredContext[i], m_fWinSizeX, m_fWinSizeY);
+					Setting_Viewport(m_pDeferredContext[i], static_cast<_uint>(m_fWinSizeX), static_cast<_uint>(m_fWinSizeY));
 					m_pGameInstance->SetUp_MRT(m_pDeferredContext[i], TEXT("MRT_Object"));
 					m_pGameInstance->Bind_SharedBuffer(iLOD, m_pDeferredContext[i]);
 					for (_uint iIndex = iStartIndex; iIndex < iEndIndex; ++iIndex)
 					{
 						m_StaticObjects[iReadIndex][iLOD][iIndex]->Set_LOD(iLOD);
 						m_StaticObjects[iReadIndex][iLOD][iIndex]->Render(m_pDeferredContext[i], i);
-						m_StaticObjects[iReadIndex][iLOD][iIndex]->Set_RenderTime(iLOD, m_pGameInstance->Get_PlayTime());
+						m_StaticObjects[iReadIndex][iLOD][iIndex]->Set_RenderTime(iLOD, static_cast<_float>(m_pGameInstance->Get_PlayTime()));
 					}
 
 					ID3D11CommandList* pCL = { nullptr };
@@ -392,7 +392,7 @@ void CRenderer::Render_LOD_Weight()
 		{
 			_float RenderRatio = dLODCost[i] / dTotalRenderCost;
 
-			_uint ThreadCnt = (RenderRatio * m_iNumThread);
+			_uint ThreadCnt = static_cast<_uint>((RenderRatio * m_iNumThread));
 			if (ThreadCnt == 0 && m_StaticObjects[iReadIndex][i].size() > 0)
 				ThreadCnt = 1;
 			iAssignedThreads[i] = ThreadCnt;
@@ -414,7 +414,7 @@ void CRenderer::Render_LOD_Weight()
 	{
 		_uint iThreadCntForThisLOD = iAssignedThreads[iLOD];
 
-		_uint iTotalObjects = m_StaticObjects[iReadIndex][iLOD].size();
+		_uint iTotalObjects = static_cast<_uint>(m_StaticObjects[iReadIndex][iLOD].size());
 		_uint iNumObjPerThread = max(1, iTotalObjects / max(1, iThreadCntForThisLOD));
 
 		for (_uint i = 0; i < iThreadCntForThisLOD; ++i)
@@ -428,14 +428,14 @@ void CRenderer::Render_LOD_Weight()
 			if (i == iThreadCntForThisLOD - 1)
 				iEndIndex = iTotalObjects;
 
-			_float fPlayTime = m_pGameInstance->Get_PlayTime();
+			_float fPlayTime = static_cast<_float>(m_pGameInstance->Get_PlayTime());
 
 			if (iStartIndex < iEndIndex)
 			{
 				m_pGameInstance->Add_Render_Work([this, iLOD, iStartIndex, iEndIndex, iReadIndex, iGlobalThreadIdx, fPlayTime]() {
 					auto pDC = m_pDeferredContext[iGlobalThreadIdx];
 					pDC->ClearState();
-					Setting_Viewport(pDC, m_fWinSizeX, m_fWinSizeY);
+					Setting_Viewport(pDC, static_cast<_uint>(m_fWinSizeX), static_cast<_uint>(m_fWinSizeY));
 					m_pGameInstance->SetUp_MRT(pDC, TEXT("MRT_Object"));
 					m_pGameInstance->Bind_SharedBuffer(iLOD, pDC);
 

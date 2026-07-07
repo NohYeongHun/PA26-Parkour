@@ -6,6 +6,7 @@
 #include "SpringCamera.h"
 #include "Mouse.h"
 #include "MovementComponent.h"
+#include "EnvironmentQueryComponent.h"
 
 #include "Level_Loading.h"
 #include "Level_Test.h"
@@ -228,6 +229,10 @@ void CMainApp::Ready_Prototype_ForStatic()
 #pragma region COMPONENT
 	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Movement"),
 		CMovementComponent::Create(m_pDevice, m_pContext))))
+		CRASH("Faild to Add Prototype MovementComponent");
+
+	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_EnvQuery"),
+		CEnvironmentQueryComponent::Create(m_pDevice, m_pContext))))
 		CRASH("Faild to Add Prototype MovementComponent");
 #pragma endregion
 

@@ -18,9 +18,16 @@ public:
 
 public:
 	void Execute(_float fTimeDelta);
+	void Broad_Phase(_float fTimeDelta);
+	void Narrow_Phase(_float fTimeDelta);
 
 private:
+	// Component => 참조할
 	class CTransform* m_pOwnerTransformCom = { nullptr };
+	class CCollider* m_pOwnerColliderCom = { nullptr };
+
+private:
+	vector<SHAPE_CAST_HIT> m_OutHits{};
 
 public:
 	static	CEnvironmentQueryComponent* Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);

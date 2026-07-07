@@ -404,6 +404,16 @@ namespace Engine
 		BodyID HitBodyID;
 	}BOX_CAST_HIT;
 
+	typedef struct tagShapeCastHit
+	{
+		_float4 vHitPoint;
+		_float4 vHitNormal;
+		_float fFraction;
+		BodyID HitBodyID;
+		void* pDesc = { nullptr }; // 해석은 호출부 몫
+	}SHAPE_CAST_HIT;
+
+
 #pragma endregion
 
 

@@ -18,11 +18,11 @@ namespace Editor
 	* CLIMBABLE : 벽을 탈 수 있는지 (높아서?)
 	* MANTLEABLE : 벽을 매달릴 수 있는지?
 	*/
-	enum class TERRIANTYPE {
-		NONE = 1 << 0,
-		VAULTABLE = 1 << 1,
-		CLIMBABLE = 1 << 2,
-		MANTLEABLE = 1 << 3
+	enum class PARKOUR_FLAG {
+		VAULTABLE = 1 << 0, // 1
+		CLIMBABLE = 1 << 1, // 2
+		HANGABLE = 1 << 2, // 4
+		ALL = 0x7,
 		, END
 	};
 }

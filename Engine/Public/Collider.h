@@ -23,8 +23,11 @@ private:
 	virtual ~CCollider() = default;
 
 public:
+	const Shape*						Get_Shape() const { return m_pShape; }
+	const _fvector&						Get_Offset() const;
 	// Data (void*)
 	void								Set_Desc(void* pData) { m_tCollisionData.pDesc = pData; }
+	
 	// Collider 움직임 -> Transform에 적용
 	void								Sync_Position(class CTransform* pTransform);
 	// 땅을 타고 있는지 Check

@@ -28,21 +28,24 @@ private:
 	class CGameSystem* m_pGameSystem = { nullptr };
 
 private:
+	// GameObjects
+	class CSpringCamera* m_pSpringCamera = { nullptr };
+
+private:
 	// Components
 	class CRigidbody* m_pRigidbodyCom = { nullptr };
 	class CCollider* m_pColliderCom = { nullptr };
+	
 	class CMovementComponent* m_pMoveCom = { nullptr };
-
-private:
-	// GameObjects
-	class CSpringCamera* m_pSpringCamera = { nullptr };
+	class CEnvironmentQueryComponent* m_pEnvQueryCom = { nullptr };
+	
 
 private:
 	// 임시 Variables
 	_float m_fTrackPosition;
 	ANIMATION_PLAY_DESC m_AnimPlayDesc{}; 
 	ROOTMOTION_DESC m_RootModtionDesc{};
-	vector<BOX_CAST_HIT> m_OutHits{};
+	vector<SHAPE_CAST_HIT> m_OutHits{};
 
 
 private:
@@ -54,7 +57,7 @@ private:
 private:
 	// Update
 	void Update_Physics(_float fTimeDelta);
-	
+	void Update_EnvQuery(_float fTimeDelta);
 	void Update_Camera(_float fTimeDelta);
 
 	void Sync_Transform();
@@ -65,14 +68,14 @@ private:
 
 private:
 	HRESULT Ready_Components(const CHARACTER_DESC* pDesc);
+	HRESULT Ready_EnvQueryComponents(const CHARACTER_DESC* pDesc);
+
 	HRESULT Ready_Variables(const CHARACTER_DESC* pDesc);
 	HRESULT Bind_Matrices();
 
 private:
 	// Helper
 	void Update_Collider(_float fTimeDelta);
-	void Update_Rigidbodies(_float fTimeDelta);  // SENSOR
-	void Process_CollideParkour(const CALLBACK_CLIENT* pCallDesc, const ContactManifold& Manifold);
 
 #ifdef _DEBUG
 

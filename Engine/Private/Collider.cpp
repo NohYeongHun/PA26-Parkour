@@ -15,6 +15,12 @@ CCollider::CCollider(const CCollider& Prototype)
 {
 }
 
+const _fvector& CCollider::Get_Offset() const
+{
+	Vec3 vec = m_pCharacterVirtual->GetShapeOffset();
+	return XMVectorSet(vec.GetX(), vec.GetY(), vec.GetZ(), 0.f);
+}
+
 void CCollider::Sync_Position(CTransform* pTransform)
 {
 	Vec3 vPos = m_pCharacterVirtual->GetPosition();

@@ -791,6 +791,11 @@ _bool CGameInstance::Box_Cast(const CRigidbody* pRigidbodyCom, const _fvector& v
 	return m_pPhysicsManager->Box_Cast(pRigidbodyCom, vDir, fDistance, iObjectLayer, OutHits);
 }
 
+_bool CGameInstance::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<SHAPE_CAST_HIT>& OutHits)
+{
+	return m_pPhysicsManager->Shape_Cast(pShape, vQuat, vPos, vDir, fDistance, iObjectLayer, OutHits);
+}
+
 #ifdef _DEBUG
 void CGameInstance::DrawShape(const Shape* pShape, RMat44 Matrix, Color BodyColor)
 {

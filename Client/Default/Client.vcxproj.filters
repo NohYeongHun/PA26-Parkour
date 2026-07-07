@@ -135,6 +135,9 @@
     <ClCompile Include="..\Private\EnvironmentQueryComponent.cpp">
       <Filter>04. Component</Filter>
     </ClCompile>
+    <ClCompile Include="..\private\StateComponent.cpp">
+      <Filter>04. Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h">
@@ -222,6 +225,9 @@
       <Filter>03. GameObject\MapObject</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\EnvironmentQueryComponent.h">
+      <Filter>04. Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\public\StateComponent.h">
       <Filter>04. Component</Filter>
     </ClInclude>
   </ItemGroup>

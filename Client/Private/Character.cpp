@@ -1,5 +1,6 @@
 ﻿#include "ClientPch.h"
 #include "Character.h"
+#include "MovementComponent.h"
 #include "InputController.h"
 
 CCharacter::CCharacter(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
@@ -53,6 +54,12 @@ void CCharacter::Render()
 {
 }
 
+void CCharacter::Move(ACTORDIR eDir, const _fvector& vCamForward, const _fvector& vCamRight, _float fTimeDelta, _float fSpeed)
+{
+	_vector vMoveDir = CMovementComponent::Calc_WorldDir(eDir, vCamForward, vCamRight);
+	m_pMoveCom->Move(vMoveDir, fTimeDelta, fSpeed);
+}
+
 HRESULT CCharacter::Ready_Components(const CHARACTER_DESC* pDesc)
 {
 	
@@ -64,13 +71,24 @@ HRESULT CCharacter::Ready_Components(const CHARACTER_DESC* pDesc)
 		, pDesc->shaderData.second, TEXT("Com_Shader"), reinterpret_cast<CComponent**>(&m_pShaderCom), nullptr)))
 		CRASH("Shader");
 
-
 	if (FAILED(CGameObject::Add_Component(ENUM_CLASS(pDesc->inputControllerData.first)
 		, pDesc->inputControllerData.second, TEXT("Com_InputController"), reinterpret_cast<CComponent**>(&m_pInputControllerCom), nullptr)))
 		CRASH("Input Controller");
 
-	
+	if (FAILED(Ready_MovementComponents(pDesc)))
+		return E_FAIL;
 
+	return S_OK;
+}
+
+HRESULT CCharacter::Ready_MovementComponents(const CHARACTER_DESC* pDesc)
+{
+	/* MoveComp */
+	CMovementComponent::COMPONENT_DESC MoveCompDesc{};
+	MoveCompDesc.pOwner = this;
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Movement"),
+		TEXT("Com_Move"), reinterpret_cast<CComponent**>(&m_pMoveCom), &MoveCompDesc)))
+		return E_FAIL;
 
 	return S_OK;
 }
@@ -80,8 +98,8 @@ HRESULT CCharacter::Ready_Components(const CHARACTER_DESC* pDesc)
 void CCharacter::Free()
 {
 	__super::Free();
-	
 	Safe_Release(m_pModelCom);
 	Safe_Release(m_pShaderCom);
 	Safe_Release(m_pInputControllerCom);
+	Safe_Release(m_pMoveCom);
 }

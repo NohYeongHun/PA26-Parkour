@@ -284,6 +284,83 @@ _bool CPhysicsManager::Box_Cast(const CRigidbody* pRigidbodyCom, const _fvector&
 	return isHit;
 }
 
+_bool CPhysicsManager::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<SHAPE_CAST_HIT>& OutHits)
+{
+	// 1. 제약 조건
+	if (nullptr == pShape)
+		return false;
+
+	// 2. 현재 시점의 Rot, Translation
+	JPH::RVec3 startPos = LoadVec3(vPos);
+	JPH::Quat  startRot = LoadQuat(vQuat);
+	RMat44 StartTransform = Mat44::sRotationTranslation(startRot, startPos);
+
+	// 3. 방향 결정
+	Vec3 Direction = LoadVec3(vDir).Normalized() * fDistance;
+	RShapeCast ShapeCastIn = RShapeCast::sFromWorldTransform(
+		pShape, Vec3::sReplicate(1.f), StartTransform, Direction
+	);
+
+	ShapeCastSettings CastSettings;
+
+	// 4. Object Layer Filter
+	// => Parkour Layer만 충돌 되도록
+	SpecifiedObjectLayerFilter ObjectLayerFilter{ ObjectLayer{iObjectLayer} };
+	ClosestHitCollisionCollector<CastShapeCollector> Collector;
+	m_pPhysicsSystem->GetNarrowPhaseQuery().CastShape(
+		ShapeCastIn, CastSettings, RVec3::sZero(), Collector,
+		*m_pRayFilter, ObjectLayerFilter);
+
+	_bool isHit = Collector.HadHit();
+	_float fEndFraction = 1.f;
+#ifdef _DEBUG
+	vector<_float3> HitPointsDebug;
+#endif
+	if (isHit)
+	{
+		
+		fEndFraction = Collector.mHit.mFraction;
+		const ShapeCastResult& Hit = Collector.mHit;
+
+		SHAPE_CAST_HIT Result{};
+		Result.fFraction = Hit.mFraction;
+		Result.HitBodyID = Hit.mBodyID2;
+		XMStoreFloat4(&Result.vHitPoint,
+			XMVectorSet(Hit.mContactPointOn2.GetX(), Hit.mContactPointOn2.GetY(), Hit.mContactPointOn2.GetZ(), 1.f));
+		XMStoreFloat4(&Result.vHitNormal,
+			XMVectorSet(Hit.mPenetrationAxis.GetX(), Hit.mPenetrationAxis.GetY(), Hit.mPenetrationAxis.GetZ(), 0.f));
+			
+		// Memory Pointer 주소
+		uint64 UserData = m_pPhysicsSystem->GetBodyInterface().GetUserData(Hit.mBodyID2);
+		if (0 != UserData)
+			Result.pDesc = reinterpret_cast<COLLISION_DATA*>(UserData)->pDesc;
+
+		OutHits.push_back(Result);
+
+#ifdef _DEBUG
+		HitPointsDebug.push_back(_float3(Result.vHitPoint.x, Result.vHitPoint.y, Result.vHitPoint.z));
+#endif // _DEBUG
+
+	}
+
+#ifdef _DEBUG
+	{
+		SHAPE_CAST_DEBUG Debug{};
+		Debug.pShape = pShape;
+		Debug.StartMatrix = StartTransform;
+		Debug.EndMatrix = StartTransform.PostTranslated(Direction * fEndFraction);
+		Debug.isHit = isHit;
+		Debug.HitPoints = move(HitPointsDebug);
+		m_ShapeCastDebugs.push_back(move(Debug));
+	}
+#endif
+
+
+	return isHit;
+}
+
+// 현재 시점을 정확하게 구할려면
+
 
 
 
@@ -301,8 +378,12 @@ void CPhysicsManager::Render()
 	{
 		for (const BOX_CAST_DEBUG& Debug : m_BoxCastDebugs)
 			DrawBoxCast(Debug.pShape, Debug.StartMatrix, Debug.EndMatrix, Debug.isHit, Debug.HitPoints);
+
+		for (const SHAPE_CAST_DEBUG& Debug : m_ShapeCastDebugs)
+			DrawShapeCast(Debug.pShape, Debug.StartMatrix, Debug.EndMatrix, Debug.isHit, Debug.HitPoints);
 	}
 	m_BoxCastDebugs.clear();
+	m_ShapeCastDebugs.clear();
 
 	if (false == m_isRenderAll)
 		return;
@@ -342,6 +423,36 @@ void CPhysicsManager::DrawBoxCast(const Shape* pShape, const RMat44& StartMatrix
 	// 히트 지점 마커
 	for (const _float3& vPoint : HitPoints)
 		m_pDebugRenderer->DrawMarker(LoadVec3(vPoint), Color(255.f, 0.f, 0.f, 1.f), 0.15f);
+
+	static_cast<CDebugRender*>(m_pDebugRenderer)->End();
+}
+void CPhysicsManager::DrawShapeCast(const Shape* pShape, const RMat44& StartMatrix, const RMat44& EndMatrix, _bool isHit, const vector<_float3>& HitPoints)
+{
+	if (nullptr == pShape)
+		return;
+
+	Color EndColor = isHit ? Color(255.f, 0.f, 0.f, 1.f) : Color(0.f, 255.f, 0.f, 1.f);
+	static_cast<CDebugRender*>(m_pDebugRenderer)->Begin();
+	pShape->Draw(m_pDebugRenderer, StartMatrix, Vec3(1.f, 1.f, 1.f), Color(255.f, 255.f, 255.f, 1.f), false, true);
+	// 스윕 종료 포즈 (히트 시 빨강, 아니면 초록)
+	pShape->Draw(m_pDebugRenderer, EndMatrix, Vec3(1.f, 1.f, 1.f), EndColor, false, true);
+
+	// 스윕 경로 (바닥 / 중앙 / 최상단 3갈래 노란 화살표)
+	AABox LocalBounds = pShape->GetLocalBounds();
+	Vec3 vCenterLocal = LocalBounds.GetCenter();
+	Vec3 vBottomLocal = vCenterLocal;
+	vBottomLocal.SetY(LocalBounds.mMin.GetY());
+	Vec3 vTopLocal = vCenterLocal;
+	vTopLocal.SetY(LocalBounds.mMax.GetY());
+
+	Color ArrowColor = Color(255.f, 255.f, 0.f, 1.f);
+	m_pDebugRenderer->DrawArrow(StartMatrix * vBottomLocal, EndMatrix * vBottomLocal, ArrowColor, 0.05f);
+	m_pDebugRenderer->DrawArrow(StartMatrix * vCenterLocal, EndMatrix * vCenterLocal, ArrowColor, 0.05f);
+	m_pDebugRenderer->DrawArrow(StartMatrix * vTopLocal, EndMatrix * vTopLocal, ArrowColor, 0.05f);
+
+	// 히트 지점 마커
+	for (const _float3& vPoint : HitPoints)
+		m_pDebugRenderer->DrawMarker(LoadVec3(vPoint), Color(0.f, 0.f, 255.f, 1.f), 0.15f);
 
 	static_cast<CDebugRender*>(m_pDebugRenderer)->End();
 }

@@ -7,6 +7,7 @@
 #include "Rigidbody.h"
 #include "Collider.h"
 #include "MovementComponent.h"
+#include "EnvironmentQueryComponent.h"
 
 #include "TraceurFactory.h"
 
@@ -75,7 +76,9 @@ void CTraceur::Update(_float fTimeDelta)
 	// 2. Physics => 바뀐 이동량에 따른 물리 확인.
 	Update_Physics(fTimeDelta);
 
-	// 3. Camera Update
+	// 3. 환경 탐지.
+	Update_EnvQuery(fTimeDelta);
+	// 4. Camera Update
 	Update_Camera(fTimeDelta);
 
 	// Last. Sync_Transform;
@@ -118,20 +121,7 @@ void CTraceur::Render()
 // 객체 생성시에 pDesc에 등록된 정보를 가져올 수 있습니다.
 void CTraceur::OnCollider_During(_uint iLayer, void* pDesc, const ContactManifold& Manifold)
 {
-	// 탐지된 레이어가 PARKOUR가 아닌 경우 return;
-	if (ENUM_CLASS(COLLISIONLAYER::PARKOUR) != iLayer)
-		return;
-
-	// 여기서는 객체가 
-	COLLISIONLAYER eLayer = static_cast<COLLISIONLAYER>(iLayer);
-	CALLBACK_CLIENT* pCallDesc = static_cast<CALLBACK_CLIENT*>(pDesc);
-
-	switch (eLayer)
-	{
-	case COLLISIONLAYER::PARKOUR:
-		Process_CollideParkour(pCallDesc, Manifold);
-		break;
-	}
+	
 }
 
 void CTraceur::OnCollider_Enter(_uint iLayer, void* pDesc, const ContactManifold& Manifold)
@@ -158,11 +148,9 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 {
 #ifdef _DEBUG
 
-	ACTORDIR eDir = CMovementComponent::Calculate_Direction(m_pInputControllerCom);
-	_vector vCamForward = m_pSpringCamera->Get_LookVector_NoPitch();
-	_vector vCamRight = m_pSpringCamera->Get_RightVector_NoPitch();
-	_vector vMoveDir = CMovementComponent::Calc_WorldDir(eDir, vCamForward, vCamRight);
-	m_pMoveCom->Move(vMoveDir, fTimeDelta, 0.2f); // 속도는 멤버 변수
+	Move(CMovementComponent::Calculate_Direction(m_pInputControllerCom)
+		, m_pSpringCamera->Get_LookVector_NoPitch()
+		, m_pSpringCamera->Get_RightVector_NoPitch(), fTimeDelta, 0.5f);
 
 	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D1), KEYSTATE::UP))
 	{
@@ -186,11 +174,6 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 	}
 
 	
-
-	/*if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::SPACE), KEYSTATE::PRESS))
-	{
-		m_pMoveCom->Move_Direction(m_pInputControllerCom, m_pSpringCamera, fTimeDelta, 0.2f);
-	}*/
 #endif // _DEBUG
 
 }
@@ -201,28 +184,22 @@ void CTraceur::Update_Collider(_float fTimeDelta)
 	m_pColliderCom->Update(vVelocity / fTimeDelta);
 }
 
-void CTraceur::Update_Rigidbodies(_float fTimeDelta)
-{
-	if (nullptr == m_pRigidbodyCom)
-		return;
 
-	const _fmatrix WorldMatrix = m_pTransformCom->Get_WorldMatrix();
-	m_pRigidbodyCom->Update_Rigidbody(WorldMatrix, fTimeDelta);
-}
-
-void CTraceur::Process_CollideParkour(const CALLBACK_CLIENT* pCallDesc, const ContactManifold& Manifold)
-{
-	CTransform* pTargetTransform = static_cast<CTransform*>(pCallDesc->pTransform);
-	if (nullptr == pTargetTransform)
-		return;
-}
 
 void CTraceur::Update_Physics(_float fTimeDelta)
 {
 	Update_Collider(fTimeDelta);
 	
-	Update_Rigidbodies(fTimeDelta);
-	m_pGameInstance->Box_Cast(m_pRigidbodyCom, m_pTransformCom->Get_State(STATE::LOOK), 2.f, ENUM_CLASS(COLLISIONLAYER::PARKOUR), m_OutHits);
+	
+}
+
+void CTraceur::Update_EnvQuery(_float fTimeDelta)
+{
+	if (nullptr == m_pEnvQueryCom)
+		return;
+	
+	// 주변 환경을 탐지합니다.
+	m_pEnvQueryCom->Execute(fTimeDelta);
 }
 
 void CTraceur::Update_Camera(_float fTimeDelta)
@@ -250,23 +227,6 @@ HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 	if (FAILED(__super::Ready_Components(pDesc)))
 		return E_FAIL;
 
-	/* 감지 콜라이더 */
-	Engine::CRigidbody::BOXBODY_DESC RigidbodyDesc = {};
-	RigidbodyDesc.eBodyType = Engine::CRigidbody::BODY;
-	RigidbodyDesc.eShape = SHAPE::BOX;
-	RigidbodyDesc.eType = EMotionType::Kinematic;
-	RigidbodyDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::DETECT);
-	RigidbodyDesc.vExtent = _float3(2.f, 2.f, 2.f);
-	XMStoreFloat3(&RigidbodyDesc.vPos, m_pTransformCom->Get_State(STATE::POSITION));
-
-	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Rigidbody"),
-		TEXT("Com_Rigidbody"), reinterpret_cast<CComponent**>(&m_pRigidbodyCom), &RigidbodyDesc)))
-		CRASH("Rigidbody");
-
-	/*m_pRigidbodyCom->SetUp_CallBack(COLLIDE_STATE::DURING, [this](_uint iLayer, void* pDesc, const ContactManifold& Manifold) {
-		OnCollider_During(iLayer, pDesc, Manifold);
-	});*/
-
 	m_vColliderOffSet = { 0.f, 0.8f, 0.f };
 	m_fColliderRadius = 0.4f;
 	m_fColliderHeight = 0.8f;
@@ -279,17 +239,23 @@ HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 	ColliderDesc.iLayer = ENUM_CLASS(COLLISIONLAYER::PLAYER);
 	ColliderDesc.fHeight = m_fColliderHeight;
 	ColliderDesc.fRadius = m_fColliderRadius;
-	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC)
-		, TEXT("Prototype_Component_Collider"), TEXT("Com_Collider"), reinterpret_cast<CComponent**>(&m_pColliderCom), &ColliderDesc)))
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_Collider"),
+		TEXT("Com_Collider"), reinterpret_cast<CComponent**>(&m_pColliderCom), &ColliderDesc)))
 		CRASH("Collider");
 
+	if (FAILED(Ready_EnvQueryComponents(pDesc)))
+		return E_FAIL;
 
-	/* MoveComp */
+	return S_OK;
+}
+
+HRESULT CTraceur::Ready_EnvQueryComponents(const CHARACTER_DESC* pDesc)
+{
 	CMovementComponent::COMPONENT_DESC MoveCompDesc{};
 	MoveCompDesc.pOwner = this;
-	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC)
-		, TEXT("Prototype_Component_Movement"), TEXT("Com_Move"), reinterpret_cast<CComponent**>(&m_pMoveCom), &MoveCompDesc)))
-		CRASH("Move");
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_EnvQuery"),
+		TEXT("Com_EnvQuery"), reinterpret_cast<CComponent**>(&m_pEnvQueryCom), &MoveCompDesc)))
+		return E_FAIL;
 
 	return S_OK;
 }
@@ -348,8 +314,6 @@ void CTraceur::Print_CameraLook()
 
 
 
-
-
 CTraceur* CTraceur::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 {
 	CTraceur* pInstance = new CTraceur(pDevice, pContext);
@@ -379,9 +343,13 @@ CGameObject* CTraceur::Clone(void* pArg)
 void CTraceur::Free()
 {
 	__super::Free();
-	Safe_Release(m_pSpringCamera);
 	Safe_Release(m_pGameSystem);
+
+	// GameObjects
+	Safe_Release(m_pSpringCamera);
+
+	// Components
 	Safe_Release(m_pRigidbodyCom);
 	Safe_Release(m_pColliderCom);
-	Safe_Release(m_pMoveCom);
+	Safe_Release(m_pEnvQueryCom);
 }
