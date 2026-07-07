@@ -77,13 +77,6 @@ private:
 	// Helper
 	void Update_Collider(_float fTimeDelta);
 
-#ifdef _DEBUG
-
-private:
-	void Print_Transform();
-	void Print_CameraLook();
-#endif // _DEBUG
-
 public:
 	static		CTraceur* Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
 	virtual		CGameObject* Clone(void* pArg) override;

@@ -410,10 +410,9 @@ namespace Engine
 		_float4 vHitNormal;
 		_float fFraction;
 		BodyID HitBodyID;
+		_bool isHit = { false };
 		void* pDesc = { nullptr }; // 해석은 호출부 몫
 	}SHAPE_CAST_HIT;
-
-
 #pragma endregion
 
 

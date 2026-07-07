@@ -58,4 +58,5 @@ namespace Client
 		OBJECTTYPE eObjectType{ OBJECTTYPE::END }; 
 		PARKOUR_FLAG eParkourFlag = { PARKOUR_FLAG::END };
 	}CALLBACK_CLIENT;
+
 }

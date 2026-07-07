@@ -98,6 +98,9 @@ HRESULT CCollider::Initialize_Clone(void* pArg)
 	m_pShape = new CapsuleShape(pDesc->fHeight * 0.5f, pDesc->fRadius);
 	ASSERT_CRASH(m_pShape);
 
+	m_fHeight = pDesc->fHeight;
+	m_fRadius = pDesc->fRadius;
+
 	m_vOffset = pDesc->vOffset;
 	// Virtual Setting
 	CharacterVirtualSettings VirtualSetting = {};

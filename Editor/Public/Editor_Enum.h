@@ -19,10 +19,11 @@ namespace Editor
 	* MANTLEABLE : 벽을 매달릴 수 있는지?
 	*/
 	enum class PARKOUR_FLAG {
-		VAULTABLE = 1 << 0, // 1
-		CLIMBABLE = 1 << 1, // 2
-		HANGABLE = 1 << 2, // 4
-		ALL = 0x7,
-		, END
+		VAULTABLE	= 1 << 0, // 1
+		CLIMBABLE	= 1 << 1, // 2
+		HANGABLE	= 1 << 2, // 4
+		MANTLEABLE	= 1 << 3, // 8 => 매달려 있는 상태에서 전환동작
+		ALL = 0xF, // 15
+		END
 	};
 }

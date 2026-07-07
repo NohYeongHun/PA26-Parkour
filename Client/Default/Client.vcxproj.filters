@@ -70,6 +70,15 @@
     <Filter Include="04. Component">
       <UniqueIdentifier>{ea0c2aa1-b6d5-4f71-89f9-194318718b8f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="04. Component\Environment">
+      <UniqueIdentifier>{f581ae86-ff59-4ec1-aa6b-71bcf51fd5fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. Component\Move">
+      <UniqueIdentifier>{12d00d88-a901-45c7-ade8-c063c07c6b91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. Component\State">
+      <UniqueIdentifier>{14a1bdec-1967-4297-b3d9-d2eb4d8295c1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -126,17 +135,17 @@
     <ClCompile Include="..\Private\TraceurFactory.cpp">
       <Filter>03. GameObject\Character\Factory</Filter>
     </ClCompile>
-    <ClCompile Include="..\Private\MovementComponent.cpp">
-      <Filter>04. Component</Filter>
-    </ClCompile>
     <ClCompile Include="..\Private\MapObject.cpp">
       <Filter>03. GameObject\MapObject</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\EnvironmentQueryComponent.cpp">
-      <Filter>04. Component</Filter>
+      <Filter>04. Component\Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\MovementComponent.cpp">
+      <Filter>04. Component\Move</Filter>
     </ClCompile>
     <ClCompile Include="..\private\StateComponent.cpp">
-      <Filter>04. Component</Filter>
+      <Filter>04. Component\State</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -218,17 +227,17 @@
     <ClInclude Include="ClientPch.h">
       <Filter>99. Define</Filter>
     </ClInclude>
-    <ClInclude Include="..\Public\MovementComponent.h">
-      <Filter>04. Component</Filter>
-    </ClInclude>
     <ClInclude Include="..\Public\MapObject.h">
       <Filter>03. GameObject\MapObject</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\EnvironmentQueryComponent.h">
-      <Filter>04. Component</Filter>
+      <Filter>04. Component\Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\MovementComponent.h">
+      <Filter>04. Component\Move</Filter>
     </ClInclude>
     <ClInclude Include="..\public\StateComponent.h">
-      <Filter>04. Component</Filter>
+      <Filter>04. Component\State</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

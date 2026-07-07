@@ -21,6 +21,7 @@ public:
 		_float4x4* WorldMatrix = { nullptr };
 		_uint iLevel = ENUM_CLASS(LEVEL::MAP);
 		OBJECTTYPE eObjectType;
+		PARKOUR_FLAG eParkourFlag = { PARKOUR_FLAG::ALL };
 		_float3 vBoundingPos;
 		_float3 vBoundingExtends;
 		CEdit_MapObject* pCopyObject = { nullptr };
@@ -70,6 +71,7 @@ protected:
 	void Child_UpdateMatrix(_fmatrix Matrix, _fvector vParentsPos, _fvector vDeltaTranslation);
 	void About_Parent();
 	void About_Transform();
+	void About_Parkour();
 	void About_Texture();
 	void Copy_MapObject(_bool IsChild = false, CEdit_MapObject* pParent = nullptr);
 
@@ -155,6 +157,7 @@ protected:
 
 	_uint m_iLevel = {};
 	OBJECTTYPE m_eObjectType = { OBJECTTYPE::END };
+	PARKOUR_FLAG m_eParkourFlag = { PARKOUR_FLAG::ALL };
 
 	_bool m_IsSonoro = { false };
 	_bool m_IsRender = { true };
@@ -164,7 +167,6 @@ protected:
 	_bool m_fMode = { false };
 	_float m_fTotalTime = {};
 	_float m_fDistortionTime = {};
-
 	_float m_fDynamicVolume = {};
 
 	vector<_string> m_SoundTags;

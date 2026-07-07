@@ -208,7 +208,40 @@ _bool CPhysicsManager::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndP
 	return fOriginFraction > result.mFraction && result.mFraction > 0.f ? true : false;
 }
 
-_bool CPhysicsManager::Box_Cast(const CRigidbody* pRigidbodyCom, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits)
+_bool CPhysicsManager::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer, _float4* pOut)
+{
+	RVec3 StartPos = LoadVec3(vStartPos);
+	RVec3 EndPos = LoadVec3(vEndPos);
+
+#ifdef _DEBUG
+	_float3 vSP{}, vEP{};
+	XMStoreFloat3(&vSP, vStartPos);
+	XMStoreFloat3(&vEP, vEndPos);
+	m_RayPoint.push_back(make_pair(vSP, vEP));
+#endif
+
+	_vector vDir = vEndPos - vStartPos;
+
+	RRayCast ray(StartPos, (EndPos - StartPos));
+	RayCastResult result;
+
+	_float fOriginFraction = result.mFraction;
+	SpecifiedObjectLayerFilter ObjectLayerFilter{ ObjectLayer{iTargetObjectLayer} };
+
+	m_pPhysicsSystem->GetNarrowPhaseQuery().CastRay(ray, result, *m_pRayFilter, ObjectLayerFilter);
+
+	if (nullptr != pOut)
+	{
+		_float fDistanceOffset = 0.8f;
+		if (result.mFraction < 0.1f)
+			return false;
+		XMStoreFloat4(pOut, vStartPos + result.mFraction * vDir * fDistanceOffset);
+	}
+
+	return fOriginFraction > result.mFraction && result.mFraction > 0.f ? true : false;
+}
+
+_bool CPhysicsManager::Box_Cast(const CRigidbody* pRigidbodyCom, const _fvector& vDir, const _float fDistance, const uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits)
 {
 	if (nullptr == pRigidbodyCom)
 		return false;
@@ -284,7 +317,7 @@ _bool CPhysicsManager::Box_Cast(const CRigidbody* pRigidbodyCom, const _fvector&
 	return isHit;
 }
 
-_bool CPhysicsManager::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<SHAPE_CAST_HIT>& OutHits)
+_bool CPhysicsManager::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, const _float fDistance, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit)
 {
 	// 1. 제약 조건
 	if (nullptr == pShape)
@@ -305,7 +338,9 @@ _bool CPhysicsManager::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat,
 
 	// 4. Object Layer Filter
 	// => Parkour Layer만 충돌 되도록
-	SpecifiedObjectLayerFilter ObjectLayerFilter{ ObjectLayer{iObjectLayer} };
+	SpecifiedObjectLayerFilter ObjectLayerFilter{ ObjectLayer{iTargetObjectLayer} };
+
+	// ClosestCollector => 가장 가까운 하나의 Shape만 충돌 처리.
 	ClosestHitCollisionCollector<CastShapeCollector> Collector;
 	m_pPhysicsSystem->GetNarrowPhaseQuery().CastShape(
 		ShapeCastIn, CastSettings, RVec3::sZero(), Collector,
@@ -318,43 +353,41 @@ _bool CPhysicsManager::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat,
 #endif
 	if (isHit)
 	{
-		
 		fEndFraction = Collector.mHit.mFraction;
 		const ShapeCastResult& Hit = Collector.mHit;
-
-		SHAPE_CAST_HIT Result{};
-		Result.fFraction = Hit.mFraction;
-		Result.HitBodyID = Hit.mBodyID2;
-		XMStoreFloat4(&Result.vHitPoint,
+		
+		OutHit.fFraction = Hit.mFraction;
+		OutHit.HitBodyID = Hit.mBodyID2;
+		XMStoreFloat4(&OutHit.vHitPoint,
 			XMVectorSet(Hit.mContactPointOn2.GetX(), Hit.mContactPointOn2.GetY(), Hit.mContactPointOn2.GetZ(), 1.f));
-		XMStoreFloat4(&Result.vHitNormal,
+		XMStoreFloat4(&OutHit.vHitNormal,
 			XMVectorSet(Hit.mPenetrationAxis.GetX(), Hit.mPenetrationAxis.GetY(), Hit.mPenetrationAxis.GetZ(), 0.f));
 			
 		// Memory Pointer 주소
 		uint64 UserData = m_pPhysicsSystem->GetBodyInterface().GetUserData(Hit.mBodyID2);
 		if (0 != UserData)
-			Result.pDesc = reinterpret_cast<COLLISION_DATA*>(UserData)->pDesc;
-
-		OutHits.push_back(Result);
+			OutHit.pDesc = reinterpret_cast<COLLISION_DATA*>(UserData)->pDesc;
 
 #ifdef _DEBUG
-		HitPointsDebug.push_back(_float3(Result.vHitPoint.x, Result.vHitPoint.y, Result.vHitPoint.z));
+		HitPointsDebug.push_back(_float3(OutHit.vHitPoint.x, OutHit.vHitPoint.y, OutHit.vHitPoint.z));
 #endif // _DEBUG
 
 	}
+
+	
 
 #ifdef _DEBUG
 	{
 		SHAPE_CAST_DEBUG Debug{};
 		Debug.pShape = pShape;
-		Debug.StartMatrix = StartTransform;
-		Debug.EndMatrix = StartTransform.PostTranslated(Direction * fEndFraction);
+		Debug.StartMatrix = StartTransform; // 시작 지점 행렬
+		Debug.EndMatrix = StartTransform.PostTranslated(Direction * fEndFraction); // 끝 지점 행렬
 		Debug.isHit = isHit;
 		Debug.HitPoints = move(HitPointsDebug);
 		m_ShapeCastDebugs.push_back(move(Debug));
 	}
 #endif
-
+	OutHit.isHit = isHit;
 
 	return isHit;
 }
@@ -376,13 +409,10 @@ void CPhysicsManager::Render()
 	// Box Cast Render (파쿠르 디버그 토글에 종속) END키를 켰을때만?
 	if (true == m_isParkourDebug)
 	{
-		for (const BOX_CAST_DEBUG& Debug : m_BoxCastDebugs)
-			DrawBoxCast(Debug.pShape, Debug.StartMatrix, Debug.EndMatrix, Debug.isHit, Debug.HitPoints);
-
 		for (const SHAPE_CAST_DEBUG& Debug : m_ShapeCastDebugs)
 			DrawShapeCast(Debug.pShape, Debug.StartMatrix, Debug.EndMatrix, Debug.isHit, Debug.HitPoints);
 	}
-	m_BoxCastDebugs.clear();
+	
 	m_ShapeCastDebugs.clear();
 
 	if (false == m_isRenderAll)
@@ -452,7 +482,7 @@ void CPhysicsManager::DrawShapeCast(const Shape* pShape, const RMat44& StartMatr
 
 	// 히트 지점 마커
 	for (const _float3& vPoint : HitPoints)
-		m_pDebugRenderer->DrawMarker(LoadVec3(vPoint), Color(0.f, 0.f, 255.f, 1.f), 0.15f);
+		m_pDebugRenderer->DrawMarker(LoadVec3(vPoint), Color(255.f, 255.f, 0.f, 1.f), 0.15f);
 
 	static_cast<CDebugRender*>(m_pDebugRenderer)->End();
 }

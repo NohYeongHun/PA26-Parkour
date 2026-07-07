@@ -173,6 +173,7 @@ void CParser::Read_Map_Dat(LEVEL eLevel, const _string pFilePath)
 
 		File.read(reinterpret_cast<char*>(&Desc.iShaderPassIndex), sizeof(_uint));
 		File.read(reinterpret_cast<char*>(&Desc.eObjectType), sizeof(OBJECTTYPE));
+		File.read(reinterpret_cast<char*>(&Desc.eParkourFlag), sizeof(PARKOUR_FLAG));
 		_float4x4 Matrix = {};
 		File.read(reinterpret_cast<char*>(&Matrix), sizeof(_float4x4));
 		Desc.WorldMatrix = &Matrix;
@@ -183,11 +184,12 @@ void CParser::Read_Map_Dat(LEVEL eLevel, const _string pFilePath)
 		_wstring ModelName = StringToWString(Desc.ModelName);
 
 		m_pGameInstance->Add_Work([&, ModelName = string(Desc.ModelName), ShaderPass = Desc.iShaderPassIndex, eObjectType = Desc.eObjectType,
-			Matrix = *Desc.WorldMatrix, BoundingPos = Desc.vBoundingPos, BoundingExtends = Desc.vBoundingExtends]() mutable {
+			eParkourFlag = Desc.eParkourFlag, Matrix = *Desc.WorldMatrix, BoundingPos = Desc.vBoundingPos, BoundingExtends = Desc.vBoundingExtends]() mutable {
 			CMapObject::MAP_LOAD pDesc{};
 			strcpy_s(pDesc.ModelName, ModelName.c_str());
 			pDesc.iShaderPassIndex = ShaderPass;
 			pDesc.eObjectType = eObjectType;
+			pDesc.eParkourFlag = eParkourFlag;
 			pDesc.WorldMatrix = &Matrix;
 			pDesc.iLevel = ENUM_CLASS(eLevel);
 			pDesc.vBoundingPos = BoundingPos;

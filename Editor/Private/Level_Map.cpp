@@ -264,15 +264,7 @@ void CLevel_Map::Menu_Object()
 	ImGui::Begin("Menu_Object");
 	if (m_pPickedObject)
 		m_pPickedObject->Set_ImGuiOption();
-
-	/*switch (m_eObjectType)
-	{
-	default:
-		
-		else if (m_pPickedDestructObject)
-			m_pPickedDestructObject->Set_ImGuiOption();
-		break;
-	}*/
+	
 	ImGui::End();
 }
 
@@ -528,6 +520,7 @@ void CLevel_Map::Menu_Save_Load()
 
 								File.read(reinterpret_cast<char*>(&Desc.iShaderPassIndex), sizeof(_uint));
 								File.read(reinterpret_cast<char*>(&Desc.eObjectType), sizeof(OBJECTTYPE));
+								File.read(reinterpret_cast<char*>(&Desc.eParkourFlag), sizeof(PARKOUR_FLAG));
 								_float4x4 Matrix = {};
 								File.read(reinterpret_cast<char*>(&Matrix), sizeof(_float4x4));
 								Desc.WorldMatrix = &Matrix;

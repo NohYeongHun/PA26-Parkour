@@ -786,14 +786,19 @@ _bool CGameInstance::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos
 	return m_pPhysicsManager->Ray_Cast(vStartPos, vEndPos, pOut);
 }
 
+_bool CGameInstance::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer, _float4* pOut)
+{
+	return m_pPhysicsManager->Ray_Cast(vStartPos, vEndPos, iTargetObjectLayer, pOut);
+}
+
 _bool CGameInstance::Box_Cast(const CRigidbody* pRigidbodyCom, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits)
 {
 	return m_pPhysicsManager->Box_Cast(pRigidbodyCom, vDir, fDistance, iObjectLayer, OutHits);
 }
 
-_bool CGameInstance::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<SHAPE_CAST_HIT>& OutHits)
+_bool CGameInstance::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, SHAPE_CAST_HIT& OutHit)
 {
-	return m_pPhysicsManager->Shape_Cast(pShape, vQuat, vPos, vDir, fDistance, iObjectLayer, OutHits);
+	return m_pPhysicsManager->Shape_Cast(pShape, vQuat, vPos, vDir, fDistance, iObjectLayer, OutHit);
 }
 
 #ifdef _DEBUG

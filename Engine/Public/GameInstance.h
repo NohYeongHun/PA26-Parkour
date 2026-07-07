@@ -62,12 +62,6 @@ public:
 
 #pragma region FONT_MANAGER
 	HRESULT		Add_Font(const _wstring& strFontTag, const _char* pFilePath, const _int iPixelHeight = 64U);
-	//HRESULT		Draw_Text(const _wstring& strFontTag, const _tchar* pText, const _float2& vPosition, _fvector vColor = XMVectorSet(1.f, 1.f, 1.f, 1.f), _float fRadian = 0.f, const _float2& vOrigin = _float2(0.f, 0.f), const _float2& vScale = _float2(1.f, 1.f));
-	//void		Add_FloatingText(const _wstring& strFontTag, const _tchar* pText, FONT_SINGLEDESC tSingleFontDesc);
-	//_bool		Draw_Font(_wstring strFontTag, const _tchar* pText, _float2 vPos, _float fScale, _float4 vColor, _uint iShaderFlag);
-	//_bool		Draw_Font(FONT_SINGLEDESC* pSingleDesc);
-	//void		Add_FloatingText(const _wstring& strFontTag, const _wstring& strText, _float2 vScreenPos, _float fScale, _float fLifeTime, _uint iPassIndex, _float4 vColor);
-	//void		Add_FloatingText(FONT_SINGLEDESC pDesc);
 	FTCUSTOM_FONT*	Find_Font(const _wstring& strFontTag);
 	const FTCUSTOM_FONT_GLYPH* Get_Glyph(const _wstring& strFontTag, _uint code);
 	ID3D11ShaderResourceView* Get_AtlasSRV(const _wstring& strFontTag);
@@ -218,8 +212,9 @@ public:
 	void					Register_Virtual(CharacterVirtual* pVirtual);
 	void					Remove_Virtual(CharacterVirtual* pVirtual);
 	_bool					Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, _float4* pOut);	// pOut->w = 0 반환함에 주의.
+	_bool					Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer, _float4* pOut);
 	_bool					Box_Cast(const class CRigidbody* pRigidbodyCom, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits);
-	_bool					Shape_Cast(RefConst<Shape> pShape,  const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<SHAPE_CAST_HIT>& OutHits);
+	_bool					Shape_Cast(RefConst<Shape> pShape,  const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, SHAPE_CAST_HIT& OutHit);
 
 #ifdef _DEBUG
 	void					DrawShape(const Shape* pShape, RMat44 Matrix, Color BodyColor = Color(0.f, 255.f, 0.f, 1.f));

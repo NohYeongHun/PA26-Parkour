@@ -70,8 +70,9 @@ public:
 #endif
 
 	_bool				Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, _float4* pOut);
-	_bool				Box_Cast(const class CRigidbody* pRigidbodyCom, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits);
-	_bool				Shape_Cast(RefConst<Shape> pShape,  const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<SHAPE_CAST_HIT>& OutHits);
+	_bool				Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer, _float4* pOut);
+	_bool				Box_Cast(const class CRigidbody* pRigidbodyCom, const _fvector& vDir, const _float fDistance, const uint16 iTargetObjectLayer, vector<BOX_CAST_HIT>& OutHits);
+	_bool				Shape_Cast(RefConst<Shape> pShape,  const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, const _float fDistance, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit);
 	
 	
 
@@ -113,6 +114,7 @@ private:
 	_bool m_isParkourDebug = { false };
 	_uint m_iHighlightLayer = {};
 	vector<pair<_float3, _float3>>	m_RayPoint;
+	
 
 	struct BOX_CAST_DEBUG
 	{

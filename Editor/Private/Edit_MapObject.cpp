@@ -57,6 +57,7 @@ HRESULT CEdit_MapObject::Initialize_Clone(void* pArg)
     m_vNewTranslation = m_vTranslation;
     m_iShaderPassIndex = pDesc->iShaderPassIndex;
     m_eObjectType = pDesc->eObjectType;
+	m_eParkourFlag = pDesc->eParkourFlag;
     MODELTYPE::MAP;
 
     _char Tag[MAX_PATH] = "NonInteraction";
@@ -114,6 +115,7 @@ HRESULT CEdit_MapObject::Initialize_Clone(void* pArg)
 
 		event.File.write(reinterpret_cast<const char*>(&m_iShaderPassIndex), sizeof(_uint));
 		event.File.write(reinterpret_cast<const char*>(&m_eObjectType), sizeof(OBJECTTYPE));
+		event.File.write(reinterpret_cast<const char*>(&m_eParkourFlag), sizeof(PARKOUR_FLAG));
 		_float4x4 WorldMatrix;
 		XMStoreFloat4x4(&WorldMatrix, m_pTransformCom->Get_WorldMatrix());
 		event.File.write(reinterpret_cast<const _char*>(&WorldMatrix), sizeof(_float4x4));
@@ -374,8 +376,11 @@ void CEdit_MapObject::Set_ImGuiOption()
 	}
 
 	About_Parent();
-
 	About_Transform();
+	if (m_eObjectType == OBJECTTYPE::PARKOUR)
+		About_Parkour();
+
+
 
 	m_pMapInterface->Set_ShaderPass(m_pShaderCom, &m_iShaderPassIndex);
 	ImGui::SameLine();
@@ -411,24 +416,7 @@ void CEdit_MapObject::Set_ImGuiOption()
 
 	About_Texture();
 
-	/*if (ImGui::BeginCombo("Sound Tag", m_SoundTags[m_iPickedSoundTag].c_str()))
-	{
-		for (_uint i = 0; i < ENUM_CLASS(OBJECTTYPE::END); ++i)
-		{
-			if (ImGui::Selectable(m_SoundTags[i].c_str()))
-			{
-				m_iPickedSoundTag = i;
-			}
-		}
-		ImGui::EndCombo();
-	}
-	ImGui::InputFloat("Sound Volume", &m_fDynamicVolume);
-
-	if (ImGui::Button("Play Sound"))
-	{
-		m_pGameInstance->Stop_Sound_Dynamic(ENUM_CLASS(CHANNEL::ENEMY_VOICE));
-		m_pGameInstance->Play_Sound_Dynamic(StringToWString(m_SoundTags[m_iPickedSoundTag]), ENUM_CLASS(CHANNEL::ENEMY_VOICE), m_fDynamicVolume, m_pTransformCom, 0.f, 100.f, 1.f);
-	}*/
+	
 #endif
 }
 
@@ -881,6 +869,7 @@ void CEdit_MapObject::About_Parent()
 
 void CEdit_MapObject::About_Transform()
 {
+	ImGui::SeparatorText("About_Transform");
 	m_pMapInterface->Set_Transform(m_pTransformCom);
 
 
@@ -891,8 +880,21 @@ void CEdit_MapObject::About_Transform()
 		Make_ChildLocalMatrix(dynamic_cast<CTransform*>(m_pParent->Get_Component(TEXT("Com_Transform")))->Get_WorldMatrix());
 }
 
+void CEdit_MapObject::About_Parkour()
+{
+	ImGui::SeparatorText("About_Parkour");
+
+	_uint* pFlag = reinterpret_cast<_uint*>(&m_eParkourFlag);
+
+	ImGui::CheckboxFlags("Vaultable", pFlag, ENUM_CLASS(PARKOUR_FLAG::VAULTABLE));
+	ImGui::CheckboxFlags("Climbable", pFlag, ENUM_CLASS(PARKOUR_FLAG::CLIMBABLE));
+	ImGui::CheckboxFlags("Hangable", pFlag, ENUM_CLASS(PARKOUR_FLAG::HANGABLE));
+	ImGui::CheckboxFlags("Mantleable", pFlag, ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE));
+}
+
 void CEdit_MapObject::About_Texture()
 {
+	ImGui::SeparatorText("About_Texture");
 	if (m_IsCustomTexture)
 	{
 		IGFD::FileDialogConfig config;

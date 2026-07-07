@@ -156,6 +156,7 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 	{
 		m_AnimPlayDesc.strAnimationName = "Run";
 		m_AnimPlayDesc.fBlendDuration = 0.2f;
+		m_RootModtionDesc.isEnable = false;
 		m_pColliderCom->Set_Gravity(true);
 	}
 
@@ -251,10 +252,13 @@ HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 
 HRESULT CTraceur::Ready_EnvQueryComponents(const CHARACTER_DESC* pDesc)
 {
-	CMovementComponent::COMPONENT_DESC MoveCompDesc{};
-	MoveCompDesc.pOwner = this;
+	CEnvironmentQueryComponent::ENV_QUERY_DESC EnvCompDesc{};
+	EnvCompDesc.pOwner = this;
+	EnvCompDesc.fShapeTraceDistance = 4.f;
+	EnvCompDesc.fLineTraceDistance = 4.f;
+	EnvCompDesc.eTargetLayer = COLLISIONLAYER::PARKOUR;
 	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_EnvQuery"),
-		TEXT("Com_EnvQuery"), reinterpret_cast<CComponent**>(&m_pEnvQueryCom), &MoveCompDesc)))
+		TEXT("Com_EnvQuery"), reinterpret_cast<CComponent**>(&m_pEnvQueryCom), &EnvCompDesc)))
 		return E_FAIL;
 
 	return S_OK;
@@ -295,23 +299,6 @@ HRESULT CTraceur::Bind_Matrices()
 
 	return S_OK;
 }
-
-#ifdef _DEBUG
-void CTraceur::Print_Transform()
-{
-	_float4 vPosition{};
-	XMStoreFloat4(&vPosition, m_pTransformCom->Get_State(STATE::POSITION));
-	cout << "Character (x, y, z) : " << vPosition.x << ", " << vPosition.y << ", " << vPosition.z << endl;
-
-}
-void CTraceur::Print_CameraLook()
-{
-	_float4 vLook{};
-	XMStoreFloat4(&vLook, m_pSpringCamera->Get_LookVector());
-	cout << "Camera Look (x, y, z) : " << vLook.x << ", " << vLook.y << ", " << vLook.z << endl;
-}
-#endif // _DEBUG
-
 
 
 CTraceur* CTraceur::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)

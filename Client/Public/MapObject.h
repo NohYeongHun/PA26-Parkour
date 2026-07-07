@@ -18,6 +18,7 @@ public:
 		_uint iShaderPassIndex = {};
 		_float4x4* WorldMatrix = { nullptr };
 		OBJECTTYPE eObjectType;
+		PARKOUR_FLAG eParkourFlag;
 		_uint iLevel = {};
 		_float3 vBoundingPos;
 		_float3 vBoundingExtends;
@@ -57,7 +58,8 @@ private:
 	_bool						m_IsParkour = { false };
 
 private:
-	CALLBACK_CLIENT m_CallBack = {};
+	/* Jolt로 탐지될 정보 */
+	CALLBACK_CLIENT m_CallBack = {}; 
 
 
 #ifdef _DEBUG

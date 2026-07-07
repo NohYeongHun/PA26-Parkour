@@ -25,6 +25,8 @@ private:
 public:
 	const Shape*						Get_Shape() const { return m_pShape; }
 	const _fvector&						Get_Offset() const;
+	const _float						Get_Height() const { return m_fHeight; }
+	const _float						Get_Radius() const { return m_fRadius; }
 	// Data (void*)
 	void								Set_Desc(void* pData) { m_tCollisionData.pDesc = pData; }
 	
@@ -57,20 +59,21 @@ public:
 private:
 	Ref<CharacterVirtual>		m_pCharacterVirtual = { nullptr };
 	COLLISION_DATA				m_tCollisionData = {};
-	BodyInterface*					m_pBodyInterface = { nullptr };
-	BodyID							m_BodyID = {};
+	BodyInterface*				m_pBodyInterface = { nullptr };
+	BodyID						m_BodyID = {};
 
-	_bool								m_isActivate = { true };
+	_bool						m_isActivate = { true };
+	_uint						m_iCollisionLayer = {};
+	_bool						m_isGravity = { true };
 
-	_uint								m_iCollisionLayer = {};
-
-	_bool								m_isGravity = { true };
-
-	_float3							m_vOffset = {};
-	_float								m_fRayOffset = {};
+	_float3						m_vOffset = {};
+	_float						m_fRayOffset = {};
 	RefConst<Shape>				m_pShape = { nullptr };
+	_bool						m_isLand = { true };
 
-	_bool								m_isLand = { true };
+private:
+	_float						m_fHeight = {};
+	_float						m_fRadius = {};
 private:
 	// 경사로에서 이동속도 변화 -> Slide로 보정
 	Vec3								Slide(const Vec3& Velocity);
