@@ -18,7 +18,7 @@ public:
 		_uint iShaderPassIndex = {};
 		_float4x4* WorldMatrix = { nullptr };
 		OBJECTTYPE eObjectType;
-		PARKOUR_FLAG eParkourFlag;
+		PARKOUR_FLAG eObjectParkourFlag;
 		_uint iLevel = {};
 		_float3 vBoundingPos;
 		_float3 vBoundingExtends;

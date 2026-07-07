@@ -56,7 +56,28 @@ namespace Client
 	{
 		void* pTransform = { nullptr };  // Transform;
 		OBJECTTYPE eObjectType{ OBJECTTYPE::END }; 
-		PARKOUR_FLAG eParkourFlag = { PARKOUR_FLAG::END };
+		PARKOUR_FLAG eObjectParkourFlag = { PARKOUR_FLAG::END };
 	}CALLBACK_CLIENT;
+
+
+#pragma region ENVIRONMENT
+	typedef struct tagObstacleGeometry {
+		_float3 vTopEdgePos;      // 상단 모서리(모션워핑 타겟)
+		_float3 vTopNormal;       // 상단면 노멀
+		_float  fObstacleHeight;  // 캐릭터 발 기준 상단면 높이
+		_float  fDepth;           // 장애물 두께
+		_bool   hasLandingSpace;  // 반대편 착지 공간 유무
+	}OBSTACLE_GEOMETRY;
+
+	typedef struct tagEnvQueryResult {
+		_bool             isValid;       
+		_uint             iCandidateFlag;
+		PARKOUR_ACTION    eBestAction;     
+		OBSTACLE_GEOMETRY Geometry;
+	}ENV_QUERY_RESULT;
+
+
+#pragma endregion
+
 
 }

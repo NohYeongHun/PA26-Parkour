@@ -14,6 +14,13 @@ namespace Client
 		ALL = 0xF, // 15
 		END
 	};
+
+	// 이번 프레임에 실행 가능한 실제 파쿠르 액션.
+	enum class PARKOUR_ACTION {
+		NONE, VAULT, MANTLE, CLIMB, HANG, END
+	};
+
+
 	enum class INSTANCETYPE { DEFAULT, SONORO, NONSONORO, END };
 
 	enum class SHADER_VTXANIMMESH_PATH { DEFAULT, NORMAL, END};

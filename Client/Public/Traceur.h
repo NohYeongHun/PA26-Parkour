@@ -45,7 +45,6 @@ private:
 	_float m_fTrackPosition;
 	ANIMATION_PLAY_DESC m_AnimPlayDesc{}; 
 	ROOTMOTION_DESC m_RootModtionDesc{};
-	vector<SHAPE_CAST_HIT> m_OutHits{};
 
 
 private:

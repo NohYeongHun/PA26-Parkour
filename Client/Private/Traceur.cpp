@@ -170,6 +170,7 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D3), KEYSTATE::UP))
 	{
 		m_AnimPlayDesc.strAnimationName = "ForwardShortJump";
+		m_RootModtionDesc.isEnable = true;
 		m_AnimPlayDesc.fBlendDuration = 0.f;
 		m_pColliderCom->Set_Gravity(false);
 	}

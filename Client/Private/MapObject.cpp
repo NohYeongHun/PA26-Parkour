@@ -284,7 +284,7 @@ void CMapObject::Ready_Components(const MAP_LOAD* pDesc)
 	{
 		m_CallBack.pTransform = m_pTransformCom;
 		m_CallBack.eObjectType = pDesc->eObjectType;
-		m_CallBack.eParkourFlag = pDesc->eParkourFlag; // ParkourFlag?
+		m_CallBack.eObjectParkourFlag = pDesc->eObjectParkourFlag; // ParkourFlag?
 		m_pRigidbodyCom->Set_Desc(&m_CallBack);
 	}
 

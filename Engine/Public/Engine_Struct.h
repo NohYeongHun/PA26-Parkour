@@ -396,13 +396,15 @@ namespace Engine
 
 
 #pragma region PHYSICS
-	typedef struct tagBoxCastHit
+	typedef struct tagRayCastHit
 	{
-		_float4 vHitPoint;
-		_float4 vHitNormal; // 현재 면이 위를 향한 면인가?
-		_float fFraction;
-		BodyID HitBodyID;
-	}BOX_CAST_HIT;
+		_bool   isHit = { false };
+		_float  fFraction = 1.f;
+		_float  fDistance = 0.f;
+		_float3 vHitPosition{};
+		_float3 vHitNormal{};
+		BodyID  BodyID{};
+	}RAY_CAST_HIT;
 
 	typedef struct tagShapeCastHit
 	{

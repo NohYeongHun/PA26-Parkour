@@ -213,7 +213,7 @@ public:
 	void					Remove_Virtual(CharacterVirtual* pVirtual);
 	_bool					Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, _float4* pOut);	// pOut->w = 0 반환함에 주의.
 	_bool					Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer, _float4* pOut);
-	_bool					Box_Cast(const class CRigidbody* pRigidbodyCom, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits);
+	RAY_CAST_HIT			Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer);
 	_bool					Shape_Cast(RefConst<Shape> pShape,  const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, SHAPE_CAST_HIT& OutHit);
 
 #ifdef _DEBUG

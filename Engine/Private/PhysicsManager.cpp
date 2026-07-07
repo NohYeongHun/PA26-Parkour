@@ -241,81 +241,66 @@ _bool CPhysicsManager::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndP
 	return fOriginFraction > result.mFraction && result.mFraction > 0.f ? true : false;
 }
 
-_bool CPhysicsManager::Box_Cast(const CRigidbody* pRigidbodyCom, const _fvector& vDir, const _float fDistance, const uint16 iObjectLayer, vector<BOX_CAST_HIT>& OutHits)
+RAY_CAST_HIT CPhysicsManager::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer)
 {
-	if (nullptr == pRigidbodyCom)
-		return false;
+	RAY_CAST_HIT RayCastHit{};
 
-	const Body* pBody = pRigidbodyCom->Get_Body();
-	if (nullptr == pBody)
-		return false;
-
-	OutHits.clear();
-	RMat44 StartTransform = pBody->GetWorldTransform();
-
-	// 방향
-	Vec3 Direction = LoadVec3(vDir).Normalized() * fDistance;
-	// ShapeCast 객체
-	RefConst<Shape> pShape = pBody->GetShape();
-	RShapeCast ShapeCastIn = RShapeCast::sFromWorldTransform(
-		pShape, Vec3::sReplicate(1.f), StartTransform, Direction
-	);
-
-	ShapeCastSettings CastSettings;
-
-	SpecifiedObjectLayerFilter ObjectLayerFilter{ ObjectLayer{iObjectLayer} };
-
-	// 충돌한 객체 후보군을 모을 곳
-	AllHitCollisionCollector<CastShapeCollector> Collector;
-	m_pPhysicsSystem->GetNarrowPhaseQuery().CastShape(
-		ShapeCastIn, CastSettings, RVec3::sZero(), Collector,
-		*m_pRayFilter, ObjectLayerFilter);
-
-	_bool isHit = Collector.HadHit();
-	_float fEndFraction = 1.f;
+	RVec3 StartPos = LoadVec3(vStartPos);
+	RVec3 EndPos = LoadVec3(vEndPos);
 
 #ifdef _DEBUG
-	vector<_float3> HitPointsDebug;
+	_float3 vSP{}, vEP{};
+	XMStoreFloat3(&vSP, vStartPos);
+	XMStoreFloat3(&vEP, vEndPos);
+	m_RayPoint.push_back(make_pair(vSP, vEP));
 #endif
 
-	if (isHit)
+	_vector vDir = vEndPos - vStartPos;
+
+	RRayCast ray(StartPos, (EndPos - StartPos));
+	RayCastResult result;
+
+	_float fOriginFraction = result.mFraction;
+	SpecifiedObjectLayerFilter ObjectLayerFilter{ ObjectLayer{iTargetObjectLayer} };
+
+	m_pPhysicsSystem->GetNarrowPhaseQuery().CastRay(ray, result, *m_pRayFilter, ObjectLayerFilter);
+
+
+	if (fOriginFraction > result.mFraction && result.mFraction > 0.f)
 	{
-		Collector.Sort();
-		fEndFraction = Collector.mHits[0].mFraction;
+		RayCastHit.isHit = true;
+		RayCastHit.fFraction = result.mFraction;
+		float fLength = XMVectorGetX(XMVector3Length(vDir));
+		RayCastHit.fDistance = fLength * result.mFraction;
 
-		OutHits.reserve(OutHits.size() + Collector.mHits.size());
-		for (const ShapeCastResult& Hit : Collector.mHits)
+		_vector vHitPos = vStartPos + vDir * result.mFraction;
+		XMStoreFloat3(&RayCastHit.vHitPosition, vHitPos);
+		RayCastHit.BodyID = result.mBodyID;
+		BodyLockRead lock(
+			m_pPhysicsSystem->GetBodyLockInterface(),
+			result.mBodyID);
+
+		if (lock.Succeeded())
 		{
-			BOX_CAST_HIT Result{};
-			Result.fFraction = Hit.mFraction;
-			Result.HitBodyID = Hit.mBodyID2;
-			XMStoreFloat4(&Result.vHitPoint,
-				XMVectorSet(Hit.mContactPointOn2.GetX(), Hit.mContactPointOn2.GetY(), Hit.mContactPointOn2.GetZ(), 1.f));
-			XMStoreFloat4(&Result.vHitNormal,
-				XMVectorSet(Hit.mPenetrationAxis.GetX(), Hit.mPenetrationAxis.GetY(), Hit.mPenetrationAxis.GetZ(), 0.f));
+			const Body& body = lock.GetBody();
 
-			OutHits.push_back(Result);
+			Vec3 normal =
+				body.GetWorldSpaceSurfaceNormal(
+					result.mSubShapeID2,
+					LoadVec3(vHitPos));
 
-#ifdef _DEBUG
-			HitPointsDebug.push_back(_float3(Result.vHitPoint.x, Result.vHitPoint.y, Result.vHitPoint.z));
-#endif
+			RayCastHit.vHitNormal =
+			{
+				normal.GetX(),
+				normal.GetY(),
+				normal.GetZ()
+			};
 		}
 	}
-
-#ifdef _DEBUG
-	{
-		BOX_CAST_DEBUG Debug{};
-		Debug.pShape = pShape;
-		Debug.StartMatrix = StartTransform;
-		Debug.EndMatrix = StartTransform.PostTranslated(Direction * fEndFraction);
-		Debug.isHit = isHit;
-		Debug.HitPoints = move(HitPointsDebug);
-		m_BoxCastDebugs.push_back(move(Debug));
-	}
-#endif
-
-	return isHit;
+	
+	return RayCastHit;
 }
+
 
 _bool CPhysicsManager::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, const _float fDistance, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit)
 {
