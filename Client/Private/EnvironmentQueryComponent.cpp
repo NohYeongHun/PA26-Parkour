@@ -55,9 +55,9 @@ void CEnvironmentQueryComponent::Execute()
 		Extract_Geometry();
 		Judge_Condition();
 
-#ifdef _DEBUG
-		Print_Debug();
-#endif
+//#ifdef _DEBUG
+//		Print_Debug();
+//#endif
 	}
 }
 
@@ -179,8 +179,13 @@ void CEnvironmentQueryComponent::Extract_Geometry()
 	_vector vLandEnd   = XMVectorSetY(vLandXZ, XMVectorGetY(vBottom) - fTotalHeight);
 
 	// 바닥은 MAP 레이어
-	Geo.hasLandingSpace = m_pGameInstance->Ray_Cast(vLandStart, vLandEnd, ENUM_CLASS(m_eTargetLayer)).isHit
-		|| m_pGameInstance->Ray_Cast(vLandStart, vLandEnd, ENUM_CLASS(COLLISIONLAYER::MAP)).isHit;
+	RAY_CAST_HIT LandRayHit = m_pGameInstance->Ray_Cast(vLandStart, vLandEnd, ENUM_CLASS(m_eTargetLayer));
+	if (false == LandRayHit.isHit)
+		LandRayHit = m_pGameInstance->Ray_Cast(vLandStart, vLandEnd, ENUM_CLASS(COLLISIONLAYER::MAP));
+
+	Geo.hasLandingSpace = LandRayHit.isHit;
+	if (LandRayHit.isHit)
+		Geo.vLandingPos = LandRayHit.vHitPosition;
 }
 
 // LineTrace의 Hit 패턴, 정해진 파쿠르 태그, 기하 정보로 최종 액션 판정.
