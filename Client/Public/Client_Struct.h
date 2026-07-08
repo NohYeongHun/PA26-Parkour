@@ -69,14 +69,24 @@ namespace Client
 		_float3 vLandingPos;
 		_bool   hasLandingSpace;  // 반대편 착지 공간 유무
 		_bool   isTopReachable;   // 상단 모서리가 최대 도달 높이 내에 있는지 (false면 벽타기 CLIMB만 가능)
+		_float3 vFrontHitPos;     // 가장 낮은 수평 레이의 히트 지점 (전면 위치)
+		_float3 vFrontNormal;     // 그 히트의 노멀 (전면 노멀)
 	}OBSTACLE_GEOMETRY;
 
 	typedef struct tagEnvQueryResult {
-		_bool             isValid;       
+		_bool             isValid;
 		_uint             iCandidateFlag;
-		PARKOUR_ACTION    eBestAction;     
+		PARKOUR_ACTION    eBestAction;
 		OBSTACLE_GEOMETRY Geometry;
 	}ENV_QUERY_RESULT;
+
+	typedef struct tagVaultPlan
+	{
+		_float3 vFaceDir;        // 장애물을 향한 수평 단위 방향
+		_float3 vLandingPos;     // 검증된 착지 지면 위치
+		_float3 vTopEdgePos;     // 장애물 상단 모서리 (참조용)
+		_float  fRootMotionRate; // 필요거리 / 클립변위 (워핑 배율)
+	}VAULT_PLAN;
 
 
 #pragma endregion

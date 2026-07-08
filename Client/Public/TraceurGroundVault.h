@@ -1,5 +1,7 @@
-#pragma once
+﻿#pragma once
 #include "GroundState.h"
+#include "Client_Struct.h"
+
 NS_BEGIN(Client)
 class CTraceurGroundVault final : public CGroundState
 {
@@ -37,7 +39,8 @@ private:
 	void Align_ToObstacle();
 
 private:
-	_bool m_States[STATE::END];
+	VAULT_PLAN m_Plan{};
+	_bool      m_bValidPlan = false;
 
 public:
 	static CTraceurGroundVault* Create(class CTraceur* pOwner);

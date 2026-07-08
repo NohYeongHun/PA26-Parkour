@@ -8,7 +8,7 @@ NS_BEGIN(Client)
 #pragma region DEPTH 1
 enum class ETraceurGroundState : _uint
 {
-	Locomotion = 0,	// 대기/걷기/달리기 통합
+	Move = 0,	// 대기/걷기/달리기 통합
 	Sprint,			// 전력질주
 	Land,			// 착지
 	Vault,			// 장애물 넘기

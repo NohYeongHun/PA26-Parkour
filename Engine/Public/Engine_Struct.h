@@ -319,8 +319,6 @@ namespace Engine
 		_uint iWeightClipDU;       // 4 
 	}ANIMATIONFLY_CBINFO;
 
-	
-
 	typedef struct tagMorphDeltaInfo
 	{
 		_float3 vPosDelta;	  // 위치 변화량
@@ -430,6 +428,12 @@ namespace Engine
 		_bool isHit = { false };
 		void* pDesc = { nullptr }; // 해석은 호출부 몫
 	}SHAPE_CAST_HIT;
+
+	typedef struct tagRootMotionDelta
+	{
+		_float3 vTranslate;
+		_float4 qRotation;
+	}ROOT_MOTION_DELTA;
 #pragma endregion
 
 

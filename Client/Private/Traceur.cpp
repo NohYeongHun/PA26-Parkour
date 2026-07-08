@@ -9,6 +9,7 @@
 #include "MovementComponent.h"
 #include "EnvironmentQueryComponent.h"
 #include "TraceurFactory.h"
+#include "TraceurState_Enum.h"
 
 
 CTraceur::CTraceur(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
@@ -231,8 +232,12 @@ void CTraceur::Update_EnvQuery(_float fTimeDelta)
 {
 	if (nullptr == m_pEnvQueryCom)
 		return;
-	
-	// 주변 환경을 탐지합니다.
+
+	// Vault 실행 중에는 재판정 금지 (재트리거 방지)
+	if (nullptr != m_pStateMachineCom
+		&& m_pStateMachineCom->Get_CurrentSubState() == ENUM_CLASS(ETraceurGroundState::Vault))
+		return;
+
 	m_pEnvQueryCom->Execute();
 }
 
@@ -298,8 +303,8 @@ HRESULT CTraceur::Ready_EnvQueryComponents(const CHARACTER_DESC* pDesc)
 {
 	CEnvironmentQueryComponent::ENV_QUERY_DESC EnvCompDesc{};
 	EnvCompDesc.pOwner = this;
-	EnvCompDesc.fShapeTraceDistance = 4.f;
-	EnvCompDesc.fLineTraceDistance = 4.f;
+	EnvCompDesc.fShapeTraceDistance = 2.f;
+	EnvCompDesc.fLineTraceDistance = 2.f;
 	EnvCompDesc.eTargetLayer = COLLISIONLAYER::PARKOUR;
 	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_EnvQuery"),
 		TEXT("Com_EnvQuery"), reinterpret_cast<CComponent**>(&m_pEnvQueryCom), &EnvCompDesc)))

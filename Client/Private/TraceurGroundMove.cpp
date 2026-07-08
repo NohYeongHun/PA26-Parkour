@@ -4,6 +4,8 @@
 #include "TraceurState_Enum.h"
 #include "MovementComponent.h"
 #include "EnvironmentQueryComponent.h"
+#include "Collider.h"
+#include "Model.h"
 
 HRESULT CTraceurGroundMove::Initialize(CTraceur* pOwner)
 {
@@ -65,16 +67,18 @@ void CTraceurGroundMove::Update_Animations(_float fTimeDelta)
 void CTraceurGroundMove::Check_Physics(_float fTimeDelta)
 {
 	const ENV_QUERY_RESULT& EnvResult = m_pEnvQueryCom->Get_QueryResult();
-	m_States[VAULT] = m_States[MOVE] && m_States[RUN]
-		&& EnvResult.isValid && EnvResult.eBestAction == PARKOUR_ACTION::VAULT;
+	if (!m_States[MOVE] || !m_States[RUN] || !EnvResult.isValid
+		|| EnvResult.eBestAction != PARKOUR_ACTION::VAULT)
+		return;
+
+	m_States[STATE::VAULT] = true;
 }
 
 void CTraceurGroundMove::Check_StateTransition(_float fTimeDelta)
 {
 	if (m_States[VAULT])
-	{
-		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Vault));
-	}
+		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND),
+			ENUM_CLASS(ETraceurGroundState::Vault), &m_VaultPlan);
 }
 
 void CTraceurGroundMove::SetUp_Animations()

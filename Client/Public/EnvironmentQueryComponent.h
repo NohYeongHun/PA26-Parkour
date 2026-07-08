@@ -58,6 +58,7 @@ public:
 	const ENV_QUERY_RESULT& Get_QueryResult() const { return m_EnvQueryResult; }
 
 	void Execute();
+	_bool Find_Ground(const _fvector& vProbePos, _float fUpOffset, _float fMaxDrop, _float3& vOutGroundPos);
 
 private:
 	_bool Detect_Obstacle();

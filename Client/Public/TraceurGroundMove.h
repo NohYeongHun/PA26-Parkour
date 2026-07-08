@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "GroundState.h"
+#include "Client_Define.h"
 
 NS_BEGIN(Client)
 
@@ -7,6 +8,11 @@ NS_BEGIN(Client)
 class CTraceurGroundMove final : public CGroundState
 {
 private:
+	static constexpr _float FVAULT_WARP_MIN        = 0.8f;
+	static constexpr _float FVAULT_WARP_MAX        = 1.3f;
+	static constexpr _float FVAULT_LANDING_MARGIN  = 0.3f;
+	static constexpr _float FVAULT_MAX_LANDING_DROP = 2.0f;
+
 	enum STATE
 	{
 		MOVE = 0,
@@ -36,7 +42,7 @@ private:
 	void State_Reset();
 
 private:
-	_bool m_States[STATE::END] = {};
+	_bool      m_States[STATE::END] = {};
 
 public:
 	static CTraceurGroundMove* Create(class CTraceur* pOwner);

@@ -15,6 +15,11 @@ public:
 	virtual void OnExit() override;
 
 public:
+	//_bool IsState(EStateCategory eCategory);
+	_bool IsVault() const;
+
+
+public:
 	virtual _bool Play_Animation(_float fTimeDelta);
 
 protected:

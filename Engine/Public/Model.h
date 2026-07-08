@@ -48,6 +48,7 @@ private:
 	virtual ~CModel() = default;
 
 public:
+	const ROOT_MOTION_DELTA&			Get_RootMotionDelta();
 	_uint								Get_NumBones(_uint iMeshIndex);
 	void								Copy_BoneMatrices(_float4x4* pOutMatrices, _uint iMeshIndex);
 	const vector<class CBone*>			Get_Bones() { return m_Bones; }
@@ -62,6 +63,7 @@ public:
 	void Set_ShapeKeyWeight(const _string& strKeyName, _float fWeight);
 	_uint Get_NumShapeKeys() { return static_cast<_uint>(m_ShapeKeyNames.size()); }
 	void Set_TrackPosition(const _string& strAnimName, const _float fTrackPosition);
+	_float3 Get_RootMotionTotalDisplacement(const _string& strAnimationName);
 
 
 #ifdef _DEBUG

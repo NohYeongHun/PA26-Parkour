@@ -82,6 +82,12 @@ CModel::CModel(const CModel& Prototype)
 
 }
 
+const ROOT_MOTION_DELTA& CModel::Get_RootMotionDelta()
+{
+	ROOT_MOTION_DELTA rootMotionDelta;
+	return rootMotionDelta;
+}
+
 _uint CModel::Get_NumBones(_uint iMeshIndex)
 {
 	if (iMeshIndex >= m_iNumMeshes)
@@ -944,6 +950,32 @@ CAnimation* CModel::Get_AnimationOrNull(const string& strAnimationName)
 	auto it = m_Animations.find(strAnimationName);
 
 	return (it == m_Animations.end()) ? nullptr : it->second;
+}
+
+_float3 CModel::Get_RootMotionTotalDisplacement(const _string& strAnimationName)
+{
+	CAnimation* pAnim = Get_AnimationOrNull(strAnimationName);
+	if (!pAnim) return _float3{};
+
+	for (CChannel* pChannel : pAnim->Get_Channels())
+	{
+		if (pChannel->Get_BoneIndex() != m_iRootBoneIndex)
+			continue;
+
+		const auto& kf = pChannel->Get_Keyframes();
+		if (kf.size() < 2)
+			return _float3{};
+
+		_vector vFirst     = XMLoadFloat3(&kf.front().vTranslation);
+		_vector vLast      = XMLoadFloat3(&kf.back().vTranslation);
+		_vector vConverted = XMVector3Transform(vLast - vFirst, XMLoadFloat4x4(&m_ConversionMatrix));
+		vConverted         = XMVectorScale(vConverted, m_fPreScale);
+
+		_float3 vOut{};
+		XMStoreFloat3(&vOut, vConverted);
+		return vOut;
+	}
+	return _float3{};
 }
 
 void CModel::Compute_RootAnimation(_float fRootMotionRate, _bool isRootMotionRotation, _bool isRootMotionTranslate)

@@ -143,8 +143,17 @@ void CEnvironmentQueryComponent::Extract_Geometry()
 
 	// 상단면 Down Ray의 위치, 노멀, 높이 값 저장
 	RAY_CAST_HIT TopDownRay = m_pGameInstance->Ray_Cast(vDownStart, vDownEnd, ENUM_CLASS(m_eTargetLayer));
-
 	OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
+
+	// 전면 히트: 가장 낮은 수평 레이 (VAULT 판정용 거리 계산에 사용)
+	const LINE_TRACE_HIT& FrontHit = m_KneeHit.isHit ? m_KneeHit
+		: m_ChestHit.isHit ? m_ChestHit : m_HeadHit;
+	if (FrontHit.isHit)
+	{
+		Geo.vFrontHitPos = FrontHit.vHitPosition;
+		Geo.vFrontNormal = FrontHit.vHitNormal;
+	}
+
 	if (!TopDownRay.isHit)
 	{
 		// 상단이 최대 도달 높이보다 위 — 모서리 정보 없이 벽타기 시작 판정용 기하만 기록
@@ -281,6 +290,23 @@ void CEnvironmentQueryComponent::Print_Debug()
 	cout << endl;
 }
 #endif // _DEBUG
+
+_bool CEnvironmentQueryComponent::Find_Ground(const _fvector& vProbePos, _float fUpOffset, _float fMaxDrop, _float3& vOutGroundPos)
+{
+	_vector vStart = vProbePos + XMVectorSet(0.f, fUpOffset, 0.f, 0.f);
+	_vector vEnd   = vProbePos - XMVectorSet(0.f, fMaxDrop,  0.f, 0.f);
+
+	RAY_CAST_HIT hit = m_pGameInstance->Ray_Cast(vStart, vEnd, ENUM_CLASS(m_eTargetLayer));
+	if (!hit.isHit)
+		hit = m_pGameInstance->Ray_Cast(vStart, vEnd, ENUM_CLASS(COLLISIONLAYER::MAP));
+
+	if (hit.isHit)
+	{
+		vOutGroundPos = hit.vHitPosition;
+		return true;
+	}
+	return false;
+}
 
 CEnvironmentQueryComponent* CEnvironmentQueryComponent::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 {

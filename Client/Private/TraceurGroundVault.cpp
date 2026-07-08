@@ -3,6 +3,7 @@
 #include "Traceur.h"
 #include "TraceurState_Enum.h"
 #include "MovementComponent.h"
+#include "Transform.h"
 
 HRESULT CTraceurGroundVault::Initialize(CTraceur* pOwner)
 {
@@ -19,11 +20,9 @@ void CTraceurGroundVault::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
 
-	// 1. 전환되었을 때 조건을 확인하고 현재 애니메이션을 선택한다.
 	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurGroundVault::LowerVault);
-	
-	m_pColliderCom->Set_Gravity(false);
 
+	m_pColliderCom->Set_Gravity(false);
 	State_Reset();
 }
 
@@ -60,7 +59,6 @@ void CTraceurGroundVault::Check_State()
 
 void CTraceurGroundVault::Update_Animations(_float fTimeDelta)
 {
-	m_Animations[m_iCurrentAnimIdx].AnimPlayDesc.strAnimationName = "LowVault";
 	CTraceurState::Play_Animation(fTimeDelta);
 }
 
@@ -70,8 +68,8 @@ void CTraceurGroundVault::Check_Physics(_float fTimeDelta)
 
 void CTraceurGroundVault::Check_StateTransition(_float fTimeDelta)
 {
-	if (m_IsAnimationEnd)
-		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Locomotion));
+	if (!m_IsAnimationEnd) return;
+	m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move));
 }
 
 void CTraceurGroundVault::SetUp_Animations()
@@ -82,8 +80,7 @@ void CTraceurGroundVault::SetUp_Animations()
 
 void CTraceurGroundVault::State_Reset()
 {
-	for (_uint i = 0; i < STATE::END; ++i)
-		m_States[i] = false;
+	
 }
 
 

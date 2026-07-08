@@ -62,7 +62,7 @@ void CTraceurFactory::Register_Camera(LEVEL ePrototypeLevel, LEVEL eLevel, CTrac
 
 void CTraceurFactory::Register_States(CStateMachine* pStateMachineCom, CTraceur* pCharacter)
 {
-	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Locomotion), CTraceurGroundMove::Create(pCharacter));
+	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move), CTraceurGroundMove::Create(pCharacter));
 	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Vault), CTraceurGroundVault::Create(pCharacter));
-	pStateMachineCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Locomotion));
+	pStateMachineCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move));
 }

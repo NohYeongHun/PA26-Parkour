@@ -5,6 +5,7 @@
 #include "Collider.h"
 #include "MovementComponent.h"
 #include "EnvironmentQueryComponent.h"
+#include "TraceurState_Enum.h"
 
 
 HRESULT CTraceurState::Initialize(CTraceur* pOwner)
@@ -66,6 +67,14 @@ void CTraceurState::OnExit()
 	CState::OnExit();
 }
 
+_bool CTraceurState::IsVault() const
+{
+	const auto& stateKey = m_pStateMachinCom->Get_CurrentStateKey();
+	return (EStateCategory::GROUND == static_cast<EStateCategory>(stateKey.iCategory) &&
+		ETraceurGroundState::Vault == static_cast<ETraceurGroundState>(stateKey.iSubState));
+}
+
+
 _bool CTraceurState::Play_Animation(_float fTimeDelta)
 {
 	const auto& iter = m_Animations.find(m_iCurrentAnimIdx);
@@ -83,6 +92,13 @@ _bool CTraceurState::Play_Animation(_float fTimeDelta)
 	}
 
 	m_pModelCom->Sync_RootNode(m_pTransformCom, fTimeDelta);
+
+	if (IsVault() && m_iCurrentAnimIdx == ENUM_CLASS(ETraceurGroundVault::LowerVault))
+	{
+		m_pColliderCom->Set_Position(m_pTransformCom->Get_State(Engine::STATE::POSITION));
+	}
+	
+	
 	return true;
 }
 
