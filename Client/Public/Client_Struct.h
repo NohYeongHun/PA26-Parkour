@@ -66,6 +66,7 @@ namespace Client
 		_float3 vTopNormal;       // 상단면 노멀
 		_float  fObstacleHeight;  // 캐릭터 발 기준 상단면 높이
 		_float  fDepth;           // 장애물 두께
+		_float3 vLandingPos;
 		_bool   hasLandingSpace;  // 반대편 착지 공간 유무
 		_bool   isTopReachable;   // 상단 모서리가 최대 도달 높이 내에 있는지 (false면 벽타기 CLIMB만 가능)
 	}OBSTACLE_GEOMETRY;

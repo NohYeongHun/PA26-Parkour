@@ -74,7 +74,7 @@ void CTraceur::Update(_float fTimeDelta)
 
 	// 3. 환경 탐지.
 	Update_EnvQuery(fTimeDelta);
-	
+	 
 	// 4. 해당 위치를 이용한 카메라 이동.
 	Sync_Camera(fTimeDelta);
 }

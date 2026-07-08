@@ -153,13 +153,7 @@
     <ClCompile Include="..\Private\GroundState.cpp">
       <Filter>04. Component\State\Ground</Filter>
     </ClCompile>
-    <ClCompile Include="..\Private\TraceurGroundIdle.cpp">
-      <Filter>04. Component\State\Ground</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Private\TraceurGroundRun.cpp">
-      <Filter>04. Component\State\Ground</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Private\TraceurGroundWalk.cpp">
+    <ClCompile Include="..\Private\TraceurGroundMove.cpp">
       <Filter>04. Component\State\Ground</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\TraceurGroundVault.cpp">
@@ -266,13 +260,7 @@
     <ClInclude Include="..\Public\GroundState.h">
       <Filter>04. Component\State\Ground</Filter>
     </ClInclude>
-    <ClInclude Include="..\Public\TraceurGroundIdle.h">
-      <Filter>04. Component\State\Ground</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Public\TraceurGroundRun.h">
-      <Filter>04. Component\State\Ground</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Public\TraceurGroundWalk.h">
+    <ClInclude Include="..\Public\TraceurGroundMove.h">
       <Filter>04. Component\State\Ground</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\TraceurGroundVault.h">

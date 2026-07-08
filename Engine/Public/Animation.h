@@ -16,6 +16,7 @@ public:
 	//void				Set_CurrentTrackPosition(_float fTrackPos) { m_fCurrentTrackPosition = fTrackPos; m_iNotifyIndex = 0; }
 	void				Set_CurrentTrackPosition(_float fTrackPos);
 	_float				Get_Duration() { return m_fDuration; }
+	_float				Get_TickPerSecond() { return m_fTickPerSecond; }
 	_float				Get_AnimProgress() { return m_fCurrentTrackPosition / m_fDuration; }
 	void				Release_Channels();
 	
@@ -47,6 +48,11 @@ public:
 
 	//_bool				Blend_TransformationMatrices(_float fTimeDelta, const vector<class CBone*>& Bones, _float fTrackLength);
 	_bool				Blend_TransformationMatrices(_float fTimeDelta, const vector<class CBone*>& Bones, _float fWeight);
+
+	// BlendSpace용: 시간을 내부적으로 진행하지 않고 지정된 트랙 위치의 포즈를 본에 기록
+	void				Sample_AtTrackPosition(_float fTrackPosition, const vector<class CBone*>& Bones);
+	// BlendSpace용: 지정된 트랙 위치의 포즈를 fWeight 비율로 현재 본 포즈에 블렌딩
+	void				Blend_AtTrackPosition(_float fTrackPosition, const vector<class CBone*>& Bones, _float fWeight);
 
 	_bool			Update_TrackPosition(_float fTimeDelta, _float* pTrackPosition);
 

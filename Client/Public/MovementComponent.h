@@ -19,12 +19,22 @@ public:
 	static _vector  Calc_WorldDir(ACTORDIR eDir, _fvector vCamForward, _fvector vCamRight);
 
 public:
-	void Move(_fvector vWorldDir, _float fTimeDelta, _float fSpeed);
+	// fTargetWeight: 0~1 정규화 목표 가중치 (0=정지, 0.5=걷기, 1=달리기).
+	// 실제 이동 속도 = m_fLocomotionWeight * m_fMaxMoveSpeed
+	void Move(_fvector vWorldDir, _float fTimeDelta, _float fTargetWeight);
 
+	// BlendSpace 파라미터 소스 (0~1)
+	const _float* Get_LocomotionWeightPtr() const { return &m_fLocomotionWeight; }
+	_float        Get_LocomotionWeight()    const { return m_fLocomotionWeight; }
 
-	
 private:
 	class CTransform* m_pTransformCom = { nullptr }; // 약한 참조.
+
+	_float  m_fLocomotionWeight = 0.f;   // 0~1, 가감속 스무딩된 현재 가중치
+	_float3 m_vLastMoveDir      = {};
+	_float  m_fAccelTime        = 0.25f;
+	_float  m_fDecelTime        = 0.15f;
+	_float  m_fMaxMoveSpeed     = 0.5f;  // 가중치 1.0일 때의 월드 이동 속도
 
 
 public:

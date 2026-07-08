@@ -21,10 +21,8 @@
   <ItemGroup>
     <ClCompile Include="..\Private\Character.cpp" />
     <ClCompile Include="..\Private\GroundState.cpp" />
-    <ClCompile Include="..\Private\TraceurGroundIdle.cpp" />
-    <ClCompile Include="..\Private\TraceurGroundRun.cpp" />
+    <ClCompile Include="..\Private\TraceurGroundMove.cpp" />
     <ClCompile Include="..\Private\TraceurGroundVault.cpp" />
-    <ClCompile Include="..\Private\TraceurGroundWalk.cpp" />
     <ClCompile Include="..\Private\TraceurState.cpp" />
     <ClCompile Include="..\Private\GameSystem.cpp" />
     <ClCompile Include="..\Private\Level_Loading.cpp" />
@@ -53,10 +51,8 @@
   <ItemGroup>
     <ClInclude Include="..\Public\Character.h" />
     <ClInclude Include="..\Public\GroundState.h" />
-    <ClInclude Include="..\Public\TraceurGroundIdle.h" />
-    <ClInclude Include="..\Public\TraceurGroundRun.h" />
+    <ClInclude Include="..\Public\TraceurGroundMove.h" />
     <ClInclude Include="..\Public\TraceurGroundVault.h" />
-    <ClInclude Include="..\Public\TraceurGroundWalk.h" />
     <ClInclude Include="..\Public\TraceurState.h" />
     <ClInclude Include="..\Public\Client_CharacterEnum.h" />
     <ClInclude Include="..\Public\Client_Define.h" />

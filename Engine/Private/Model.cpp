@@ -533,6 +533,73 @@ _bool CModel::Play_Animation_CPU(const ANIMATION_PLAY_DESC& playDesc, const ROOT
 	return false;
 }
 
+_bool CModel::Play_BlendSpace_CPU(const BLENDSPACE_1D_DESC& desc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta)
+{
+	if (nullptr == desc.pParam || desc.Samples.size() < 2)
+		return false;
+
+	_float fParam = *desc.pParam;
+
+	// 파라미터를 감싸는 이웃 샘플 2개 탐색
+	_uint iA = 0;
+	_uint iB = 1;
+	const _uint iCount = static_cast<_uint>(desc.Samples.size());
+	for (_uint i = 0; i + 1 < iCount; ++i)
+	{
+		if (fParam <= desc.Samples[i + 1].fParamValue)
+		{
+			iA = i;
+			iB = i + 1;
+			break;
+		}
+		iA = i;
+		iB = i + 1;
+	}
+
+	const _string& strAnimA = desc.Samples[iA].strAnimationName;
+	const _string& strAnimB = desc.Samples[iB].strAnimationName;
+
+	auto iterA = m_Animations.find(strAnimA);
+	auto iterB = m_Animations.find(strAnimB);
+	if (iterA == m_Animations.end() || iterB == m_Animations.end())
+		return false;
+
+	// 선형 가중치 계산 (0 = A 100%, 1 = B 100%)
+	_float fRange = desc.Samples[iB].fParamValue - desc.Samples[iA].fParamValue;
+	_float fWeight = (fRange > 0.f) ? ((fParam - desc.Samples[iA].fParamValue) / fRange) : 0.f;
+	fWeight = max(0.f, min(1.f, fWeight));
+
+	// 위상 동기화: 두 클립의 실제 길이를 가중 보간한 속도로 phase 진행
+	_float fDurA = iterA->second->Get_Duration();
+	_float fDurB = iterB->second->Get_Duration();
+	_float fTickA = iterA->second->Get_TickPerSecond();
+	_float fTickB = iterB->second->Get_TickPerSecond();
+	_float fRealDurA = (fTickA > 0.f) ? (fDurA / fTickA) : fDurA;
+	_float fRealDurB = (fTickB > 0.f) ? (fDurB / fTickB) : fDurB;
+	_float fBlendedDur = fRealDurA + fWeight * (fRealDurB - fRealDurA);
+	if (fBlendedDur > 0.f)
+		m_fBlendSpacePhase += (fTimeDelta * desc.fPlayRate) / fBlendedDur;
+	if (m_fBlendSpacePhase >= 1.f)
+		m_fBlendSpacePhase -= 1.f;
+
+	_float fTrackA = m_fBlendSpacePhase * fDurA;
+	_float fTrackB = m_fBlendSpacePhase * fDurB;
+
+	// 포즈 블렌딩 A 포즈를 본에 기록한 뒤 B 포즈를 fWeight로 블렌딩
+	iterA->second->Sample_AtTrackPosition(fTrackA, m_Bones);
+	iterB->second->Blend_AtTrackPosition(fTrackB, m_Bones, fWeight);
+
+	// 루트모션 OFF여도 항상 호출
+	Compute_RootAnimation(rootMotionDesc.fRate,
+		rootMotionDesc.isEnable && rootMotionDesc.isRotate,
+		rootMotionDesc.isEnable && rootMotionDesc.isTranslate);
+
+	for (auto& pBone : m_Bones)
+		pBone->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_PreTransformMatrix), m_Bones);
+
+	return false;
+}
+
 
 //_bool CModel::Play_Animation_CPU(const _string& strAnimationName, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc)
 //{

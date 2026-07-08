@@ -35,6 +35,7 @@ void CTraceurGroundVault::OnUpdate(_float fTimeDelta)
 	Check_State();
 
 	// 2. 애니메이션 업데이트
+	
 	Update_Animations(fTimeDelta);
 
 	// 3. 물리 체크
@@ -59,6 +60,7 @@ void CTraceurGroundVault::Check_State()
 
 void CTraceurGroundVault::Update_Animations(_float fTimeDelta)
 {
+	m_Animations[m_iCurrentAnimIdx].AnimPlayDesc.strAnimationName = "LowVault";
 	CTraceurState::Play_Animation(fTimeDelta);
 }
 
@@ -68,16 +70,14 @@ void CTraceurGroundVault::Check_Physics(_float fTimeDelta)
 
 void CTraceurGroundVault::Check_StateTransition(_float fTimeDelta)
 {
-	// 입력에 영향받지 않습니다.
 	if (m_IsAnimationEnd)
-		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Idle));
-		
+		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Locomotion));
 }
 
 void CTraceurGroundVault::SetUp_Animations()
 {
 	CState::Add_Animations(ENUM_CLASS(ETraceurGroundVault::LowerVault),
-		{&m_fTrackPosition, "LowerVault", 1.f, 0.05f, 0.f, false}, { 1.f, true, true, true});
+		{&m_fTrackPosition, "LowVault", 1.f, 0.05f, 0.f, false}, { 1.f, true, true, true});
 }
 
 void CTraceurGroundVault::State_Reset()

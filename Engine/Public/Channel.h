@@ -28,6 +28,15 @@ public:
 	void					Update_TransformationMatrix_All(_float fCurrentTrackPosition, const vector<class CBone*>& Bones, _uint* pCurrentFrameIndex);
 	//void					Blend_TransformationMatrix(_float fCurrentTrackPosition, const vector<class CBone*>& Bones, _float fTrackLength);
 	void					Blend_TransformationMatrix(_float fCurrentTrackPosition, const vector<class CBone*>& Bones, _float fWeight);
+
+	// BlendSpace용: 지정 트랙 위치의 포즈를 본에 기록 (내부 상태 없이 매번 탐색)
+	void					Sample_TransformationMatrix(_float fTrackPosition, const vector<class CBone*>& Bones);
+	// BlendSpace용: 지정 트랙 위치의 포즈를 현재 본 로컬 행렬과 fWeight로 블렌딩
+	void					Blend_TransformationMatrix_At(_float fTrackPosition, const vector<class CBone*>& Bones, _float fWeight);
+
+private:
+	void					Compute_SRT(_float fTrackPosition, _vector& vScale, _vector& vRotation, _vector& vTranslation) const;
+
 private:
 	_char						m_szName[MAX_PATH] = {};
 

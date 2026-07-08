@@ -7,11 +7,14 @@ NS_BEGIN(Engine)
 class ENGINE_DLL CState abstract : public CBase
 {
 public:
+	enum class EAnimSlotType { CLIP, BLENDSPACE_1D };
+
     typedef struct tagAnimData
     {
+		EAnimSlotType eType = EAnimSlotType::CLIP;
 		ANIMATION_PLAY_DESC AnimPlayDesc{};
 		ROOTMOTION_DESC RootMotionDesc{};
-		
+		BLENDSPACE_1D_DESC BlendSpaceDesc{};
     }ANIM_DATA;
 
 
@@ -43,8 +46,8 @@ protected:
     virtual void Check_State() {};
     _bool Is_EscapePossible();
 
-	// animIndex, trackPosition 주소, anim name, anim speed, blend duration, 
 	void Add_Animations(_uint iType, const ANIMATION_PLAY_DESC& AnimPlayDesc, const ROOTMOTION_DESC& RootMotionDesc);
+	void Add_BlendSpace(_uint iType, const BLENDSPACE_1D_DESC& BlendSpaceDesc, const ROOTMOTION_DESC& RootMotionDesc);
 
 public:
     virtual void Free() override;

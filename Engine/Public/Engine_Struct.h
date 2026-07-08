@@ -359,6 +359,20 @@ namespace Engine
 		_bool isTranslate = false;
 	}ROOTMOTION_DESC;
 
+	typedef struct tagBlendSpaceSample
+	{
+		_string strAnimationName;
+		_float  fParamValue = 0.f;
+	}BLENDSPACE_SAMPLE;
+
+	typedef struct tagBlendSpace1DDesc
+	{
+		const _float* pParam = nullptr;
+		vector<BLENDSPACE_SAMPLE> Samples;
+		_float fBlendDuration = 0.2f;
+		_float fPlayRate = 1.f;
+	}BLENDSPACE_1D_DESC;
+
 	typedef struct tagCollisionData {
 		class CCollideComponent* pComponent = { nullptr };
 		void* pDesc = { nullptr };

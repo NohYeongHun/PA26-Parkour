@@ -305,6 +305,20 @@ _bool CAnimation::Blend_TransformationMatrices(_float fTimeDelta, const vector<c
 }
 
 
+void CAnimation::Sample_AtTrackPosition(_float fTrackPosition, const vector<class CBone*>& Bones)
+{
+	_float fClamped = min(fTrackPosition, m_fDuration);
+	for (size_t i = 0; i < m_iNumChannels; ++i)
+		m_Channels[i]->Sample_TransformationMatrix(fClamped, Bones);
+}
+
+void CAnimation::Blend_AtTrackPosition(_float fTrackPosition, const vector<class CBone*>& Bones, _float fWeight)
+{
+	_float fClamped = min(fTrackPosition, m_fDuration);
+	for (size_t i = 0; i < m_iNumChannels; ++i)
+		m_Channels[i]->Blend_TransformationMatrix_At(fClamped, Bones, fWeight);
+}
+
 _bool CAnimation::Update_TrackPosition(_float fTimeDelta, _float* pTrackPosition)
 {
 	if (nullptr != pTrackPosition)

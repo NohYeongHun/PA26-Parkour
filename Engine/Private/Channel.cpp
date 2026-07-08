@@ -242,6 +242,81 @@ void CChannel::Blend_TransformationMatrix(_float fCurrentTrackPosition, const ve
 	Bones[m_iBoneIndex]->Set_TransformationMatrix(LerpMatrix);
 }
 
+void CChannel::Compute_SRT(_float fTrackPosition, _vector& vScale, _vector& vRotation, _vector& vTranslation) const
+{
+	if (m_KeyFrames.back().fTrackPosition <= fTrackPosition)
+	{
+		const KEYFRAME& K = m_KeyFrames.back();
+		vScale = XMLoadFloat3(&K.vScale);
+		vRotation = XMQuaternionNormalize(XMLoadFloat4(&K.vRotation));
+		vTranslation = XMVectorSetW(XMLoadFloat3(&K.vTranslation), 1.f);
+		return;
+	}
+
+	if (fTrackPosition <= m_KeyFrames.front().fTrackPosition)
+	{
+		const KEYFRAME& K = m_KeyFrames.front();
+		vScale = XMLoadFloat3(&K.vScale);
+		vRotation = XMQuaternionNormalize(XMLoadFloat4(&K.vRotation));
+		vTranslation = XMVectorSetW(XMLoadFloat3(&K.vTranslation), 1.f);
+		return;
+	}
+
+	// 이분 탐색: KeyFrames[iLow].fTrackPosition <= fTrackPosition < KeyFrames[iLow+1].fTrackPosition
+	size_t iLow = 0;
+	size_t iHigh = m_KeyFrames.size() - 1;
+	while (iLow + 1 < iHigh)
+	{
+		size_t iMid = (iLow + iHigh) / 2;
+		if (m_KeyFrames[iMid].fTrackPosition <= fTrackPosition)
+			iLow = iMid;
+		else
+			iHigh = iMid;
+	}
+
+	const KEYFRAME& Left = m_KeyFrames[iLow];
+	const KEYFRAME& Right = m_KeyFrames[iLow + 1];
+
+	_float fRatio = (fTrackPosition - Left.fTrackPosition) / (Right.fTrackPosition - Left.fTrackPosition);
+
+	vScale = XMVectorLerp(XMLoadFloat3(&Left.vScale), XMLoadFloat3(&Right.vScale), fRatio);
+	vRotation = XMQuaternionSlerp(XMQuaternionNormalize(XMLoadFloat4(&Left.vRotation)),
+								XMQuaternionNormalize(XMLoadFloat4(&Right.vRotation)), fRatio);
+	vTranslation = XMVectorSetW(XMVectorLerp(XMLoadFloat3(&Left.vTranslation), XMLoadFloat3(&Right.vTranslation), fRatio), 1.f);
+}
+
+void CChannel::Sample_TransformationMatrix(_float fTrackPosition, const vector<class CBone*>& Bones)
+{
+	_vector vScale{}, vRotation{}, vTranslation{};
+	Compute_SRT(fTrackPosition, vScale, vRotation, vTranslation);
+
+	Bones[m_iBoneIndex]->Set_TransformationMatrix(
+		XMMatrixAffineTransformation(vScale, XMVectorSet(0.f, 0.f, 0.f, 1.f), vRotation, vTranslation));
+}
+
+void CChannel::Blend_TransformationMatrix_At(_float fTrackPosition, const vector<class CBone*>& Bones, _float fWeight)
+{
+	_vector vClipScale{}, vClipRotation{}, vClipTranslation{};
+	Compute_SRT(fTrackPosition, vClipScale, vClipRotation, vClipTranslation);
+
+	_matrix CurMatrix = XMLoadFloat4x4(Bones[m_iBoneIndex]->Get_TransformationMatrix());
+	_vector vCurScale{}, vCurRotation{}, vCurTranslation{};
+	if (false == XMMatrixDecompose(&vCurScale, &vCurRotation, &vCurTranslation, CurMatrix))
+	{
+		// 분해 불가(비정상 행렬)면 클립 포즈로 덮어쓴다
+		Bones[m_iBoneIndex]->Set_TransformationMatrix(
+			XMMatrixAffineTransformation(vClipScale, XMVectorSet(0.f, 0.f, 0.f, 1.f), vClipRotation, vClipTranslation));
+		return;
+	}
+
+	_vector vScale = XMVectorLerp(vCurScale, vClipScale, fWeight);
+	_vector vRotation = XMQuaternionSlerp(vCurRotation, vClipRotation, fWeight);
+	_vector vTranslation = XMVectorSetW(XMVectorLerp(vCurTranslation, vClipTranslation, fWeight), 1.f);
+
+	Bones[m_iBoneIndex]->Set_TransformationMatrix(
+		XMMatrixAffineTransformation(vScale, XMVectorSet(0.f, 0.f, 0.f, 1.f), vRotation, vTranslation));
+}
+
 CChannel* CChannel::Create(ifstream& InputFile, const vector<class CBone*>& Bones)
 {
 	CChannel* pInstance = new CChannel();

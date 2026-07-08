@@ -73,13 +73,30 @@ _vector CMovementComponent::Calc_WorldDir(ACTORDIR eDir, _fvector vCamForward, _
 	return XMVectorZero();
 }
 
-void CMovementComponent::Move(_fvector vWorldDir, _float fTimeDelta, _float fSpeed)
+void CMovementComponent::Move(_fvector vWorldDir, _float fTimeDelta, _float fTargetWeight)
 {
-	if (XMVector3Equal(vWorldDir, XMVectorZero()))
-		return;
+	_bool bHasInput = !XMVector3Equal(vWorldDir, XMVectorZero());
 
-	m_pTransformCom->LookLerp(vWorldDir, fTimeDelta, 10.f);
-	m_pTransformCom->Go_Dir(vWorldDir * fSpeed, fTimeDelta);
+	// 목표 가중치를 향해 가감속 스무딩 (무입력이면 목표 0)
+	_float fTarget = bHasInput ? fTargetWeight : 0.f;
+	_float fSmoothTime = (fTarget > m_fLocomotionWeight) ? m_fAccelTime : m_fDecelTime;
+	_float fRate = (fSmoothTime > 0.f) ? min(fTimeDelta / fSmoothTime, 1.f) : 1.f;
+	m_fLocomotionWeight += (fTarget - m_fLocomotionWeight) * fRate;
+
+	if (false == bHasInput && m_fLocomotionWeight < 0.01f)
+	{
+		m_fLocomotionWeight = 0.f;
+		return;
+	}
+
+	if (bHasInput)
+	{
+		XMStoreFloat3(&m_vLastMoveDir, vWorldDir);
+		m_pTransformCom->LookLerp(vWorldDir, fTimeDelta, 10.f);
+	}
+
+	_fvector vMoveDir = bHasInput ? vWorldDir : XMLoadFloat3(&m_vLastMoveDir);
+	m_pTransformCom->Go_Dir(vMoveDir * (m_fLocomotionWeight * m_fMaxMoveSpeed), fTimeDelta);
 }
 
 

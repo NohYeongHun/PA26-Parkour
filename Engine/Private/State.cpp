@@ -40,7 +40,20 @@ _bool CState::Is_EscapePossible()
 
 void CState::Add_Animations(_uint iType, const ANIMATION_PLAY_DESC& AnimPlayDesc, const ROOTMOTION_DESC& RootMotionDesc)
 {
-	m_Animations.emplace(iType, ANIM_DATA{ AnimPlayDesc, RootMotionDesc });
+	ANIM_DATA Data{};
+	Data.eType = EAnimSlotType::CLIP;
+	Data.AnimPlayDesc = AnimPlayDesc;
+	Data.RootMotionDesc = RootMotionDesc;
+	m_Animations.emplace(iType, Data);
+}
+
+void CState::Add_BlendSpace(_uint iType, const BLENDSPACE_1D_DESC& BlendSpaceDesc, const ROOTMOTION_DESC& RootMotionDesc)
+{
+	ANIM_DATA Data{};
+	Data.eType = EAnimSlotType::BLENDSPACE_1D;
+	Data.BlendSpaceDesc = BlendSpaceDesc;
+	Data.RootMotionDesc = RootMotionDesc;
+	m_Animations.emplace(iType, Data);
 }
 
 
