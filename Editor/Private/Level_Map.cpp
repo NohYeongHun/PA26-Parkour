@@ -140,7 +140,7 @@ void CLevel_Map::Update(_float fTimeDelta)
 
 void CLevel_Map::Render()
 {
-    //m_pAnimationTool->Render();
+    m_pAnimationTool->Render();
 }
 
 void CLevel_Map::Menu_Select()
