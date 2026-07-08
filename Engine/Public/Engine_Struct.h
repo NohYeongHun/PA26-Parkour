@@ -345,17 +345,18 @@ namespace Engine
 	{
 		_float* pTrackPosition = nullptr;
 		_string strAnimationName;
-		_float fTimeDelta = 0.f;
+		_float fSpeed = 1.f;
 		_float fBlendDuration = 0.2f;
+		_float fEscapeTrackPosition = {};
 		_bool isFacial = false;
 	}ANIMATION_PLAY_DESC;
 
 	typedef struct tagRootMotionDesc
 	{
+		_float fRate = 0.1f;
 		_bool isEnable = false;
 		_bool isRotate = false;
 		_bool isTranslate = false;
-		_float fRate = 0.1f;
 	}ROOTMOTION_DESC;
 
 	typedef struct tagCollisionData {

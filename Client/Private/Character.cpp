@@ -71,9 +71,6 @@ HRESULT CCharacter::Ready_Components(const CHARACTER_DESC* pDesc)
 		, pDesc->shaderData.second, TEXT("Com_Shader"), reinterpret_cast<CComponent**>(&m_pShaderCom), nullptr)))
 		CRASH("Shader");
 
-	if (FAILED(CGameObject::Add_Component(ENUM_CLASS(pDesc->inputControllerData.first)
-		, pDesc->inputControllerData.second, TEXT("Com_InputController"), reinterpret_cast<CComponent**>(&m_pInputControllerCom), nullptr)))
-		CRASH("Input Controller");
 
 	if (FAILED(Ready_MovementComponents(pDesc)))
 		return E_FAIL;
@@ -100,6 +97,5 @@ void CCharacter::Free()
 	__super::Free();
 	Safe_Release(m_pModelCom);
 	Safe_Release(m_pShaderCom);
-	Safe_Release(m_pInputControllerCom);
 	Safe_Release(m_pMoveCom);
 }

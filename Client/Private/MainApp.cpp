@@ -234,6 +234,10 @@ void CMainApp::Ready_Prototype_ForStatic()
 	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_EnvQuery"),
 		CEnvironmentQueryComponent::Create(m_pDevice, m_pContext))))
 		CRASH("Faild to Add Prototype MovementComponent");
+
+	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_StateMachine"),
+		CStateMachine::Create(m_pDevice, m_pContext))))
+		CRASH("Faild to Add Prototype StateMachine");
 #pragma endregion
 
 

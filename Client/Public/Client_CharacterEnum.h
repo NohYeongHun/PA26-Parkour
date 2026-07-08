@@ -9,13 +9,6 @@ namespace Client
 		END
 	};
 
-	enum class PROP_CONDITION : unsigned int {
-		DEFAULT = 1 << 0,  
-		DISSOLVE = 1 << 1, // Dissolve 설정.
-		RESERVE_UNACTIVE =  1 << 2, // UnActive 예약.
-		END
-	};
-
 	enum class CHARACTER_INTERACTIONTYPE : unsigned int {
 		GRAPPLE = 0,		// 그래플
 		SENSOR,			// 스캔
@@ -25,18 +18,6 @@ namespace Client
 	};
 
 	enum class CHARACTER_TRANSITIONTYPE { IDLE, RUN, ATTACK, QTE, LEVIATAN_QTE, LEVIATAN_QTESUCCESS, LEVIATAN_PREV_EXECUTE, LEVIATAN_EXECUTE_SUCCESS, END }; // Character 전환시
-
-	enum class PLAYER_CONDITION : unsigned int {
-		LEVIATAN_GRAB = 0,
-		LEVIATANQTE_START,
-		LEVIATANQTE_SUCCESS,
-		LEVIATANPREV_EXECUTE,
-		LEVIATANEXECUTE_SUCCESS,
-		GRABRELEASE,
-		GRAB_UNBINED,
-		TELEPORT,
-		END
-	};
 
 	enum class CHARACTER_CONDITION : unsigned int {
 		HIT = 1 << 0,
@@ -90,15 +71,5 @@ namespace Client
 		C = 1 << 16,
 		F6 = 1 << 17,
 	};
-
-	enum class SKILL_STATE : unsigned int
-	{
-		READY = 0,		 // 사용 가능
-		COOLING_DOWN,	 // 쿨타임
-		NOT_ENOUGH_COST, // 자원 부족
-		NOT_EXIST,		 // 정보가 없음.
-		END
-	};
-
 	
 }

@@ -9,13 +9,9 @@ class ENGINE_DLL CState abstract : public CBase
 public:
     typedef struct tagAnimData
     {
-        _string strAnimName = {};
-        _float fSpeed = {};
-        _float fEscapeTrackPosition = {};
-        _float fRootMotionRate = { 1.f };
-        _bool IsRootMotion = { true };
-        _bool IsRootMotionRotate = { true };
-        _bool IsRootMotionTranslate = { true };
+		ANIMATION_PLAY_DESC AnimPlayDesc{};
+		ROOTMOTION_DESC RootMotionDesc{};
+		
     }ANIM_DATA;
 
 
@@ -44,9 +40,11 @@ protected:
     map<_uint, ANIM_DATA> m_Animations;  // 이 State가 사용하는 애니메이션들
 
 protected:
-    virtual void Handle_Input() {};
+    virtual void Check_State() {};
     _bool Is_EscapePossible();
-    void Add_Animations(_uint iType, const _string& strAnimName, _float fSpeed, _float fEscapeTrackPosition, _float fRootMotionRate = 1.f, _bool IsRootMotion = true, _bool IsRootMotionRotate = true, _bool IsRootMotionTranslate = true);
+
+	// animIndex, trackPosition 주소, anim name, anim speed, blend duration, 
+	void Add_Animations(_uint iType, const ANIMATION_PLAY_DESC& AnimPlayDesc, const ROOTMOTION_DESC& RootMotionDesc);
 
 public:
     virtual void Free() override;

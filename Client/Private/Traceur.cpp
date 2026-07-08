@@ -8,7 +8,6 @@
 #include "Collider.h"
 #include "MovementComponent.h"
 #include "EnvironmentQueryComponent.h"
-
 #include "TraceurFactory.h"
 
 
@@ -48,6 +47,7 @@ HRESULT CTraceur::Initialize_Clone(void* pArg)
 
 	CTraceurFactory::Register_Camera(LEVEL::STATIC, m_eCurLevel, this, m_pGameInstance, &m_pSpringCamera);
 	CTraceurFactory::Register_KeyInputs(m_pInputControllerCom, this);
+	CTraceurFactory::Register_States(m_pStateMachineCom, this);
 
 	
 
@@ -66,12 +66,8 @@ void CTraceur::Update(_float fTimeDelta)
 {
 	__super::Update(fTimeDelta);
 
-	/* 임시 */
-	m_AnimPlayDesc.fTimeDelta = fTimeDelta;
-	_bool IsPlayAnimationEnd = m_pModelCom->Play_Animation_CPU(m_AnimPlayDesc.strAnimationName, m_AnimPlayDesc, m_RootModtionDesc);
-	m_pModelCom->Sync_RootNode(m_pTransformCom, m_AnimPlayDesc.fTimeDelta);
-
 	// 1. StateMachine => 이동량, 회전량 생성
+	m_pStateMachineCom->Update(fTimeDelta);
 
 	// 2. Physics => 바뀐 이동량에 따른 물리 확인.
 	Update_Physics(fTimeDelta);
@@ -88,8 +84,6 @@ void CTraceur::Late_Update(_float fTimeDelta)
 	__super::Late_Update(fTimeDelta);
 	// 1. 물리 반영된 위치로 지정
 	Sync_Transform();
-
-	
 
 	Ready_Render();
 }
@@ -117,6 +111,16 @@ void CTraceur::Render()
 		if (FAILED(m_pModelCom->Render(i)))
 			CRASH("Render Failed");
 	}
+}
+
+_vector CTraceur::Get_CamForward() const
+{
+	return m_pSpringCamera->Get_LookVector_NoPitch();
+}
+
+_vector CTraceur::Get_CamRight() const
+{
+	return m_pSpringCamera->Get_RightVector_NoPitch();
 }
 
 // 객체 생성시에 pDesc에 등록된 정보를 가져올 수 있습니다.
@@ -149,7 +153,7 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 {
 #ifdef _DEBUG
 
-	Move(CMovementComponent::Calculate_Direction(m_pInputControllerCom)
+	/*CCharacter::Move(CMovementComponent::Calculate_Direction(m_pInputControllerCom)
 		, m_pSpringCamera->Get_LookVector_NoPitch()
 		, m_pSpringCamera->Get_RightVector_NoPitch(), fTimeDelta, 0.5f);
 
@@ -185,7 +189,7 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D5), KEYSTATE::PRESS))
 	{
 		m_pColliderCom->Set_Gravity(true);
-	}
+	}*/
 
 	
 #endif // _DEBUG
@@ -199,6 +203,22 @@ void CTraceur::Update_Collider(_float fTimeDelta)
 }
 
 
+
+void CTraceur::Update_Animation(_float fTimeDelta)
+{
+
+	/* 임시 */
+	m_AnimPlayDesc.fSpeed = 1.f;
+	_bool IsPlayAnimationEnd = m_pModelCom->Play_Animation_CPU(m_AnimPlayDesc, m_RootMotionDesc, fTimeDelta);
+	m_pModelCom->Sync_RootNode(m_pTransformCom, m_AnimPlayDesc.fSpeed * fTimeDelta);
+
+	if (IsPlayAnimationEnd) // 변경 설정만.
+	{
+		m_AnimPlayDesc.strAnimationName = "Idle";
+		m_AnimPlayDesc.fBlendDuration = 0.2f;
+		m_pColliderCom->Set_Gravity(true);
+	}
+}
 
 void CTraceur::Update_Physics(_float fTimeDelta)
 {
@@ -242,6 +262,15 @@ HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 {
 	if (FAILED(__super::Ready_Components(pDesc)))
 		return E_FAIL;
+
+	if (FAILED(CGameObject::Add_Component(ENUM_CLASS(pDesc->inputControllerData.first)
+		, pDesc->inputControllerData.second, TEXT("Com_InputController"), reinterpret_cast<CComponent**>(&m_pInputControllerCom), nullptr)))
+		CRASH("Input Controller");
+
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_StateMachine"),
+		TEXT("Com_StateMachine"), reinterpret_cast<CComponent**>(&m_pStateMachineCom), nullptr)))
+		CRASH("StateMachine");
+
 
 	m_vColliderOffSet = { 0.f, 0.8f, 0.f };
 	m_fColliderRadius = 0.4f;
@@ -291,10 +320,10 @@ HRESULT CTraceur::Ready_Variables(const CHARACTER_DESC* pDesc)
 	m_AnimPlayDesc.pTrackPosition = &m_fTrackPosition;
 	m_AnimPlayDesc.isFacial = false;
 
-	m_RootModtionDesc.fRate = 1.f;
-	m_RootModtionDesc.isEnable = true;
-	m_RootModtionDesc.isRotate = true;
-	m_RootModtionDesc.isTranslate = true;
+	m_RootMotionDesc.fRate = 1.f;
+	m_RootMotionDesc.isEnable = true;
+	m_RootMotionDesc.isRotate = true;
+	m_RootMotionDesc.isTranslate = true;
 
 	m_pColliderCom->Set_Gravity(true);
 
@@ -351,7 +380,10 @@ void CTraceur::Free()
 	Safe_Release(m_pSpringCamera);
 
 	// Components
+	Safe_Release(m_pInputControllerCom);
+	Safe_Release(m_pStateMachineCom);
 	Safe_Release(m_pRigidbodyCom);
 	Safe_Release(m_pColliderCom);
 	Safe_Release(m_pEnvQueryCom);
+	
 }

@@ -20,6 +20,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Private\Character.cpp" />
+    <ClCompile Include="..\Private\GroundState.cpp" />
+    <ClCompile Include="..\Private\TraceurGroundIdle.cpp" />
+    <ClCompile Include="..\Private\TraceurGroundRun.cpp" />
+    <ClCompile Include="..\Private\TraceurGroundVault.cpp" />
+    <ClCompile Include="..\Private\TraceurGroundWalk.cpp" />
+    <ClCompile Include="..\Private\TraceurState.cpp" />
     <ClCompile Include="..\Private\GameSystem.cpp" />
     <ClCompile Include="..\Private\Level_Loading.cpp" />
     <ClCompile Include="..\Private\Level_Test.cpp" />
@@ -34,7 +40,6 @@
     <ClCompile Include="..\Private\Slide_Navigation.cpp" />
     <ClCompile Include="..\Private\Spawner.cpp" />
     <ClCompile Include="..\Private\SpringCamera.cpp" />
-    <ClCompile Include="..\private\StateComponent.cpp" />
     <ClCompile Include="..\Private\Traceur.cpp" />
     <ClCompile Include="..\Private\EnvironmentQueryComponent.cpp" />
     <ClCompile Include="..\Private\TraceurFactory.cpp" />
@@ -47,6 +52,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Public\Character.h" />
+    <ClInclude Include="..\Public\GroundState.h" />
+    <ClInclude Include="..\Public\TraceurGroundIdle.h" />
+    <ClInclude Include="..\Public\TraceurGroundRun.h" />
+    <ClInclude Include="..\Public\TraceurGroundVault.h" />
+    <ClInclude Include="..\Public\TraceurGroundWalk.h" />
+    <ClInclude Include="..\Public\TraceurState.h" />
     <ClInclude Include="..\Public\Client_CharacterEnum.h" />
     <ClInclude Include="..\Public\Client_Define.h" />
     <ClInclude Include="..\Public\Client_Enum.h" />
@@ -66,10 +77,11 @@
     <ClInclude Include="..\Public\Slide_Navigation.h" />
     <ClInclude Include="..\Public\Spawner.h" />
     <ClInclude Include="..\Public\SpringCamera.h" />
-    <ClInclude Include="..\public\StateComponent.h" />
+    <ClInclude Include="..\Public\StateCategory_Enum.h" />
     <ClInclude Include="..\Public\Traceur.h" />
     <ClInclude Include="..\Public\EnvironmentQueryComponent.h" />
     <ClInclude Include="..\Public\TraceurFactory.h" />
+    <ClInclude Include="..\Public\TraceurState_Enum.h" />
     <ClInclude Include="..\Public\Trigger_Box.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="ClientPch.h" />

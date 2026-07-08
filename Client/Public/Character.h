@@ -43,7 +43,6 @@ protected:
 	// Component
 	class CModel* m_pModelCom = { nullptr };
 	class CShader* m_pShaderCom = { nullptr };
-	class CInputController* m_pInputControllerCom = { nullptr };
 	class CMovementComponent* m_pMoveCom = { nullptr };
 
 protected:

@@ -7,7 +7,7 @@ NS_BEGIN(Engine)
 // 계층적 State Key 관리
 struct StateKey
 {
-	_uint iCategory;	// 상위 카테고리 (Ground, Air, Climb, Hit)
+	_uint iCategory;	// 상위 카테고리 (Ground, Air, Climb)
 	_uint iSubState;	// 하위 상태 (Idle, Run, Walk, etc.)
 
 	StateKey(_uint category, _uint subState)
@@ -51,8 +51,6 @@ public:
 	virtual void Update(_float fTimeDelta);
 
 	// HSM: 계층적 State 전환 (Category + SubState)
-	/*void Change_State(_uint iCategory, _uint iSubState, void* pArg = nullptr);
-	void Change_State(const StateKey& key, void* pArg = nullptr);*/
 	void Change_State(_uint iCategory, _uint iSubState, void* pArg = nullptr);
 	void Change_State(const StateKey& key, void* pArg = nullptr);
 

@@ -18,6 +18,9 @@ public:
 	virtual	void	Late_Update(_float fTimeDelta) override;
 	virtual	void	Render() override;
 
+public:
+	_vector Get_CamForward() const;
+	_vector Get_CamRight()   const;
 
 public:
 	void OnCollider_During(_uint iLayer, void* pDesc, const ContactManifold& Manifold);
@@ -33,10 +36,10 @@ private:
 
 private:
 	// Components
-	class CRigidbody* m_pRigidbodyCom = { nullptr };
-	class CCollider* m_pColliderCom = { nullptr };
-	
-	class CMovementComponent* m_pMoveCom = { nullptr };
+	class CInputController* m_pInputControllerCom = { nullptr };
+	class CRigidbody*	 m_pRigidbodyCom = { nullptr };
+	class CCollider*	 m_pColliderCom = { nullptr };
+	class CStateMachine* m_pStateMachineCom = { nullptr };
 	class CEnvironmentQueryComponent* m_pEnvQueryCom = { nullptr };
 	
 
@@ -44,7 +47,7 @@ private:
 	// 임시 Variables
 	_float m_fTrackPosition;
 	ANIMATION_PLAY_DESC m_AnimPlayDesc{}; 
-	ROOTMOTION_DESC m_RootModtionDesc{};
+	ROOTMOTION_DESC m_RootMotionDesc{};
 
 
 private:
@@ -55,6 +58,8 @@ private:
 
 private:
 	// Update
+	void Update_Animation(_float fTimeDelta);
+
 	void Update_Physics(_float fTimeDelta);
 	void Update_EnvQuery(_float fTimeDelta);
 	void Sync_Camera(_float fTimeDelta);
@@ -62,7 +67,6 @@ private:
 private:
 	// Late Update
 	void Sync_Transform();
-	
 	void Ready_Render();
 
 private:

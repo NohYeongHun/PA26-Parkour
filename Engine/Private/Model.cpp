@@ -474,14 +474,14 @@ _bool CModel::Play_Animation_CPU(const _string& strAnimationName, _float fTimeDe
 	return false;
 }
 
-_bool CModel::Play_Animation_CPU(const _string& strAnimationName, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc)
+_bool CModel::Play_Animation_CPU(const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta)
 {
-	auto iter = m_Animations.find(strAnimationName);
+	auto iter = m_Animations.find(playDesc.strAnimationName);
 	if (iter == m_Animations.end())
 		return false;
 
 	// 1. 전환 감지
-	if (m_strCurAnimation != strAnimationName)
+	if (m_strCurAnimation != playDesc.strAnimationName)
 	{
 		if (false == m_strCurAnimation.empty())
 		{
@@ -491,8 +491,8 @@ _bool CModel::Play_Animation_CPU(const _string& strAnimationName, const ANIMATIO
 			m_fBlendWeight = 0.f;
 		}
 
-		m_strCurAnimation = strAnimationName;
-		Clear_Animation(strAnimationName); // 새 애니메이션 시간을 초기화합니다.
+		m_strCurAnimation = playDesc.strAnimationName;
+		Clear_Animation(playDesc.strAnimationName); // 새 애니메이션 시간을 초기화합니다.
 	}
 
 	_float fTrackPosition = {};
@@ -502,13 +502,13 @@ _bool CModel::Play_Animation_CPU(const _string& strAnimationName, const ANIMATIO
 
 	if (m_isBlending)
 	{
-		m_fBlendElapsed += playDesc.fTimeDelta;
+		m_fBlendElapsed += playDesc.fSpeed * fTimeDelta;
 		m_fBlendWeight = Saturate(m_fBlendElapsed / playDesc.fBlendDuration);
-		if(iter->second->Blend_TransformationMatrices(playDesc.fTimeDelta, m_Bones, m_fBlendWeight))
+		if (iter->second->Blend_TransformationMatrices(fTimeDelta * playDesc.fSpeed, m_Bones, m_fBlendWeight))
 			m_isBlending = false;
 	}
 	else
-		IsAnimationEnd = iter->second->Update_TransformationMatrices_All(playDesc.fTimeDelta, m_Bones, &fTrackPosition);
+		IsAnimationEnd = iter->second->Update_TransformationMatrices_All(fTimeDelta * playDesc.fSpeed, m_Bones, &fTrackPosition);
 
 	if (nullptr != playDesc.pTrackPosition)
 		*playDesc.pTrackPosition = fTrackPosition;
@@ -522,7 +522,7 @@ _bool CModel::Play_Animation_CPU(const _string& strAnimationName, const ANIMATIO
 	// 애니메이션이 끝났다면? Clear 작업을 진행하고 Animation을 클리어해줍니다.
 	if (IsAnimationEnd)
 	{
-		Clear_Animation(strAnimationName);
+		Clear_Animation(playDesc.strAnimationName);
 		return true; // 애니메이션 종료
 	}
 
@@ -532,6 +532,7 @@ _bool CModel::Play_Animation_CPU(const _string& strAnimationName, const ANIMATIO
 
 	return false;
 }
+
 
 //_bool CModel::Play_Animation_CPU(const _string& strAnimationName, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc)
 //{
@@ -574,7 +575,7 @@ _bool CModel::Play_Animation_CPU(const _string& strAnimationName, const ANIMATIO
 //	return false;
 //}
 
-_bool CModel::Play_Animation_GPU(CComputeShader* pComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc)
+_bool CModel::Play_Animation_GPU(CComputeShader* pComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta)
 {
 	CAnimation* pAnimation = Get_AnimationOrNull(playDesc.strAnimationName);
 	if (nullptr == pComputeShaderCom || nullptr == playDesc.pTrackPosition || nullptr == pAnimation)
@@ -583,7 +584,7 @@ _bool CModel::Play_Animation_GPU(CComputeShader* pComputeShaderCom, const ANIMAT
 	HandleAnimationChange(playDesc.strAnimationName);
 
 	// 현재 트랙 포지션을 가져옵니다. (트랙 포지션은 애니메이션 클래스에서 갱신을 받습니다.)
-	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fTimeDelta);
+	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fSpeed * fTimeDelta);
 	// 뼈_행렬 계산 부분을 Compute Shader에 전달 및 갱신.
 	FetchLocalMatrices_FromCompute(pComputeShaderCom, *playDesc.pTrackPosition, playDesc.strAnimationName);
 	// Root Motion 조정.
@@ -605,7 +606,7 @@ _bool CModel::Play_Animation_GPU(CComputeShader* pComputeShaderCom, const ANIMAT
 	return false;
 }
 
-_bool CModel::Play_Animation_GPU(CComputeShader* pComputeShaderCom, CComputeShader* pMorphComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc)
+_bool CModel::Play_Animation_GPU(CComputeShader* pComputeShaderCom, CComputeShader* pMorphComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta)
 {
 	CAnimation* pAnimation = Get_AnimationOrNull(playDesc.strAnimationName);
 	if (nullptr == pComputeShaderCom || nullptr == pMorphComputeShaderCom ||
@@ -613,13 +614,13 @@ _bool CModel::Play_Animation_GPU(CComputeShader* pComputeShaderCom, CComputeShad
 		return false;
 
 	HandleAnimationChange(playDesc.strAnimationName);
-	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fTimeDelta);
+	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fSpeed * fTimeDelta);
 
 	// 뼈_행렬 계산 부분을 Compute Shader에 전달 및 갱신.
 	FetchLocalMatrices_FromCompute(pComputeShaderCom, *playDesc.pTrackPosition, playDesc.strAnimationName);
 
 	// Morph 애니메이션 갱신.
-	Update_MorphAnimation(pAnimation, pMorphComputeShaderCom, playDesc.fTimeDelta, playDesc.isFacial);
+	Update_MorphAnimation(pAnimation, pMorphComputeShaderCom, playDesc.fSpeed * fTimeDelta, playDesc.isFacial);
 
 	// Root Motion 조정.
 	if (true == rootMotionDesc.isEnable)
@@ -641,14 +642,14 @@ _bool CModel::Play_Animation_GPU(CComputeShader* pComputeShaderCom, CComputeShad
 	return false;
 }
 
-_bool CModel::Play_NonRibAnimation_GPU(CComputeShader* pComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc)
+_bool CModel::Play_NonRibAnimation_GPU(CComputeShader* pComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta)
 {
 	CAnimation* pAnimation = Get_AnimationOrNull(playDesc.strAnimationName);
 	if (nullptr == pComputeShaderCom || nullptr == playDesc.pTrackPosition || nullptr == pAnimation)
 		return false;
 
 	HandleAnimationChange(playDesc.strAnimationName);
-	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fTimeDelta);
+	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fSpeed * fTimeDelta);
 
 	// 뼈_행렬 계산 부분을 Compute Shader에 전달 및 갱신.
 	FetchLocalMatrices_FromComputeNonRib(pComputeShaderCom, *playDesc.pTrackPosition, playDesc.strAnimationName);
@@ -674,7 +675,7 @@ _bool CModel::Play_NonRibAnimation_GPU(CComputeShader* pComputeShaderCom, const 
 	return false;
 }
 
-_bool CModel::Play_FlyAnimation_GPU(class CComputeShader* pComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, const GPU_BLEND_INFO& gpuBlendInfo)
+_bool CModel::Play_FlyAnimation_GPU(class CComputeShader* pComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, const GPU_BLEND_INFO& gpuBlendInfo, _float fTimeDelta)
 {
 
 	CAnimation* pAnimation = Get_AnimationOrNull(playDesc.strAnimationName);
@@ -682,7 +683,7 @@ _bool CModel::Play_FlyAnimation_GPU(class CComputeShader* pComputeShaderCom, con
 		return false;
 
 	HandleAnimationChange(playDesc.strAnimationName);
-	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fTimeDelta);
+	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fSpeed * fTimeDelta);
 
 	// 뼈_행렬 계산 부분을 Compute Shader에 전달 및 갱신.
 	FetchLocalMatrices_FromComputeFly(pComputeShaderCom, *playDesc.pTrackPosition, playDesc.strAnimationName, gpuBlendInfo);
@@ -707,7 +708,7 @@ _bool CModel::Play_FlyAnimation_GPU(class CComputeShader* pComputeShaderCom, con
 	return false;
 }
 
-_bool CModel::Play_FlyAnimation_GPU(CComputeShader* pComputeShaderCom, CComputeShader* pMorphComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, const GPU_BLEND_INFO& gpuBlendInfo)
+_bool CModel::Play_FlyAnimation_GPU(CComputeShader* pComputeShaderCom, CComputeShader* pMorphComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, const GPU_BLEND_INFO& gpuBlendInfo, _float fTimeDelta)
 {
 	CAnimation* pAnimation = Get_AnimationOrNull(playDesc.strAnimationName);
 	if (nullptr == pComputeShaderCom || nullptr == pMorphComputeShaderCom ||
@@ -715,13 +716,13 @@ _bool CModel::Play_FlyAnimation_GPU(CComputeShader* pComputeShaderCom, CComputeS
 		return false;
 
 	HandleAnimationChange(playDesc.strAnimationName);
-	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fTimeDelta);
+	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fSpeed * fTimeDelta);
 
 	// 3. 뼈_행렬 계산 부분을 Compute Shader에 전달 및 갱신.
 	FetchLocalMatrices_FromComputeFly(pComputeShaderCom, *playDesc.pTrackPosition, playDesc.strAnimationName, gpuBlendInfo);
 
 	// Morph 애니메이션 갱신.
-	Update_MorphAnimation(pAnimation, pMorphComputeShaderCom, playDesc.fTimeDelta, playDesc.isFacial);
+	Update_MorphAnimation(pAnimation, pMorphComputeShaderCom, playDesc.fSpeed * fTimeDelta, playDesc.isFacial);
 
 	// Root Node Translation 조정
 	if (true == rootMotionDesc.isEnable)

@@ -79,6 +79,9 @@
     <Filter Include="04. Component\State">
       <UniqueIdentifier>{14a1bdec-1967-4297-b3d9-d2eb4d8295c1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="04. Component\State\Ground">
+      <UniqueIdentifier>{2df08c8c-3ccb-4664-b293-a79f915e836b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -144,8 +147,23 @@
     <ClCompile Include="..\Private\MovementComponent.cpp">
       <Filter>04. Component\Move</Filter>
     </ClCompile>
-    <ClCompile Include="..\private\StateComponent.cpp">
+    <ClCompile Include="..\Private\TraceurState.cpp">
       <Filter>04. Component\State</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\GroundState.cpp">
+      <Filter>04. Component\State\Ground</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TraceurGroundIdle.cpp">
+      <Filter>04. Component\State\Ground</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TraceurGroundRun.cpp">
+      <Filter>04. Component\State\Ground</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TraceurGroundWalk.cpp">
+      <Filter>04. Component\State\Ground</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TraceurGroundVault.cpp">
+      <Filter>04. Component\State\Ground</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -236,8 +254,29 @@
     <ClInclude Include="..\Public\MovementComponent.h">
       <Filter>04. Component\Move</Filter>
     </ClInclude>
-    <ClInclude Include="..\public\StateComponent.h">
+    <ClInclude Include="..\Public\StateCategory_Enum.h">
+      <Filter>99. Define</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurState_Enum.h">
+      <Filter>99. Define</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurState.h">
       <Filter>04. Component\State</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\GroundState.h">
+      <Filter>04. Component\State\Ground</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurGroundIdle.h">
+      <Filter>04. Component\State\Ground</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurGroundRun.h">
+      <Filter>04. Component\State\Ground</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurGroundWalk.h">
+      <Filter>04. Component\State\Ground</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurGroundVault.h">
+      <Filter>04. Component\State\Ground</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

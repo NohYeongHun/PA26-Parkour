@@ -4,6 +4,14 @@
 #include "InputController.h"
 #include "SpringCamera.h"
 
+#include "TraceurState_Enum.h"
+
+// Ground State
+#include "TraceurGroundIdle.h"
+#include "TraceurGroundRun.h"
+#include "TraceurGroundWalk.h"
+#include "TraceurGroundVault.h"
+
 void CTraceurFactory::Register_KeyInputs(CInputController* pInputControllerCom, CTraceur* pTraecur)
 {
 	pInputControllerCom->Register_KeyBoardKeyInput(ENUM_CLASS(KEYINPUT::W), DIK_W);
@@ -52,4 +60,13 @@ void CTraceurFactory::Register_Camera(LEVEL ePrototypeLevel, LEVEL eLevel, CTrac
 	Safe_AddRef(pSpringCamera);
 
 	pGameInstance->Change_MainCamera(ENUM_CLASS(eLevel), TEXT("Camera_Spring"));
+}
+
+void CTraceurFactory::Register_States(CStateMachine* pStateMachineCom, CTraceur* pCharacter)
+{
+	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Idle), CTraceurGroundIdle::Create(pCharacter));
+	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Run), CTraceurGroundRun::Create(pCharacter));
+	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Walk), CTraceurGroundWalk::Create(pCharacter));
+	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Vault), CTraceurGroundVault::Create(pCharacter));
+	pStateMachineCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Idle));
 }
