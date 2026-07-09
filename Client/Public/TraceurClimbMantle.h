@@ -3,7 +3,7 @@
 #include "Client_Struct.h"
 
 NS_BEGIN(Client)
-class CTraceurClimbMove final : public CClimbState
+class CTraceurClimbMantle final : public CClimbState
 {
 private:
 	enum STATE
@@ -12,8 +12,8 @@ private:
 	};
 
 public:
-	explicit CTraceurClimbMove() = default;
-	virtual ~CTraceurClimbMove() = default;
+	explicit CTraceurClimbMantle() = default;
+	virtual ~CTraceurClimbMantle() = default;
 
 public:
 	virtual HRESULT Initialize(class CTraceur* pOwner);
@@ -49,7 +49,7 @@ private:
 	_bool   m_bValidCurve = false;
 
 public:
-	static CTraceurClimbMove* Create(class CTraceur* pOwner);
+	static CTraceurClimbMantle* Create(class CTraceur* pOwner);
 	virtual void Free() override;
 
 };

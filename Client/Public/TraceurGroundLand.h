@@ -1,9 +1,9 @@
 ﻿#pragma once
-#include "ClimbState.h"
+#include "GroundState.h"
 #include "Client_Struct.h"
 
 NS_BEGIN(Client)
-class CTraceurClimbMove final : public CClimbState
+class CTraceurGroundLand final : public CGroundState
 {
 private:
 	enum STATE
@@ -12,8 +12,8 @@ private:
 	};
 
 public:
-	explicit CTraceurClimbMove() = default;
-	virtual ~CTraceurClimbMove() = default;
+	explicit CTraceurGroundLand() = default;
+	virtual ~CTraceurGroundLand() = default;
 
 public:
 	virtual HRESULT Initialize(class CTraceur* pOwner);
@@ -35,21 +35,8 @@ private:
 private:
 	void State_Reset();
 
-
-private:
-	_bool      m_bValidPlan = false;
-	ENV_QUERY_RESULT m_EnvQueryResult = {};
-
-private:
-	// Vault 비행 커브 (2차 Bezier)
-	_float3 m_vCurveP0 = {};
-	_float3 m_vCurveP1 = {};
-	_float3 m_vCurveP2 = {};
-	_float m_fCurveT = {};
-	_bool   m_bValidCurve = false;
-
 public:
-	static CTraceurClimbMove* Create(class CTraceur* pOwner);
+	static CTraceurGroundLand* Create(class CTraceur* pOwner);
 	virtual void Free() override;
 
 };

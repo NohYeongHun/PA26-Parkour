@@ -85,6 +85,9 @@
     <Filter Include="04. Component\State\Climb">
       <UniqueIdentifier>{83784167-5a9d-44a6-8be1-292b5880d9fb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="04. Component\State\Air">
+      <UniqueIdentifier>{6f6e8885-137d-4bc0-b111-4d776b1ec527}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -164,6 +167,24 @@
     </ClCompile>
     <ClCompile Include="..\Private\TraceurClimbMove.cpp">
       <Filter>04. Component\State\Climb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TraceurClimbEnter.cpp">
+      <Filter>04. Component\State\Climb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TraceurClimbMantle.cpp">
+      <Filter>04. Component\State\Climb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TraceurGroundLand.cpp">
+      <Filter>04. Component\State\Ground</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TraceurAirFall.cpp">
+      <Filter>04. Component\State\Air</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\ClimbState.cpp">
+      <Filter>04. Component\State\Climb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\AirState.cpp">
+      <Filter>04. Component\State\Air</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -277,6 +298,24 @@
     </ClInclude>
     <ClInclude Include="..\Public\TraceurClimbMove.h">
       <Filter>04. Component\State\Climb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurClimbEnter.h">
+      <Filter>04. Component\State\Climb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurClimbMantle.h">
+      <Filter>04. Component\State\Climb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurGroundLand.h">
+      <Filter>04. Component\State\Ground</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurAirFall.h">
+      <Filter>04. Component\State\Air</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\ClimbState.h">
+      <Filter>04. Component\State\Climb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\AirState.h">
+      <Filter>04. Component\State\Air</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,11 +1,11 @@
 ﻿#include "ClientPch.h"
-#include "TraceurClimbMove.h"
+#include "TraceurClimbEnter.h"
 #include "Traceur.h"
 #include "TraceurState_Enum.h"
 #include "MovementComponent.h"
 #include "EnvironmentQueryComponent.h"
 
-HRESULT CTraceurClimbMove::Initialize(CTraceur* pOwner)
+HRESULT CTraceurClimbEnter::Initialize(CTraceur* pOwner)
 {
 	if (FAILED(__super::Initialize(pOwner)))
 		return E_FAIL;
@@ -16,7 +16,7 @@ HRESULT CTraceurClimbMove::Initialize(CTraceur* pOwner)
 	return S_OK;
 }
 
-void CTraceurClimbMove::OnEnter(void* pArg)
+void CTraceurClimbEnter::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
 	m_pColliderCom->Set_Gravity(false);
@@ -24,7 +24,7 @@ void CTraceurClimbMove::OnEnter(void* pArg)
 	State_Reset();
 }
 
-void CTraceurClimbMove::OnUpdate(_float fTimeDelta)
+void CTraceurClimbEnter::OnUpdate(_float fTimeDelta)
 {
 	__super::OnUpdate(fTimeDelta);
 
@@ -44,48 +44,48 @@ void CTraceurClimbMove::OnUpdate(_float fTimeDelta)
 	State_Reset();
 }
 
-void CTraceurClimbMove::OnExit()
+void CTraceurClimbEnter::OnExit()
 {
 	__super::OnExit();
 	m_pColliderCom->Set_Gravity(true);
 }
 
-void CTraceurClimbMove::Check_State()
+void CTraceurClimbEnter::Check_State()
 {
 }
 
-void CTraceurClimbMove::Update_Animations(_float fTimeDelta)
+void CTraceurClimbEnter::Update_Animations(_float fTimeDelta)
 {
 	CTraceurState::Play_Animation(fTimeDelta);
 }
 
-void CTraceurClimbMove::Check_Physics(_float fTimeDelta)
+void CTraceurClimbEnter::Check_Physics(_float fTimeDelta)
 {
 }
 
-void CTraceurClimbMove::Check_StateTransition(_float fTimeDelta)
+void CTraceurClimbEnter::Check_StateTransition(_float fTimeDelta)
 {
 }
 
-void CTraceurClimbMove::SetUp_Animations()
+void CTraceurClimbEnter::SetUp_Animations()
 {
 		
 }
 
-void CTraceurClimbMove::State_Reset()
+void CTraceurClimbEnter::State_Reset()
 {
 	
 }
 
 
-CTraceurClimbMove* CTraceurClimbMove::Create(CTraceur* pOwner)
+CTraceurClimbEnter* CTraceurClimbEnter::Create(CTraceur* pOwner)
 {
-	CTraceurClimbMove* pInstance = new CTraceurClimbMove();
+	CTraceurClimbEnter* pInstance = new CTraceurClimbEnter();
 
 	if (FAILED(pInstance->Initialize(pOwner)))
 	{
 		Safe_Release(pInstance);
-		MSG_BOX("Failed to Create : CTraceurClimbMove");
+		MSG_BOX("Failed to Create : CTraceurClimbEnter");
 		return nullptr;
 	}
 
@@ -93,7 +93,7 @@ CTraceurClimbMove* CTraceurClimbMove::Create(CTraceur* pOwner)
 }
 
 
-void CTraceurClimbMove::Free()
+void CTraceurClimbEnter::Free()
 {
 	__super::Free();
 }

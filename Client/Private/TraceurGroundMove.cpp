@@ -44,6 +44,7 @@ void CTraceurGroundMove::Check_State()
 {
 	m_States[MOVE] = m_pInputControllerCom->Check_AnyInput(m_iMoveKey);
 	m_States[RUN]  = m_States[MOVE] && m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::LSHIFT));
+	m_States[LAND] = m_pColliderCom->IsLand();
 }
 
 void CTraceurGroundMove::Update_Animations(_float fTimeDelta)
@@ -76,8 +77,6 @@ void CTraceurGroundMove::Check_Physics(_float fTimeDelta)
 
 void CTraceurGroundMove::Check_StateTransition(_float fTimeDelta)
 {
-
-
 	if (m_States[VAULT])
 		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND),
 			ENUM_CLASS(ETraceurGroundState::Vault));

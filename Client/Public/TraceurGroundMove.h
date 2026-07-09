@@ -18,6 +18,7 @@ private:
 		MOVE = 0,
 		RUN,
 		VAULT,
+		LAND,
 		END
 	};
 

@@ -19,9 +19,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Private\AirState.cpp" />
     <ClCompile Include="..\Private\Character.cpp" />
+    <ClCompile Include="..\Private\ClimbState.cpp" />
     <ClCompile Include="..\Private\GroundState.cpp" />
+    <ClCompile Include="..\Private\TraceurAirFall.cpp" />
+    <ClCompile Include="..\Private\TraceurClimbEnter.cpp" />
+    <ClCompile Include="..\Private\TraceurClimbMantle.cpp" />
     <ClCompile Include="..\Private\TraceurClimbMove.cpp" />
+    <ClCompile Include="..\Private\TraceurGroundLand.cpp" />
     <ClCompile Include="..\Private\TraceurGroundMove.cpp" />
     <ClCompile Include="..\Private\TraceurGroundVault.cpp" />
     <ClCompile Include="..\Private\TraceurState.cpp" />
@@ -50,10 +56,16 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Public\AirState.h" />
     <ClInclude Include="..\Public\Character.h" />
     <ClInclude Include="..\Public\Client_Function.h" />
+    <ClInclude Include="..\Public\ClimbState.h" />
     <ClInclude Include="..\Public\GroundState.h" />
+    <ClInclude Include="..\Public\TraceurAirFall.h" />
+    <ClInclude Include="..\Public\TraceurClimbEnter.h" />
+    <ClInclude Include="..\Public\TraceurClimbMantle.h" />
     <ClInclude Include="..\Public\TraceurClimbMove.h" />
+    <ClInclude Include="..\Public\TraceurGroundLand.h" />
     <ClInclude Include="..\Public\TraceurGroundMove.h" />
     <ClInclude Include="..\Public\TraceurGroundVault.h" />
     <ClInclude Include="..\Public\TraceurState.h" />

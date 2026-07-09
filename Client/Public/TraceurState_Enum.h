@@ -27,26 +27,53 @@ enum class ETraceurClimbState : _uint
 {
 	Enter = 0, // 등반 매달리기 => 시작
 	Move,	  // 등반 이동 => 5개 모션 섞을 예정 (L, U, R, D, Idle)
-	Escape,     // 등반 탈출
+	Mantle,   // 탈출 상태.
 	ClimbEnd
 };
 #pragma endregion
 
 
 #pragma region DEPTH 2
+
+#pragma region GROUND
 enum class ETraceurGroundMove : _uint
 {
 	Move = 0,
 	MoveEnd
 };
 
-enum class ETraceurGroundVault: _uint
+enum class ETraceurGroundVault : _uint
 {
 	LowerVault = 0, // 애니메이션 명
 	VaultEnd
 };
 
-enum class ETraceurClimbEnter: _uint
+enum class ETraceurGroundLand : _uint
+{
+	FallLand = 0,
+	MoveEnd
+};
+
+#pragma endregion
+
+#pragma region AIR
+enum class ETraceurAirJump : _uint
+{
+	Jump = 0,
+	BackFlip,
+	Jump_End
+};
+
+enum class ETraceurFall : _uint
+{
+
+};
+#pragma endregion
+
+
+
+#pragma region CLIMB
+enum class ETraceurClimbEnter : _uint
 {
 	Enter = 0,
 	EnterEnd
@@ -57,6 +84,16 @@ enum class ETraceurClimbMove : _uint // 2D Blend Space 예정
 	Move = 0,
 	MoveEnd
 };
+
+enum class ETraceurClimbMantle : _uint // 암벽 등반을 끝까지 올라갔을 때.
+{
+	Mantle = 0,
+	Mantle_End
+};
+
+#pragma endregion
+
+
 
 
 #pragma endregion
