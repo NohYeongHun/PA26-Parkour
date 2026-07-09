@@ -22,7 +22,7 @@ void CTraceurGroundLand::OnEnter(void* pArg)
 	m_pColliderCom->Set_Gravity(true);
 	State_Reset();
 
-
+	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurGroundLand::FallingToLanding);
 }
 
 void CTraceurGroundLand::OnUpdate(_float fTimeDelta)
@@ -57,7 +57,7 @@ void CTraceurGroundLand::Check_State()
 
 void CTraceurGroundLand::Update_Animations(_float fTimeDelta)
 {
-	CTraceurState::Play_Animation(fTimeDelta * 1.2f);
+	CTraceurState::Play_Animation(fTimeDelta);
 }
 
 void CTraceurGroundLand::Check_Physics(_float fTimeDelta)
@@ -66,14 +66,15 @@ void CTraceurGroundLand::Check_Physics(_float fTimeDelta)
 
 void CTraceurGroundLand::Check_StateTransition(_float fTimeDelta)
 {
-	if (!m_IsAnimationEnd) return;
+	if (!m_IsAnimationEnd) 
+		return;
 	m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move));
 }
 
 void CTraceurGroundLand::SetUp_Animations()
 {
-	/*CState::Add_ParkourAnimations(ENUM_CLASS(ETraceurGroundVault::LowerVault),
-		{ &m_fTrackPosition, "LowVault", 1.f, 0.05f, 0.f, false }, { 1.f, false, true, true }, {});*/
+	CState::Add_Animations(ENUM_CLASS(ETraceurGroundLand::FallingToLanding),
+		{ &m_fTrackPosition, "FallingToLanding", 1.f, 0.05f, 0.f, false }, { 1.f, true, true, true });
 }
 
 void CTraceurGroundLand::State_Reset()

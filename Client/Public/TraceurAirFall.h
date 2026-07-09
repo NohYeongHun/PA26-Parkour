@@ -8,6 +8,7 @@ class CTraceurAirFall final : public CAirState
 private:
 	enum STATE
 	{
+		LAND,
 		END
 	};
 
@@ -34,6 +35,9 @@ private:
 
 private:
 	void State_Reset();
+
+private:
+	_bool m_States[STATE::LAND];
 
 public:
 	static CTraceurAirFall* Create(class CTraceur* pOwner);

@@ -50,7 +50,7 @@ enum class ETraceurGroundVault : _uint
 
 enum class ETraceurGroundLand : _uint
 {
-	FallLand = 0,
+	FallingToLanding = 0,
 	MoveEnd
 };
 
@@ -64,9 +64,10 @@ enum class ETraceurAirJump : _uint
 	Jump_End
 };
 
-enum class ETraceurFall : _uint
+enum class ETraceurAirFall : _uint
 {
-
+	FallingIdle = 0,
+	Fall_End
 };
 #pragma endregion
 
