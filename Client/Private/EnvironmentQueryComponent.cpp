@@ -56,7 +56,7 @@ void CEnvironmentQueryComponent::Execute()
 		Judge_Condition();
 
 #ifdef _DEBUG
-		Print_Debug();
+		//Print_Debug();
 #endif
 	}
 }
@@ -282,17 +282,18 @@ void CEnvironmentQueryComponent::Judge_Condition()
 		m_EnvQueryResult.eBestAction = PARKOUR_ACTION::CLIMB;
 		m_EnvQueryResult.isValid = true;
 	}
+	else if (iCandidateFlag & ENUM_CLASS(PARKOUR_FLAG::VAULTABLE))
+	{
+		// 가슴 레이까지 히트한 높은 장애물은 HIGH_VAULT로 구분
+		m_EnvQueryResult.eBestAction = bChest ? PARKOUR_ACTION::HIGH_VAULT : PARKOUR_ACTION::LOW_VAULT;
+		m_EnvQueryResult.isValid = true;
+	}
 	else if (iCandidateFlag & ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE))
 	{
 		m_EnvQueryResult.eBestAction = PARKOUR_ACTION::MANTLE;
 		m_EnvQueryResult.isValid = true;
 	}
-	else if (iCandidateFlag & ENUM_CLASS(PARKOUR_FLAG::VAULTABLE))
-	{
-		// 가슴 레이까지 히트한 높은 장애물은 HIGH_VAULT로 구분
-		m_EnvQueryResult.eBestAction = bChest ? PARKOUR_ACTION::HIGH_VAULT : PARKOUR_ACTION::LOW_VAULT;
-		m_EnvQueryResult.isValid     = true;
-	}
+	
 }
 
 #ifdef _DEBUG
