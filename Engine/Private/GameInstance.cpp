@@ -812,6 +812,16 @@ void CGameInstance::DrawRay(const _fvector& vStartPos, const _fvector& vEndPos)
 	m_pPhysicsManager->DrawRay(vStartPos, vEndPos);
 }
 
+void CGameInstance::Add_DebugSphere(const _fvector& vCenter, _float fRadius, const Color& color)
+{
+	m_pPhysicsManager->Add_DebugSphere(vCenter, fRadius, color);
+}
+
+void CGameInstance::Add_DebugLine(const _fvector& vStart, const _fvector& vEnd, const Color& color)
+{
+	m_pPhysicsManager->Add_DebugLine(vStart, vEnd, color);
+}
+
 _bool CGameInstance::IsParkourDebug()
 {
 	return m_pPhysicsManager->IsParkourDebug();

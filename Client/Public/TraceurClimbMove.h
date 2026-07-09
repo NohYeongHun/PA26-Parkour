@@ -3,7 +3,7 @@
 #include "Client_Struct.h"
 
 NS_BEGIN(Client)
-class CTraceurGroundVault final : public CGroundState
+class CTraceurClimbMove final : public CGroundState
 {
 private:
 	enum STATE
@@ -12,8 +12,8 @@ private:
 	};
 
 public:
-	explicit CTraceurGroundVault() = default;
-	virtual ~CTraceurGroundVault() = default;
+	explicit CTraceurClimbMove() = default;
+	virtual ~CTraceurClimbMove() = default;
 
 public:
 	virtual HRESULT Initialize(class CTraceur* pOwner);
@@ -37,22 +37,6 @@ private:
 
 
 private:
-	_bool Ready_Enter();
-	void Build_Curve(); // 2차 Bezier 커브 (P0: 시작점, P1: 정점 제어점, P2: 착지점)
-	
-
-#ifdef _DEBUG
-private:
-	void Draw_DebugCurve();
-#endif // _DEBUG
-
-private:
-	void Move_AlongCurve(_float fTimeDelta);
-	_bool Select_Animation();
-
-
-
-private:
 	_bool      m_bValidPlan = false;
 	ENV_QUERY_RESULT m_EnvQueryResult = {};
 
@@ -65,7 +49,7 @@ private:
 	_bool   m_bValidCurve = false;
 
 public:
-	static CTraceurGroundVault* Create(class CTraceur* pOwner);
+	static CTraceurClimbMove* Create(class CTraceur* pOwner);
 	virtual void Free() override;
 
 };

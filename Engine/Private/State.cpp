@@ -47,6 +47,16 @@ void CState::Add_Animations(_uint iType, const ANIMATION_PLAY_DESC& AnimPlayDesc
 	m_Animations.emplace(iType, Data);
 }
 
+void CState::Add_ParkourAnimations(_uint iType, const ANIMATION_PLAY_DESC& AnimPlayDesc, const ROOTMOTION_DESC& RootMotionDesc, const PARKOUR_ANIM_DESC& ParkourAnimDesc)
+{
+	ANIM_DATA Data{};
+	Data.eType = EAnimSlotType::CLIP;
+	Data.AnimPlayDesc = AnimPlayDesc;
+	Data.RootMotionDesc = RootMotionDesc;
+	Data.ParkourAnimDesc = ParkourAnimDesc;
+	m_Animations.emplace(iType, Data);
+}
+
 void CState::Add_BlendSpace(_uint iType, const BLENDSPACE_1D_DESC& BlendSpaceDesc, const ROOTMOTION_DESC& RootMotionDesc)
 {
 	ANIM_DATA Data{};

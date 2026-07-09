@@ -82,6 +82,9 @@
     <Filter Include="04. Component\State\Ground">
       <UniqueIdentifier>{2df08c8c-3ccb-4664-b293-a79f915e836b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="04. Component\State\Climb">
+      <UniqueIdentifier>{83784167-5a9d-44a6-8be1-292b5880d9fb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -158,6 +161,9 @@
     </ClCompile>
     <ClCompile Include="..\Private\TraceurGroundVault.cpp">
       <Filter>04. Component\State\Ground</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TraceurClimbMove.cpp">
+      <Filter>04. Component\State\Climb</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -265,6 +271,12 @@
     </ClInclude>
     <ClInclude Include="..\Public\TraceurGroundVault.h">
       <Filter>04. Component\State\Ground</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Client_Function.h">
+      <Filter>99. Define</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurClimbMove.h">
+      <Filter>04. Component\State\Climb</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

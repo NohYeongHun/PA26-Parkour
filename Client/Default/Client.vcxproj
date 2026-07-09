@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\Private\Character.cpp" />
     <ClCompile Include="..\Private\GroundState.cpp" />
+    <ClCompile Include="..\Private\TraceurClimbMove.cpp" />
     <ClCompile Include="..\Private\TraceurGroundMove.cpp" />
     <ClCompile Include="..\Private\TraceurGroundVault.cpp" />
     <ClCompile Include="..\Private\TraceurState.cpp" />
@@ -50,7 +51,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Public\Character.h" />
+    <ClInclude Include="..\Public\Client_Function.h" />
     <ClInclude Include="..\Public\GroundState.h" />
+    <ClInclude Include="..\Public\TraceurClimbMove.h" />
     <ClInclude Include="..\Public\TraceurGroundMove.h" />
     <ClInclude Include="..\Public\TraceurGroundVault.h" />
     <ClInclude Include="..\Public\TraceurState.h" />

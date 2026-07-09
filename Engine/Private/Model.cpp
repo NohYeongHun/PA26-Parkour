@@ -84,8 +84,7 @@ CModel::CModel(const CModel& Prototype)
 
 const ROOT_MOTION_DELTA& CModel::Get_RootMotionDelta()
 {
-	ROOT_MOTION_DELTA rootMotionDelta;
-	return rootMotionDelta;
+	return m_RootMotionDelta;
 }
 
 _uint CModel::Get_NumBones(_uint iMeshIndex)
@@ -521,8 +520,10 @@ _bool CModel::Play_Animation_CPU(const ANIMATION_PLAY_DESC& playDesc, const ROOT
 
 
 	// Root Node Translation 조정
-	if (true == rootMotionDesc.isEnable)
-		Compute_RootAnimation(rootMotionDesc.fRate, rootMotionDesc.isRotate, rootMotionDesc.isTranslate);
+	/*if (true == rootMotionDesc.isEnable)
+		Compute_RootAnimation(rootMotionDesc.fRate, rootMotionDesc.isRotate, rootMotionDesc.isTranslate);*/
+	//if (true == rootMotionDesc.isEnable)
+	Compute_RootAnimation(rootMotionDesc.fRate, rootMotionDesc.isRotate, rootMotionDesc.isTranslate, rootMotionDesc.isEnable);
 
 
 	// 애니메이션이 끝났다면? Clear 작업을 진행하고 Animation을 클리어해줍니다.
@@ -978,7 +979,7 @@ _float3 CModel::Get_RootMotionTotalDisplacement(const _string& strAnimationName)
 	return _float3{};
 }
 
-void CModel::Compute_RootAnimation(_float fRootMotionRate, _bool isRootMotionRotation, _bool isRootMotionTranslate)
+void CModel::Compute_RootAnimation(_float fRootMotionRate, _bool isRootMotionRotation, _bool isRootMotionTranslate, _bool IsRootMotionEnable)
 {
 	// PreTransform의 스케일 추출
 	// 1. GPU 계산 로컬본 전체 가져오기.
@@ -988,6 +989,7 @@ void CModel::Compute_RootAnimation(_float fRootMotionRate, _bool isRootMotionRot
 	// 2. 스켈레톤의 루트 본은 '제자리'에서 (Scale, Rotation)만 하도록
 	_matrix RootBoneLocalMatrix = XMMatrixAffineTransformation(vScale, XMVectorSet(0.f, 0.f, 0.f, 1.f), vRotation, XMVectorSet(0.f, 0.f, 0.f, 1.f));
 	m_Bones[m_iRootBoneIndex]->Set_TransformationMatrix(RootBoneLocalMatrix);
+
 
 	_matrix matConversion = XMLoadFloat4x4(&m_ConversionMatrix);
 	_vector qConversion = XMQuaternionRotationMatrix(matConversion);
@@ -1018,12 +1020,28 @@ void CModel::Compute_RootAnimation(_float fRootMotionRate, _bool isRootMotionRot
 		vRotationDelta = XMQuaternionIdentity();
 	}
 
-	m_RootMatrix = XMMatrixAffineTransformation(
-		XMVectorSet(1.f, 1.f, 1.f, 1.f), // 스케일 델타 (없음)
-		XMVectorSet(0.f, 0.f, 0.f, 1.f), // 원점
-		vRotationDelta,                  // 회전 델타
-		vLocalTranslate * m_fPreScale * fRootMotionRate // 이동 델타
-	);
+	/* 애니메이션 구동 이후에 보정할 Delta값을 가지고 옵니다. */
+	if (!IsRootMotionEnable)
+	{
+		XMStoreFloat3(&m_RootMotionDelta.vTranslate, vLocalTranslate * m_fPreScale);
+		XMStoreFloat4(&m_RootMotionDelta.qRotation, vRotationDelta);
+	}
+		
+	
+
+	if (IsRootMotionEnable)
+	{
+		m_RootMatrix = XMMatrixAffineTransformation(
+			XMVectorSet(1.f, 1.f, 1.f, 1.f), // 스케일 델타 (없음)
+			XMVectorSet(0.f, 0.f, 0.f, 1.f), // 원점
+			vRotationDelta,                  // 회전 델타
+			vLocalTranslate * m_fPreScale * fRootMotionRate // 이동 델타
+		);
+	}
+	else
+	{
+		m_RootMatrix = XMMatrixIdentity();
+	}
 
 	// 다음 프레임을 위해 '변환된' T, R 값을 저장합니다.
 	XMStoreFloat4(&m_vPreRootPosition, vConvertedTranslation);

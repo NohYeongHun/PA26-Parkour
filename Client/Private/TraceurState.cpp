@@ -91,13 +91,8 @@ _bool CTraceurState::Play_Animation(_float fTimeDelta)
 		m_IsAnimationEnd = m_pModelCom->Play_Animation_CPU(iter->second.AnimPlayDesc, iter->second.RootMotionDesc, fTimeDelta);
 	}
 
-	m_pModelCom->Sync_RootNode(m_pTransformCom, fTimeDelta);
-
-	if (IsVault() && m_iCurrentAnimIdx == ENUM_CLASS(ETraceurGroundVault::LowerVault))
-	{
-		m_pColliderCom->Set_Position(m_pTransformCom->Get_State(Engine::STATE::POSITION));
-	}
-	
+	m_pModelCom->Sync_RootNode(m_pTransformCom, fTimeDelta); // RootMotion이 항등행렬일 경우엔 아무런 문제가 없음
+	m_pColliderCom->Set_Position(m_pTransformCom->Get_State(Engine::STATE::POSITION));
 	
 	return true;
 }

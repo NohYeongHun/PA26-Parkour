@@ -25,10 +25,9 @@ enum class ETraceurAirState : _uint
 
 enum class ETraceurClimbState : _uint
 {
-	Idle =0,	// 등반 대기
-	Move,		// 등반 이동
-	Hange,		// 등반 매달리기
-	Exit,		// 등반 탈출
+	Enter = 0, // 등반 매달리기 => 시작
+	Move,	  // 등반 이동 => 5개 모션 섞을 예정 (L, U, R, D, Idle)
+	Escape,     // 등반 탈출
 	ClimbEnd
 };
 #pragma endregion
@@ -45,6 +44,18 @@ enum class ETraceurGroundVault: _uint
 {
 	LowerVault = 0, // 애니메이션 명
 	VaultEnd
+};
+
+enum class ETraceurClimbEnter: _uint
+{
+	Enter = 0,
+	EnterEnd
+};
+
+enum class ETraceurClimbMove : _uint // 2D Blend Space 예정
+{
+	Move = 0,
+	MoveEnd
 };
 
 

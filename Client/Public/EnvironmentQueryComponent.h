@@ -45,6 +45,9 @@ private:
 	static constexpr _float FMANTLE_MIN_DEPTH_MULT = 1.0f; // Mantle 가능 최소 두께 (반지름 배율)
 	static constexpr _float FMAX_CLIMBABLE_HEIGHT_RATIO = FMAX_REACH_RATIO;
 
+	static constexpr _float FVAULT_MIN_APPROACT_DOT = 0.9f;
+	static constexpr _float FMANTLE_MIN_APPROACT_DOT = 0.5f;
+
 protected:
 	explicit CEnvironmentQueryComponent(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
 	explicit CEnvironmentQueryComponent(const CEnvironmentQueryComponent& Prototype);
@@ -57,6 +60,7 @@ public:
 public:
 	const ENV_QUERY_RESULT& Get_QueryResult() const { return m_EnvQueryResult; }
 
+public:
 	void Execute();
 	_bool Find_Ground(const _fvector& vProbePos, _float fUpOffset, _float fMaxDrop, _float3& vOutGroundPos);
 
@@ -67,6 +71,7 @@ private:
 	void Extract_Geometry();
 	void Judge_Condition();
 
+private:
 	LINE_TRACE_HIT Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos);
 
 #ifdef _DEBUG
@@ -86,7 +91,7 @@ private:
 private:
 	// ShapeCast로 탐지한 Object의 태그.
 	PARKOUR_FLAG m_eObjectParkourFlag = { PARKOUR_FLAG::END };
-
+	SHAPE_CAST_HIT m_ShapeHit{};
 	LINE_TRACE_HIT m_KneeHit{};
 	LINE_TRACE_HIT m_ChestHit{};
 	LINE_TRACE_HIT m_HeadHit{};

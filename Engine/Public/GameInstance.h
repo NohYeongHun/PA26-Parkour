@@ -219,6 +219,8 @@ public:
 #ifdef _DEBUG
 	void					DrawShape(const Shape* pShape, RMat44 Matrix, Color BodyColor = Color(0.f, 255.f, 0.f, 1.f));
 	void					DrawRay(const _fvector& vStartPos, const _fvector& vEndPos);
+	void					Add_DebugSphere(const _fvector& vCenter, _float fRadius, const Color& color = Color(0.f, 255.f, 255.f, 1.f));
+	void					Add_DebugLine(const _fvector& vStart, const _fvector& vEnd, const Color& color = Color(0.f, 255.f, 0.f, 1.f));
 	_bool					IsParkourDebug();
 #endif
 #pragma endregion

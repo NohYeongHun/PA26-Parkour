@@ -67,6 +67,11 @@ public:
 
 	void				DrawShapeCast(const Shape* pShape, const RMat44& StartMatrix, const RMat44& EndMatrix, _bool isHit, const vector<_float3>& HitPoints);
 	_bool				IsParkourDebug() { return m_isParkourDebug; }
+
+	// 지정한 지점에 와이어 스피어를 큐잉합니다. Render()에서 그려진 뒤 매 프레임 클리어됩니다.
+	void				Add_DebugSphere(const _fvector& vCenter, _float fRadius, const Color& color = Color(0.f, 255.f, 255.f, 1.f));
+	// 지정한 두 지점 사이의 라인을 큐잉합니다. Render()에서 그려진 뒤 매 프레임 클리어됩니다.
+	void				Add_DebugLine(const _fvector& vStart, const _fvector& vEnd, const Color& color = Color(0.f, 255.f, 0.f, 1.f));
 #endif
 
 	_bool				Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, _float4* pOut);
@@ -135,8 +140,24 @@ private:
 	};
 
 
+	struct DEBUG_SPHERE
+	{
+		_float3	vCenter;
+		_float	fRadius;
+		Color	color;
+	};
+
+	struct DEBUG_LINE
+	{
+		_float3	vStart;
+		_float3	vEnd;
+		Color	color;
+	};
+
 	vector<BOX_CAST_DEBUG>	m_BoxCastDebugs;
 	vector<SHAPE_CAST_DEBUG> m_ShapeCastDebugs;
+	vector<DEBUG_SPHERE>	m_DebugSpheres;
+	vector<DEBUG_LINE>		m_DebugLines;
 #endif
 
 public:

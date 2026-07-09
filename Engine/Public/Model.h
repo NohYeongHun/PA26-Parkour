@@ -146,6 +146,8 @@ private:
 	map<_string, _uint>						m_AnimationNameToIndex; // Compute Shader
 
 
+	ROOT_MOTION_DELTA m_RootMotionDelta;
+
 	_bool									m_isChangeAnimation = { false };
 
 private:
@@ -212,7 +214,7 @@ private:
 
 private:
 	CAnimation*						Get_AnimationOrNull(const string& name);
-	void							Compute_RootAnimation(_float fRootMotionRate, _bool IsRootMotionRotation = true, _bool IsRootMotionTranslate = true);
+	void							Compute_RootAnimation(_float fRootMotionRate, _bool IsRootMotionRotation = true, _bool IsRootMotionTranslate = true, _bool IsRootMotionEnable = true);
 	void							HandleAnimationChange(const _string& strAnimationName);
 	void							Update_MorphAnimation(CAnimation* pAnimation, CComputeShader* pMorphComputeShaderCom, _float fTimeDelta, _bool isFacial);
 	_bool							Update_TrackPosition(CAnimation* pAnimation, _float* pTrackPosition,  _float fTimeDelta);

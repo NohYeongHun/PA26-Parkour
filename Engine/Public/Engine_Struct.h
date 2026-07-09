@@ -371,6 +371,16 @@ namespace Engine
 		_float fPlayRate = 1.f;
 	}BLENDSPACE_1D_DESC;
 
+	typedef struct tagParkourAnimDesc
+	{
+		_float fMinHeight;
+		_float fMaxHeight;
+		_float fMaxDepth;
+		_float fMaxApproachAngle;
+		_bool isRequireTopReach;
+		_bool isRequireLanding;
+	}PARKOUR_ANIM_DESC;
+
 	typedef struct tagCollisionData {
 		class CCollideComponent* pComponent = { nullptr };
 		void* pDesc = { nullptr };

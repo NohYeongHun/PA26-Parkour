@@ -68,7 +68,7 @@ void CTraceurGroundMove::Check_Physics(_float fTimeDelta)
 {
 	const ENV_QUERY_RESULT& EnvResult = m_pEnvQueryCom->Get_QueryResult();
 	if (!m_States[MOVE] || !m_States[RUN] || !EnvResult.isValid
-		|| EnvResult.eBestAction != PARKOUR_ACTION::VAULT)
+		|| EnvResult.eBestAction != PARKOUR_ACTION::LOW_VAULT)
 		return;
 
 	m_States[STATE::VAULT] = true;
@@ -76,9 +76,11 @@ void CTraceurGroundMove::Check_Physics(_float fTimeDelta)
 
 void CTraceurGroundMove::Check_StateTransition(_float fTimeDelta)
 {
+
+
 	if (m_States[VAULT])
 		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND),
-			ENUM_CLASS(ETraceurGroundState::Vault), &m_VaultPlan);
+			ENUM_CLASS(ETraceurGroundState::Vault));
 }
 
 void CTraceurGroundMove::SetUp_Animations()
@@ -89,6 +91,7 @@ void CTraceurGroundMove::SetUp_Animations()
 	bs.Samples  = { {"Idle", 0.f}, {"Walk", 0.5f}, {"Run", 1.f} };
 
 	ROOTMOTION_DESC root{};
+	root.fRate = 1.f;
 
 	Add_BlendSpace(ENUM_CLASS(ETraceurGroundMove::Move), bs, root);
 }

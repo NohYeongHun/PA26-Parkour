@@ -115,6 +115,14 @@ namespace Engine
 		return max(min(fValue, 1.f), 0.f);
 	}
 
+	inline _vector QuadraticCurve(_float3 vP0, _float3 vP1, _float3 vP2, _float fT)
+	{
+		_float fOneMinusT = 1.f - fT;
+		return XMLoadFloat3(&vP0) * (fOneMinusT * fOneMinusT)
+			+ XMLoadFloat3(&vP1) * (2.f * fOneMinusT * fT)
+			+ XMLoadFloat3(&vP2) * (fT * fT);
+	}
+
 #ifdef _DEBUG
 	inline void OutPutDebugFloat4(_wstring strPrePix, _float4 fVector)
 	{

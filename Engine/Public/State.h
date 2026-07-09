@@ -15,6 +15,7 @@ public:
 		ANIMATION_PLAY_DESC AnimPlayDesc{};
 		ROOTMOTION_DESC RootMotionDesc{};
 		BLENDSPACE_1D_DESC BlendSpaceDesc{};
+		PARKOUR_ANIM_DESC ParkourAnimDesc{};
     }ANIM_DATA;
 
 
@@ -47,6 +48,7 @@ protected:
     _bool Is_EscapePossible();
 
 	void Add_Animations(_uint iType, const ANIMATION_PLAY_DESC& AnimPlayDesc, const ROOTMOTION_DESC& RootMotionDesc);
+	void Add_ParkourAnimations(_uint iType, const ANIMATION_PLAY_DESC& AnimPlayDesc, const ROOTMOTION_DESC& RootMotionDesc, const PARKOUR_ANIM_DESC& ParkourAnimDesc);
 	void Add_BlendSpace(_uint iType, const BLENDSPACE_1D_DESC& BlendSpaceDesc, const ROOTMOTION_DESC& RootMotionDesc);
 
 public:

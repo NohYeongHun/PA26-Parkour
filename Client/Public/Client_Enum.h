@@ -18,7 +18,7 @@ namespace Client
 	// 이번 프레임에 실행 가능한 실제 파쿠르 액션.
 	// HIGH_VAULT: 가슴 높이(무릎+가슴 히트)의 얇은 장애물을 한 번에 넘는 동작
 	enum class PARKOUR_ACTION {
-		NONE, VAULT, HIGH_VAULT, MANTLE, CLIMB, HANG, END
+		NONE, LOW_VAULT, HIGH_VAULT, MANTLE, CLIMB, HANG, END
 	};
 
 

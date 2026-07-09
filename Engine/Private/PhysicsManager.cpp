@@ -345,6 +345,7 @@ _bool CPhysicsManager::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat,
 		OutHit.HitBodyID = Hit.mBodyID2;
 		XMStoreFloat4(&OutHit.vHitPoint,
 			XMVectorSet(Hit.mContactPointOn2.GetX(), Hit.mContactPointOn2.GetY(), Hit.mContactPointOn2.GetZ(), 1.f));
+
 		XMStoreFloat4(&OutHit.vHitNormal,
 			XMVectorSet(Hit.mPenetrationAxis.GetX(), Hit.mPenetrationAxis.GetY(), Hit.mPenetrationAxis.GetZ(), 0.f));
 			
@@ -391,6 +392,19 @@ void CPhysicsManager::Render()
 		DrawRay(XMLoadFloat3(&m_RayPoint[i].first), XMLoadFloat3(&m_RayPoint[i].second));
 	m_RayPoint.clear();
 
+	// Sphere/Line Render (큐잉된 디버그 도형)
+	if (false == m_DebugSpheres.empty() || false == m_DebugLines.empty())
+	{
+		static_cast<CDebugRender*>(m_pDebugRenderer)->Begin();
+		for (const DEBUG_SPHERE& Sphere : m_DebugSpheres)
+			m_pDebugRenderer->DrawWireSphere(LoadVec3(XMLoadFloat3(&Sphere.vCenter)), Sphere.fRadius, Sphere.color);
+		for (const DEBUG_LINE& Line : m_DebugLines)
+			m_pDebugRenderer->DrawLine(LoadVec3(XMLoadFloat3(&Line.vStart)), LoadVec3(XMLoadFloat3(&Line.vEnd)), Line.color);
+		static_cast<CDebugRender*>(m_pDebugRenderer)->End();
+	}
+	m_DebugSpheres.clear();
+	m_DebugLines.clear();
+
 	// Box Cast Render (파쿠르 디버그 토글에 종속) END키를 켰을때만?
 	if (true == m_isParkourDebug)
 	{
@@ -418,6 +432,22 @@ void CPhysicsManager::DrawRay(const _fvector& vStartPos, const _fvector& vEndPos
 	static_cast<CDebugRender*>(m_pDebugRenderer)->Begin();
 	m_pDebugRenderer->DrawLine(LoadVec3(vStartPos), LoadVec3(vEndPos), Color(255.f, 0.f, 0.f, 1.f));
 	static_cast<CDebugRender*>(m_pDebugRenderer)->End();
+}
+void CPhysicsManager::Add_DebugSphere(const _fvector& vCenter, _float fRadius, const Color& color)
+{
+	DEBUG_SPHERE Sphere;
+	XMStoreFloat3(&Sphere.vCenter, vCenter);
+	Sphere.fRadius = fRadius;
+	Sphere.color = color;
+	m_DebugSpheres.push_back(Sphere);
+}
+void CPhysicsManager::Add_DebugLine(const _fvector& vStart, const _fvector& vEnd, const Color& color)
+{
+	DEBUG_LINE Line;
+	XMStoreFloat3(&Line.vStart, vStart);
+	XMStoreFloat3(&Line.vEnd, vEnd);
+	Line.color = color;
+	m_DebugLines.push_back(Line);
 }
 void CPhysicsManager::DrawBoxCast(const Shape* pShape, const RMat44& StartMatrix, const RMat44& EndMatrix, _bool isHit, const vector<_float3>& HitPoints)
 {
