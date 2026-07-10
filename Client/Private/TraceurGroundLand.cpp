@@ -22,7 +22,20 @@ void CTraceurGroundLand::OnEnter(void* pArg)
 	m_pColliderCom->Set_Gravity(true);
 	State_Reset();
 
-	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurGroundLand::FallingToLanding);
+	const auto& prevKey = m_pStateMachinCom->Get_PrevStateKey();
+	if (EStateCategory::AIR == static_cast<EStateCategory>(prevKey.iCategory) &&
+		ETraceurAirState::Fall == static_cast<ETraceurAirState>(prevKey.iSubState))
+	{
+		if (m_pStateMachinCom->Get_PrevAnimIndex() == ENUM_CLASS(ETraceurAirFall::FallingIdle))
+			m_iCurrentAnimIdx = ENUM_CLASS(ETraceurGroundLand::FallingToLanding);
+		else if (m_pStateMachinCom->Get_PrevAnimIndex() == ENUM_CLASS(ETraceurAirFall::JumpFromWall))
+			m_iCurrentAnimIdx = ENUM_CLASS(ETraceurGroundLand::FallingToLanding);
+	}
+	else
+	{
+		m_iCurrentAnimIdx = ENUM_CLASS(ETraceurAirFall::FallingIdle);
+	}
+	
 }
 
 void CTraceurGroundLand::OnUpdate(_float fTimeDelta)
@@ -66,9 +79,13 @@ void CTraceurGroundLand::Check_Physics(_float fTimeDelta)
 
 void CTraceurGroundLand::Check_StateTransition(_float fTimeDelta)
 {
-	if (!m_IsAnimationEnd) 
+	if (m_IsAnimationEnd)
+	{
+		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move));
 		return;
-	m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move));
+	}
+		
+	
 }
 
 void CTraceurGroundLand::SetUp_Animations()

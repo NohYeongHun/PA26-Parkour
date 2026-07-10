@@ -553,7 +553,7 @@ _bool CModel::Play_BlendSpace_CPU(const BLENDSPACE_1D_DESC& desc, const ROOTMOTI
 	const _uint iCount = static_cast<_uint>(desc.Samples.size());
 	for (_uint i = 0; i + 1 < iCount; ++i)
 	{
-		if (fParam <= desc.Samples[i + 1].fParamValue)
+		if (fParam <= desc.Samples[i + 1].fXParamValue)
 		{
 			iA = i;
 			iB = i + 1;
@@ -572,8 +572,8 @@ _bool CModel::Play_BlendSpace_CPU(const BLENDSPACE_1D_DESC& desc, const ROOTMOTI
 		return false;
 
 	// 선형 가중치 계산 (0 = A 100%, 1 = B 100%)
-	_float fRange = desc.Samples[iB].fParamValue - desc.Samples[iA].fParamValue;
-	_float fWeight = (fRange > 0.f) ? ((fParam - desc.Samples[iA].fParamValue) / fRange) : 0.f;
+	_float fRange = desc.Samples[iB].fXParamValue - desc.Samples[iA].fXParamValue;
+	_float fWeight = (fRange > 0.f) ? ((fParam - desc.Samples[iA].fXParamValue) / fRange) : 0.f;
 	fWeight = max(0.f, min(1.f, fWeight));
 
 	// 위상 동기화: 두 클립의 실제 길이를 가중 보간한 속도로 phase 진행
@@ -597,6 +597,71 @@ _bool CModel::Play_BlendSpace_CPU(const BLENDSPACE_1D_DESC& desc, const ROOTMOTI
 	iterB->second->Blend_AtTrackPosition(fTrackB, m_Bones, fWeight);
 
 	// 루트모션 OFF여도 항상 호출
+	Compute_RootAnimation(rootMotionDesc.fRate,
+		rootMotionDesc.isEnable && rootMotionDesc.isRotate,
+		rootMotionDesc.isEnable && rootMotionDesc.isTranslate);
+
+	for (auto& pBone : m_Bones)
+		pBone->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_PreTransformMatrix), m_Bones);
+
+	return false;
+}
+
+_bool CModel::Play_BlendSpace2D_CPU(const BLENDSPACE_2D_DESC& desc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta)
+{
+	if (nullptr == desc.pParam || desc.Samples.size() < 3)
+		return false;
+
+	_float fParamX = max(-1.f, min(1.f, desc.pParam->x));
+	_float fParamY = max(-1.f, min(1.f, desc.pParam->y));
+
+	_float sx = (fParamX >= 0.f) ? 1.f : -1.f;
+	_float sy = (fParamY >= 0.f) ? 1.f : -1.f;
+	_float tx = fabsf(fParamX);
+	_float ty = fabsf(fParamY);
+
+	auto Find = [&](_float x, _float y) -> const BLENDSPACE_SAMPLE* {
+		for (auto& s : desc.Samples)
+			if (fabsf(s.fXParamValue - x) < 1e-4f && fabsf(s.fYParamValue - y) < 1e-4f)
+				return &s;
+		return nullptr;
+	};
+	const BLENDSPACE_SAMPLE* pIdle = Find(0.f, 0.f);
+	const BLENDSPACE_SAMPLE* pX = Find(sx, 0.f);
+	const BLENDSPACE_SAMPLE* pY = Find(0.f, sy);
+	if (!pIdle || !pX || !pY) return false;
+
+	auto iterI = m_Animations.find(pIdle->strAnimationName);
+	auto iterX = m_Animations.find(pX->strAnimationName);
+	auto iterY = m_Animations.find(pY->strAnimationName);
+	if (iterI == m_Animations.end() || iterX == m_Animations.end() || iterY == m_Animations.end())
+		return false;
+
+	_float fSum = tx + ty;
+	_float wX, wY, wIdle;
+	if (fSum < 1e-5f) { wIdle = 1.f; wX = 0.f; wY = 0.f; }
+	else { wX = (tx * tx) / fSum; wY = (ty * ty) / fSum; wIdle = 1.f - wX - wY; }
+
+	auto RealDur = [](CAnimation* pAnim) {
+		_float dur = pAnim->Get_Duration(), tick = pAnim->Get_TickPerSecond();
+		return (tick > 0.f) ? (dur / tick) : dur;
+	};
+	_float fBlendedDur = wIdle * RealDur(iterI->second) + wX * RealDur(iterX->second) + wY * RealDur(iterY->second);
+	if (fBlendedDur > 0.f)
+		m_fBlendSpacePhase += (fTimeDelta * desc.fPlayRate) / fBlendedDur;
+	if (m_fBlendSpacePhase >= 1.f)
+		m_fBlendSpacePhase -= 1.f;
+
+	_float trackI = m_fBlendSpacePhase * iterI->second->Get_Duration();
+	_float trackX = m_fBlendSpacePhase * iterX->second->Get_Duration();
+	_float trackY = m_fBlendSpacePhase * iterY->second->Get_Duration();
+
+	iterI->second->Sample_AtTrackPosition(trackI, m_Bones);   // S = wIdle
+
+	_float S = wIdle;
+	if (wX > 0.f) { iterX->second->Blend_AtTrackPosition(trackX, m_Bones, wX / (S + wX)); S += wX; }
+	if (wY > 0.f) { iterY->second->Blend_AtTrackPosition(trackY, m_Bones, wY / (S + wY)); S += wY; }
+
 	Compute_RootAnimation(rootMotionDesc.fRate,
 		rootMotionDesc.isEnable && rootMotionDesc.isRotate,
 		rootMotionDesc.isEnable && rootMotionDesc.isTranslate);
@@ -945,6 +1010,7 @@ void CModel::FetchLocalMatrices_FromComputeNonRib(CComputeShader* pComputeShader
 
 	Readback_BoneMatrices();
 }
+
 
 CAnimation* CModel::Get_AnimationOrNull(const string& strAnimationName)
 {

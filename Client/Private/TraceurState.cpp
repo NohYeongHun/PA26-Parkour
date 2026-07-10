@@ -86,6 +86,11 @@ _bool CTraceurState::Play_Animation(_float fTimeDelta)
 		m_pModelCom->Play_BlendSpace_CPU(iter->second.BlendSpaceDesc, iter->second.RootMotionDesc, fTimeDelta);
 		m_IsAnimationEnd = false;
 	}
+	else if (iter->second.eType == EAnimSlotType::BLENDSPACE_2D)
+	{
+		m_pModelCom->Play_BlendSpace2D_CPU(iter->second.BlendSpace2Desc, iter->second.RootMotionDesc, fTimeDelta);
+		m_IsAnimationEnd = false;
+	}
 	else
 	{
 		m_IsAnimationEnd = m_pModelCom->Play_Animation_CPU(iter->second.AnimPlayDesc, iter->second.RootMotionDesc, fTimeDelta);

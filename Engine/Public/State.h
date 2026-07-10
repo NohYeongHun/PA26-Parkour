@@ -7,7 +7,7 @@ NS_BEGIN(Engine)
 class ENGINE_DLL CState abstract : public CBase
 {
 public:
-	enum class EAnimSlotType { CLIP, BLENDSPACE_1D };
+	enum class EAnimSlotType { CLIP, BLENDSPACE_1D, BLENDSPACE_2D };
 
     typedef struct tagAnimData
     {
@@ -15,6 +15,7 @@ public:
 		ANIMATION_PLAY_DESC AnimPlayDesc{};
 		ROOTMOTION_DESC RootMotionDesc{};
 		BLENDSPACE_1D_DESC BlendSpaceDesc{};
+		BLENDSPACE_2D_DESC BlendSpace2Desc{};
 		PARKOUR_ANIM_DESC ParkourAnimDesc{};
     }ANIM_DATA;
 
@@ -22,6 +23,9 @@ public:
 protected:
     explicit CState() = default;
     virtual ~CState() = default;
+
+public:
+	_uint Get_CurrentAnimIndex() { return m_iCurrentAnimIdx; }
 
 public:
     virtual HRESULT Initialize(class CGameObject* pOwner);
@@ -50,6 +54,7 @@ protected:
 	void Add_Animations(_uint iType, const ANIMATION_PLAY_DESC& AnimPlayDesc, const ROOTMOTION_DESC& RootMotionDesc);
 	void Add_ParkourAnimations(_uint iType, const ANIMATION_PLAY_DESC& AnimPlayDesc, const ROOTMOTION_DESC& RootMotionDesc, const PARKOUR_ANIM_DESC& ParkourAnimDesc);
 	void Add_BlendSpace(_uint iType, const BLENDSPACE_1D_DESC& BlendSpaceDesc, const ROOTMOTION_DESC& RootMotionDesc);
+	void Add_BlendSpace(_uint iType, const BLENDSPACE_2D_DESC& BlendSpaceDesc, const ROOTMOTION_DESC& RootMotionDesc);
 
 public:
     virtual void Free() override;

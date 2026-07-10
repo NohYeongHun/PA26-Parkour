@@ -66,6 +66,15 @@ void CState::Add_BlendSpace(_uint iType, const BLENDSPACE_1D_DESC& BlendSpaceDes
 	m_Animations.emplace(iType, Data);
 }
 
+void CState::Add_BlendSpace(_uint iType, const BLENDSPACE_2D_DESC& BlendSpaceDesc, const ROOTMOTION_DESC& RootMotionDesc)
+{
+	ANIM_DATA Data{};
+	Data.eType = EAnimSlotType::BLENDSPACE_2D;
+	Data.BlendSpace2Desc = BlendSpaceDesc;
+	Data.RootMotionDesc = RootMotionDesc;
+	m_Animations.emplace(iType, Data);
+}
+
 
 //void CState::Add_Animations(_uint iType, const _string& strAnimName, _float fSpeed, _float fEscapeTrackPosition, _float fRootMotionRate, _bool IsRootMotion, _bool IsRootMotionRotate, _bool IsRootMotionTranslate)
 //{

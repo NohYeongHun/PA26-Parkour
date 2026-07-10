@@ -9,10 +9,16 @@
 // Ground State
 #include "TraceurGroundMove.h"
 #include "TraceurGroundVault.h"
+#include "TraceurGroundLand.h"
 
 // Climb State
 #include "TraceurClimbEnter.h"
 #include "TraceurClimbMove.h"
+
+// Air State
+#include "TraceurAirFall.h"
+#include "TraceurAirJump.h"
+
 
 void CTraceurFactory::Register_KeyInputs(CInputController* pInputControllerCom, CTraceur* pTraecur)
 {
@@ -68,9 +74,13 @@ void CTraceurFactory::Register_States(CStateMachine* pStateMachineCom, CTraceur*
 {
 	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move), CTraceurGroundMove::Create(pCharacter));
 	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Vault), CTraceurGroundVault::Create(pCharacter));
+	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Land), CTraceurGroundLand::Create(pCharacter));
 
 	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Enter), CTraceurClimbEnter::Create(pCharacter));
 	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Move), CTraceurClimbMove::Create(pCharacter));
+
+	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Fall), CTraceurAirFall::Create(pCharacter));
+	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Jump), CTraceurAirJump::Create(pCharacter));
 
 	pStateMachineCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move));
 

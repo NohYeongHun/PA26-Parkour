@@ -14,6 +14,9 @@ public:
 	virtual HRESULT		Initialize_Clone(void* pArg) override;
 
 public:
+	void Set_MovementType(MOVEMENT_TYPE eMovementType) { m_eMoventType = eMovementType; }
+
+public:
 	// 정적 유틸 함수.
 	static ACTORDIR Calculate_Direction(const class CInputController* pInputController);
 	static _vector  Calc_GroundDir(ACTORDIR eDir, _fvector vCamForward, _fvector vCamRight);
@@ -24,14 +27,21 @@ public:
 	// 실제 이동 속도 = m_fLocomotionWeight * m_fMaxMoveSpeed
 	void Move(_fvector vWorldDir, _float fTimeDelta, _float fTargetWeight);
 
+	// eDir 기준 목표 (X,Y)로 m_fLocomotionWeight2D를 가속/감속 스무딩하며 갱신 (2D BlendSpace 파라미터 소스)
+	void Update_ClimbBlendWeight(ACTORDIR eDir, _float fTimeDelta);
+
 	// BlendSpace 파라미터 소스 (0~1)
 	const _float* Get_LocomotionWeightPtr() const { return &m_fLocomotionWeight; }
 	_float        Get_LocomotionWeight()    const { return m_fLocomotionWeight; }
 
+	const _float2* Get_LocomotionWeight2DPtr() const { return &m_fLocomotionWeight2D; }
+	_float2        Get_LocomotionWeight2D()    const { return m_fLocomotionWeight2D; }
+
 private:
 	class CTransform* m_pTransformCom = { nullptr }; // 약한 참조.
 
-	_float  m_fLocomotionWeight = 0.f;   // 0~1, 가감속 스무딩된 현재 가중치
+	_float  m_fLocomotionWeight = 0.f;   
+	_float2 m_fLocomotionWeight2D = {};
 	_float3 m_vLastMoveDir      = {};
 	_float3 m_vLastClimbDir = {};
 	_float  m_fAccelTime        = 0.25f;

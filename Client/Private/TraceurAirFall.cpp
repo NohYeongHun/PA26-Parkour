@@ -19,11 +19,21 @@ HRESULT CTraceurAirFall::Initialize(CTraceur* pOwner)
 void CTraceurAirFall::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
-	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurAirFall::FallingIdle);
+
+	// 어디서 낙하가 시작됐는지에 따라 재생할 애니메이션을 다르게 선택
+	const auto& prevKey = m_pStateMachinCom->Get_PrevStateKey();
+	if (EStateCategory::CLIMB == static_cast<EStateCategory>(prevKey.iCategory) &&
+		ETraceurClimbState::Move == static_cast<ETraceurClimbState>(prevKey.iSubState))
+	{
+		m_iCurrentAnimIdx = ENUM_CLASS(ETraceurAirFall::JumpFromWall);
+	}
+	else
+	{
+		m_iCurrentAnimIdx = ENUM_CLASS(ETraceurAirFall::FallingIdle);
+	}
+
 	m_pColliderCom->Set_Gravity(true);
 	State_Reset();
-
-
 }
 
 void CTraceurAirFall::OnUpdate(_float fTimeDelta)
@@ -54,6 +64,7 @@ void CTraceurAirFall::OnExit()
 
 void CTraceurAirFall::Check_State()
 {
+	m_States[LAND] = m_pColliderCom->IsLand();
 }
 
 void CTraceurAirFall::Update_Animations(_float fTimeDelta)
@@ -67,11 +78,29 @@ void CTraceurAirFall::Check_Physics(_float fTimeDelta)
 
 void CTraceurAirFall::Check_StateTransition(_float fTimeDelta)
 {
-	if (m_States[LAND])
+	ETraceurAirFall eType = static_cast<ETraceurAirFall>(m_iCurrentAnimIdx);
+
+	if (eType == ETraceurAirFall::JumpFromWall)
 	{
-		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND),
-			ENUM_CLASS(ETraceurGroundState::Land));
-		return;
+		if (m_IsAnimationEnd)
+		{
+			if (m_States[LAND])
+			{
+				m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND),
+					ENUM_CLASS(ETraceurGroundState::Land));
+				return;
+			}
+		}
+	}
+
+	if (eType == ETraceurAirFall::FallingIdle)
+	{
+		if (m_States[LAND])
+		{
+			m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND),
+				ENUM_CLASS(ETraceurGroundState::Land));
+			return;
+		}
 	}
 }
 
@@ -79,6 +108,9 @@ void CTraceurAirFall::SetUp_Animations()
 {
 	CState::Add_Animations(ENUM_CLASS(ETraceurAirFall::FallingIdle),
 		{ &m_fTrackPosition, "FallingIdle", 1.f, 0.05f, 0.f, false }, { 1.f, true, true, true });
+
+	CState::Add_Animations(ENUM_CLASS(ETraceurAirFall::JumpFromWall),
+		{ &m_fTrackPosition, "JumpFromWall", 1.f, 0.05f, 0.f, false }, { 1.f, true, true, true });
 }
 
 void CTraceurAirFall::State_Reset()

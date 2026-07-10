@@ -69,7 +69,7 @@ void CTraceurClimbMantle::Check_StateTransition(_float fTimeDelta)
 
 void CTraceurClimbMantle::SetUp_Animations()
 {
-		
+	
 }
 
 void CTraceurClimbMantle::State_Reset()

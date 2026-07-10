@@ -139,15 +139,42 @@ void CMovementComponent::GroundMove(_fvector vWorldDir, _float fTimeDelta, _floa
 void CMovementComponent::ClimbMove(_fvector vWorldDir, _float fTimeDelta, _float fTargetWeight)
 {
 	_bool bHasInput = !XMVector3Equal(vWorldDir, XMVectorZero());
-	if (bHasInput) // 입력이 있을 때만.
-	{ 
-		XMStoreFloat3(&m_vLastClimbDir, vWorldDir);
-		m_pTransformCom->LookLerp(vWorldDir, fTimeDelta, 10.f);
-	}
 	
-	// 입력이 없을때는 이전 이동방향
-	_fvector vMoveDir = bHasInput ? vWorldDir : XMLoadFloat3(&m_vLastMoveDir);
-	m_pTransformCom->Go_Dir(vMoveDir * m_fMaxClimbSpeed, fTimeDelta);
+	_float fTarget = bHasInput ? fTargetWeight : 0.f;
+	_float fSmoothTime = (fTarget > m_fLocomotionWeight) ? m_fAccelTime : m_fDecelTime;
+	_float fRate = (fSmoothTime > 0.f) ? min(fTimeDelta / fSmoothTime, 1.f) : 1.f;
+	m_fLocomotionWeight += (fTarget - m_fLocomotionWeight) * fRate;
+
+	// 입력이 있을 때만 실제로 이동. (LookLerp는 벽 수직 방향에서 축이 깨지므로 사용하지 않음)
+	if (bHasInput)
+	{
+		XMStoreFloat3(&m_vLastClimbDir, vWorldDir);
+		m_pTransformCom->Go_Dir(vWorldDir * m_fMaxClimbSpeed, fTimeDelta);
+	}
+}
+
+void CMovementComponent::Update_ClimbBlendWeight(ACTORDIR eDir, _float fTimeDelta)
+{
+	_float2 vTarget = {};
+	switch (eDir)
+	{
+		case ACTORDIR::U:  vTarget = { 0.f,  1.f }; break;
+		case ACTORDIR::D:  vTarget = { 0.f, -1.f }; break;
+		case ACTORDIR::L:  vTarget = { -1.f, 0.f }; break;
+		case ACTORDIR::R:  vTarget = { 1.f,  0.f }; break;
+		case ACTORDIR::LU: vTarget = { -1.f, 1.f }; break;
+		case ACTORDIR::LD: vTarget = { -1.f,-1.f }; break;
+		case ACTORDIR::RU: vTarget = { 1.f,  1.f }; break;
+		case ACTORDIR::RD: vTarget = { 1.f, -1.f }; break;
+		default:           vTarget = { 0.f,  0.f }; break; // END: 입력 없음 -> Idle
+	}
+
+	_bool bHasInput = (eDir != ACTORDIR::END);
+	_float fSmoothTime = bHasInput ? m_fAccelTime : m_fDecelTime;
+	_float fRate = (fSmoothTime > 0.f) ? min(fTimeDelta / fSmoothTime, 1.f) : 1.f;
+
+	m_fLocomotionWeight2D.x += (vTarget.x - m_fLocomotionWeight2D.x) * fRate;
+	m_fLocomotionWeight2D.y += (vTarget.y - m_fLocomotionWeight2D.y) * fRate;
 }
 
 CMovementComponent* CMovementComponent::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)

@@ -57,12 +57,16 @@ void CStateMachine::Change_State(const StateKey& key, void* pArg)
 
     if (nullptr != m_pCurrentState)
     {
+		m_iPrevAnimIndex = m_pCurrentState->Get_CurrentAnimIndex();
         m_pCurrentState->OnExit();
+        m_PrevStateKey = m_CurrentStateKey;
+		
     }
 
     m_CurrentStateKey = key;
     m_pCurrentState = iter->second;
     m_pCurrentState->OnEnter(pArg); // pArg를 전달하며 Enter 호출
+	m_iCurAnimIndex = m_pCurrentState->Get_CurrentAnimIndex();
 }
 
 void CStateMachine::Add_State(_uint iCategory, _uint iSubState, CState* pState)

@@ -66,9 +66,21 @@ public:
 	_uint Get_CurrentCategory() const { return m_CurrentStateKey.iCategory; }
 	_uint Get_CurrentSubState() const { return m_CurrentStateKey.iSubState; }
 
+	// 직전 State 정보 반환 (Change_State가 일어나기 전까지는 최초 상태와 동일한 값)
+	StateKey Get_PrevStateKey() const { return m_PrevStateKey; }
+	_uint Get_PrevCategory() const { return m_PrevStateKey.iCategory; }
+	_uint Get_PrevSubState() const { return m_PrevStateKey.iSubState; }
+
+	_uint Get_PrevAnimIndex() const { return m_iPrevAnimIndex; }
+	_uint Get_CurAnimIndex() const { return m_iCurAnimIndex; }
+
 private:
-	map<StateKey, class CState*> m_States;	// HSM: Category별로 구분된 State들
-	StateKey m_CurrentStateKey = { 0, 0 };	// 현재 활성화된 State (Category + SubState)
+	map<StateKey, class CState*> m_States;
+	StateKey m_CurrentStateKey = { 0, 0 };
+	StateKey m_PrevStateKey = { 0, 0 };
+	_uint	 m_iCurAnimIndex = {};
+	_uint	 m_iPrevAnimIndex = {};
+	
 	class CState* m_pCurrentState = { nullptr };
 
 public:

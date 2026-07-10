@@ -67,6 +67,7 @@ enum class ETraceurAirJump : _uint
 enum class ETraceurAirFall : _uint
 {
 	FallingIdle = 0,
+	JumpFromWall,	
 	Fall_End
 };
 #pragma endregion
@@ -83,6 +84,7 @@ enum class ETraceurClimbEnter : _uint
 enum class ETraceurClimbMove : _uint // 2D Blend Space 예정
 {
 	HangingIdle = 0,
+	Move,
 	MoveEnd
 };
 

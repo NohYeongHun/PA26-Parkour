@@ -186,6 +186,9 @@
     <ClCompile Include="..\Private\AirState.cpp">
       <Filter>04. Component\State\Air</Filter>
     </ClCompile>
+    <ClCompile Include="..\Private\TraceurAirJump.cpp">
+      <Filter>04. Component\State\Air</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h">
@@ -315,6 +318,9 @@
       <Filter>04. Component\State\Climb</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\AirState.h">
+      <Filter>04. Component\State\Air</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurAirJump.h">
       <Filter>04. Component\State\Air</Filter>
     </ClInclude>
   </ItemGroup>

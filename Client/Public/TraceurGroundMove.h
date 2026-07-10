@@ -20,6 +20,7 @@ private:
 		VAULT,
 		LAND,
 		CLIMB,
+		JUMP,
 		END
 	};
 

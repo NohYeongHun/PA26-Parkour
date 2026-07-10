@@ -360,8 +360,9 @@ namespace Engine
 	typedef struct tagBlendSpaceSample
 	{
 		_string strAnimationName;
-		_float  fParamValue = 0.f;
-	}BLENDSPACE_SAMPLE;
+		_float  fXParamValue = 0.f;
+		_float	fYParamValue = 0.f;
+	}BLENDSPACE_SAMPLE;	
 
 	typedef struct tagBlendSpace1DDesc
 	{
@@ -370,6 +371,14 @@ namespace Engine
 		_float fBlendDuration = 0.2f;
 		_float fPlayRate = 1.f;
 	}BLENDSPACE_1D_DESC;
+
+	typedef struct tagBlendSpace2DDesc
+	{
+		const _float2* pParam = nullptr; // X축
+		vector<BLENDSPACE_SAMPLE> Samples;
+		_float fBlendDuration = 0.2f;
+		_float fPlayRate = 1.f;
+	}BLENDSPACE_2D_DESC;
 
 	typedef struct tagParkourAnimDesc
 	{

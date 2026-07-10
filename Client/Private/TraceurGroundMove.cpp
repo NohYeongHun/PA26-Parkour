@@ -21,8 +21,9 @@ HRESULT CTraceurGroundMove::Initialize(CTraceur* pOwner)
 void CTraceurGroundMove::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
-	//m_pColliderCom->Set_Gravity(true);
+	m_pColliderCom->Set_Gravity(true);
 	State_Reset();
+	m_pMoveCom->Set_MovementType(MOVEMENT_TYPE::GROUND);
 }
 
 void CTraceurGroundMove::OnUpdate(_float fTimeDelta)
@@ -46,6 +47,7 @@ void CTraceurGroundMove::Check_State()
 	m_States[MOVE] = m_pInputControllerCom->Check_AnyInput(m_iMoveKey);
 	m_States[RUN]  = m_States[MOVE] && m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::LSHIFT));
 	m_States[LAND] = m_pColliderCom->IsLand();
+	m_States[JUMP] = m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::SPACE));
 }
 
 void CTraceurGroundMove::Update_Animations(_float fTimeDelta)
@@ -92,6 +94,22 @@ void CTraceurGroundMove::Check_Physics(_float fTimeDelta)
 
 void CTraceurGroundMove::Check_StateTransition(_float fTimeDelta)
 {
+	if (!m_States[LAND])
+	{
+		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::AIR),
+			ENUM_CLASS(ETraceurAirState::Fall));
+
+		return;
+	}
+
+	if (m_States[JUMP])
+	{
+		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::AIR),
+			ENUM_CLASS(ETraceurAirState::Jump));
+
+		return;
+	}
+
 	if (m_States[CLIMB])
 	{
 		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::CLIMB),
@@ -105,6 +123,8 @@ void CTraceurGroundMove::Check_StateTransition(_float fTimeDelta)
 			ENUM_CLASS(ETraceurGroundState::Vault));
 		return;
 	}
+
+
 		
 }
 
