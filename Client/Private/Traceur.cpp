@@ -154,6 +154,22 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 {
 #ifdef _DEBUG
 
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D1), KEYSTATE::UP))
+	{
+		m_pColliderCom->Set_Gravity(false);
+	}
+
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D2), KEYSTATE::UP))
+	{
+		m_pColliderCom->Set_Gravity(true);
+	}
+
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D3), KEYSTATE::UP))
+	{
+		m_pStateMachineCom->Change_State(ENUM_CLASS(EStateCategory::GROUND),
+			ENUM_CLASS(ETraceurGroundState::Move));
+	}
+
 	/*CCharacter::Move(CMovementComponent::Calculate_Direction(m_pInputControllerCom)
 		, m_pSpringCamera->Get_LookVector_NoPitch()
 		, m_pSpringCamera->Get_RightVector_NoPitch(), fTimeDelta, 0.5f);

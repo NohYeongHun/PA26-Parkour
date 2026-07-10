@@ -21,6 +21,7 @@ HRESULT CTraceurGroundMove::Initialize(CTraceur* pOwner)
 void CTraceurGroundMove::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
+	//m_pColliderCom->Set_Gravity(true);
 	State_Reset();
 }
 
@@ -58,7 +59,7 @@ void CTraceurGroundMove::Update_Animations(_float fTimeDelta)
 	else if (m_States[MOVE])
 		fTargetWeight = 0.5f;
 
-	_vector vWorldDir = CMovementComponent::Calc_WorldDir(
+	_vector vWorldDir = CMovementComponent::Calc_GroundDir(
 		CMovementComponent::Calculate_Direction(m_pInputControllerCom),
 		m_pOwner->Get_CamForward(), m_pOwner->Get_CamRight());
 
@@ -68,18 +69,43 @@ void CTraceurGroundMove::Update_Animations(_float fTimeDelta)
 void CTraceurGroundMove::Check_Physics(_float fTimeDelta)
 {
 	const ENV_QUERY_RESULT& EnvResult = m_pEnvQueryCom->Get_QueryResult();
-	if (!m_States[MOVE] || !m_States[RUN] || !EnvResult.isValid
-		|| EnvResult.eBestAction != PARKOUR_ACTION::LOW_VAULT)
-		return;
+	if (!m_States[MOVE] || !m_States[RUN])
+		return; 
 
-	m_States[STATE::VAULT] = true;
+	if (EnvResult.isValid)
+	{
+		if (EnvResult.eBestAction == PARKOUR_ACTION::LOW_VAULT)
+		{
+			m_States[VAULT] = true;
+			return;
+		}
+
+		if (EnvResult.eBestAction == PARKOUR_ACTION::CLIMB)
+		{
+			m_States[CLIMB] = true;
+			return;
+		}
+	}
+
+	
 }
 
 void CTraceurGroundMove::Check_StateTransition(_float fTimeDelta)
 {
+	if (m_States[CLIMB])
+	{
+		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::CLIMB),
+			ENUM_CLASS(ETraceurClimbState::Enter));
+		return;
+	}
+
 	if (m_States[VAULT])
+	{
 		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND),
 			ENUM_CLASS(ETraceurGroundState::Vault));
+		return;
+	}
+		
 }
 
 void CTraceurGroundMove::SetUp_Animations()

@@ -22,6 +22,13 @@ namespace Client
 	};
 
 
+	enum class MOVEMENT_TYPE {
+		GROUND,
+		CLIMB,
+		END
+	};
+
+
 	enum class INSTANCETYPE { DEFAULT, SONORO, NONSONORO, END };
 
 	enum class SHADER_VTXANIMMESH_PATH { DEFAULT, NORMAL, END};

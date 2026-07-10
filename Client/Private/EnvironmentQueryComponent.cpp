@@ -94,9 +94,10 @@ void CEnvironmentQueryComponent::Collect_RayInfo()
 	m_KneeHit  = Ray_Cast(vKneeStart,  vKneeStart  + vLook * m_fLineTraceDistance);
 	m_ChestHit = Ray_Cast(vChestStart, vChestStart + vLook * m_fLineTraceDistance);
 	m_HeadHit  = Ray_Cast(vHeadStart,  vHeadStart  + vLook * m_fLineTraceDistance);
+
 }
 
-CEnvironmentQueryComponent::LINE_TRACE_HIT CEnvironmentQueryComponent::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos)
+LINE_TRACE_HIT CEnvironmentQueryComponent::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos)
 {
 	LINE_TRACE_HIT lineTrace;
 	RAY_CAST_HIT RayCastHit = m_pGameInstance->Ray_Cast(vStartPos, vEndPos, ENUM_CLASS(m_eTargetLayer));
@@ -138,6 +139,10 @@ void CEnvironmentQueryComponent::Extract_Geometry()
 	
 	OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
 
+	Geo.KneeHit = m_KneeHit;
+	Geo.ChestHit = m_ChestHit;
+	Geo.HeadHit = m_HeadHit;
+
 	// 전면 히트: 가장 낮은 수평 레이
 	const LINE_TRACE_HIT& FrontHit = m_KneeHit.isHit ? m_KneeHit
 		: m_ChestHit.isHit ? m_ChestHit : m_HeadHit;
@@ -155,6 +160,7 @@ void CEnvironmentQueryComponent::Extract_Geometry()
 
 		Geo.fFrontDistance = XMVectorGetX(XMVector3Length(XMLoadFloat3(&Geo.vFrontHitPos) - m_pOwnerTransformCom->Get_State(STATE::POSITION)));
 	}
+
 
 	_float fInset = fRadius * 0.5f;
 	_vector vStartXZ = XMLoadFloat3(&TopHit.vHitPosition) + vTraversal * fInset;
@@ -206,6 +212,7 @@ void CEnvironmentQueryComponent::Extract_Geometry()
 	Geo.hasLandingSpace = LandRayHit.isHit;
 	if (LandRayHit.isHit)
 		Geo.vLandingPos = LandRayHit.vHitPosition;
+
 
 }
 

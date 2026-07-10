@@ -61,7 +61,19 @@ namespace Client
 
 
 #pragma region ENVIRONMENT
+	typedef struct tagLineTraceHit
+	{
+		_bool		isHit = { false };
+		_float      fCenterDistance = 0.f;
+		_float3     vHitPosition{};
+		_float3     vHitNormal{};
+	}LINE_TRACE_HIT;
+
 	typedef struct tagObstacleGeometry {
+		LINE_TRACE_HIT KneeHit;
+		LINE_TRACE_HIT ChestHit;
+		LINE_TRACE_HIT HeadHit;
+
 		_float3 vTopEdgePos;      
 		_float3 vTopNormal;
 		_float3 vLandingPos;

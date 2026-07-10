@@ -56,7 +56,7 @@ void CCharacter::Render()
 
 void CCharacter::Move(ACTORDIR eDir, const _fvector& vCamForward, const _fvector& vCamRight, _float fTimeDelta, _float fSpeed)
 {
-	_vector vMoveDir = CMovementComponent::Calc_WorldDir(eDir, vCamForward, vCamRight);
+	_vector vMoveDir = CMovementComponent::Calc_GroundDir(eDir, vCamForward, vCamRight);
 	m_pMoveCom->Move(vMoveDir, fTimeDelta, fSpeed);
 }
 

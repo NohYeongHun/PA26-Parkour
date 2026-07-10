@@ -20,7 +20,7 @@ void CTraceurClimbMove::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
 	m_pColliderCom->Set_Gravity(false);
-
+	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurClimbMove::HangingIdle);
 	State_Reset();
 }
 
@@ -47,7 +47,7 @@ void CTraceurClimbMove::OnUpdate(_float fTimeDelta)
 void CTraceurClimbMove::OnExit()
 {
 	__super::OnExit();
-	m_pColliderCom->Set_Gravity(true);
+	m_pColliderCom->Set_Gravity(false);
 }
 
 void CTraceurClimbMove::Check_State()
@@ -65,11 +65,18 @@ void CTraceurClimbMove::Check_Physics(_float fTimeDelta)
 
 void CTraceurClimbMove::Check_StateTransition(_float fTimeDelta)
 {
+	// 임시.
+	if (m_IsAnimationEnd)
+	{
+		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::CLIMB),
+			ENUM_CLASS(ETraceurClimbState::Move));
+	}
 }
 
 void CTraceurClimbMove::SetUp_Animations()
 {
-		
+	CState::Add_ParkourAnimations(ENUM_CLASS(ETraceurClimbMove::HangingIdle),
+		{ &m_fTrackPosition, "HangingIdle", 1.f, 0.2f, 0.f, false }, { 1.f, false, true, true }, {});
 }
 
 void CTraceurClimbMove::State_Reset()

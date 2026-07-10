@@ -19,6 +19,7 @@ private:
 		RUN,
 		VAULT,
 		LAND,
+		CLIMB,
 		END
 	};
 

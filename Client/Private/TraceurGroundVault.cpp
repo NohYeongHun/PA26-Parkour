@@ -52,7 +52,6 @@ void CTraceurGroundVault::OnUpdate(_float fTimeDelta)
 	Draw_DebugCurve();
 #endif
 
-
 	// 3. 물리 체크
 	Check_Physics(fTimeDelta);
 
@@ -182,8 +181,10 @@ void CTraceurGroundVault::Move_AlongCurve(_float fTimeDelta)
 		return;
 	
 	m_fCurveT = min(m_fTrackPosition / m_pModelCom->Get_Duration(m_Animations[m_iCurrentAnimIdx].AnimPlayDesc.strAnimationName), 1.f);
-	_vector vPos = QuadraticCurve(m_vCurveP0, m_vCurveP1, m_vCurveP2, m_fCurveT);
-	m_pTransformCom->Set_State(Engine::STATE::POSITION, XMVectorSetW(vPos, 1.f));
+	_float fSmoothT = m_fCurveT * m_fCurveT * (3.0f - 2.0f * m_fCurveT); // Smoothstep 공식
+	_vector vPos = XMVectorSetW(QuadraticCurve(m_vCurveP0, m_vCurveP1, m_vCurveP2, fSmoothT), 1.f);
+	m_pTransformCom->Set_State(Engine::STATE::POSITION, vPos);
+	m_pColliderCom->Set_Position(vPos);
 }
 
 _bool CTraceurGroundVault::Select_Animation()

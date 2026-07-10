@@ -29,6 +29,8 @@ HRESULT CMovementComponent::Initialize_Clone(void* pArg)
 	m_pTransformCom = dynamic_cast<CTransform*>(m_pOwner->Get_Component(TEXT("Com_Transform")));
 	ASSERT_CRASH(m_pTransformCom);
 
+	m_eMoventType = MOVEMENT_TYPE::GROUND;
+
 	return S_OK;
 }
 
@@ -54,7 +56,7 @@ ACTORDIR CMovementComponent::Calculate_Direction(const CInputController* pInputC
 	return ACTORDIR::END;
 }
 
-_vector CMovementComponent::Calc_WorldDir(ACTORDIR eDir, _fvector vCamForward, _fvector vCamRight)
+_vector CMovementComponent::Calc_GroundDir(ACTORDIR eDir, _fvector vCamForward, _fvector vCamRight)
 {
 
 	switch (eDir)
@@ -73,17 +75,52 @@ _vector CMovementComponent::Calc_WorldDir(ACTORDIR eDir, _fvector vCamForward, _
 	return XMVectorZero();
 }
 
+_vector CMovementComponent::Calc_ClimbDir(ACTORDIR eDir, _fvector vClimbNormal, _fvector vWorldUp)
+{
+	_vector vRight = XMVector3Normalize(XMVector3Cross(vWorldUp, vClimbNormal));
+	_vector vUp = XMVector3Normalize(XMVector3Cross(vClimbNormal, vRight));
+
+
+	switch (eDir)
+	{
+		case ACTORDIR::U:   return vUp;
+		case ACTORDIR::D:   return -vUp;
+		case ACTORDIR::L:   return -vRight;
+		case ACTORDIR::R:   return vRight;
+		case ACTORDIR::LU:  return XMVector3Normalize(vUp - vRight);
+		case ACTORDIR::LD:  return XMVector3Normalize(-vUp - vRight);
+		case ACTORDIR::RU:  return XMVector3Normalize(vUp + vRight);
+		case ACTORDIR::RD:  return XMVector3Normalize(-vUp + vRight);
+		default: return XMVectorZero();
+	}
+
+	return XMVectorZero();
+}
+
 void CMovementComponent::Move(_fvector vWorldDir, _float fTimeDelta, _float fTargetWeight)
 {
-	_bool bHasInput = !XMVector3Equal(vWorldDir, XMVectorZero());
+	switch (m_eMoventType)
+	{
+	case MOVEMENT_TYPE::GROUND:
+		GroundMove(vWorldDir, fTimeDelta, fTargetWeight);
+		break;
+	case MOVEMENT_TYPE::CLIMB:
+		ClimbMove(vWorldDir, fTimeDelta, fTargetWeight);
+		break;
+	}
+	
+}
 
-	// 목표 가중치를 향해 가감속 스무딩 (무입력이면 목표 0)
+
+void CMovementComponent::GroundMove(_fvector vWorldDir, _float fTimeDelta, _float fTargetWeight)
+{
+	_bool bHasInput = !XMVector3Equal(vWorldDir, XMVectorZero());
 	_float fTarget = bHasInput ? fTargetWeight : 0.f;
 	_float fSmoothTime = (fTarget > m_fLocomotionWeight) ? m_fAccelTime : m_fDecelTime;
 	_float fRate = (fSmoothTime > 0.f) ? min(fTimeDelta / fSmoothTime, 1.f) : 1.f;
 	m_fLocomotionWeight += (fTarget - m_fLocomotionWeight) * fRate;
 
-	if (false == bHasInput && m_fLocomotionWeight < 0.01f)
+	if (m_fLocomotionWeight < 0.01f)
 	{
 		m_fLocomotionWeight = 0.f;
 		return;
@@ -99,6 +136,19 @@ void CMovementComponent::Move(_fvector vWorldDir, _float fTimeDelta, _float fTar
 	m_pTransformCom->Go_Dir(vMoveDir * (m_fLocomotionWeight * m_fMaxMoveSpeed), fTimeDelta);
 }
 
+void CMovementComponent::ClimbMove(_fvector vWorldDir, _float fTimeDelta, _float fTargetWeight)
+{
+	_bool bHasInput = !XMVector3Equal(vWorldDir, XMVectorZero());
+	if (bHasInput) // 입력이 있을 때만.
+	{ 
+		XMStoreFloat3(&m_vLastClimbDir, vWorldDir);
+		m_pTransformCom->LookLerp(vWorldDir, fTimeDelta, 10.f);
+	}
+	
+	// 입력이 없을때는 이전 이동방향
+	_fvector vMoveDir = bHasInput ? vWorldDir : XMLoadFloat3(&m_vLastMoveDir);
+	m_pTransformCom->Go_Dir(vMoveDir * m_fMaxClimbSpeed, fTimeDelta);
+}
 
 CMovementComponent* CMovementComponent::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 {

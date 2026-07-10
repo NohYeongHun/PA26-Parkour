@@ -25,14 +25,6 @@ public:
 		COLLISIONLAYER eTargetLayer = COLLISIONLAYER::END;
 	}ENV_QUERY_DESC;
 
-	typedef struct tagLineTraceHit
-	{
-		_bool		isHit = { false };
-		_float      fCenterDistance = 0.f;
-		_float3     vHitPosition{};
-		_float3     vHitNormal{};
-	}LINE_TRACE_HIT;
-
 private:
 	static constexpr _float FHEAD_RATIO		 = 1.1f;
 	static constexpr _float FCHEST_RATIO	 = 0.8f;
@@ -46,6 +38,7 @@ private:
 	static constexpr _float FMAX_CLIMBABLE_HEIGHT_RATIO = FMAX_REACH_RATIO;
 
 	static constexpr _float FVAULT_MIN_APPROACT_DOT = 0.9f;
+	static constexpr _float FCLIMB_MIN_APPROACT_DOT = 0.8f;
 	static constexpr _float FMANTLE_MIN_APPROACT_DOT = 0.5f;
 
 protected:

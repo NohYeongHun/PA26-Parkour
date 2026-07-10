@@ -10,6 +10,10 @@
 #include "TraceurGroundMove.h"
 #include "TraceurGroundVault.h"
 
+// Climb State
+#include "TraceurClimbEnter.h"
+#include "TraceurClimbMove.h"
+
 void CTraceurFactory::Register_KeyInputs(CInputController* pInputControllerCom, CTraceur* pTraecur)
 {
 	pInputControllerCom->Register_KeyBoardKeyInput(ENUM_CLASS(KEYINPUT::W), DIK_W);
@@ -64,5 +68,11 @@ void CTraceurFactory::Register_States(CStateMachine* pStateMachineCom, CTraceur*
 {
 	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move), CTraceurGroundMove::Create(pCharacter));
 	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Vault), CTraceurGroundVault::Create(pCharacter));
+
+	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Enter), CTraceurClimbEnter::Create(pCharacter));
+	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Move), CTraceurClimbMove::Create(pCharacter));
+
 	pStateMachineCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move));
+
+	
 }

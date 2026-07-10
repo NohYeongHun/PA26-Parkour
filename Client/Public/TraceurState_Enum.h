@@ -76,13 +76,13 @@ enum class ETraceurAirFall : _uint
 #pragma region CLIMB
 enum class ETraceurClimbEnter : _uint
 {
-	Enter = 0,
+	IdleToBracedHang = 0,
 	EnterEnd
 };
 
 enum class ETraceurClimbMove : _uint // 2D Blend Space 예정
 {
-	Move = 0,
+	HangingIdle = 0,
 	MoveEnd
 };
 
