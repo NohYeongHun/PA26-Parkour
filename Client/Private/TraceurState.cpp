@@ -1,4 +1,4 @@
-#include "ClientPch.h"
+﻿#include "ClientPch.h"
 #include "TraceurState.h"
 #include "Traceur.h"
 #include "Model.h"
@@ -113,7 +113,6 @@ _bool CTraceurState::Play_Animation(_float fTimeDelta)
 	}
 
 	m_pModelCom->Sync_RootNode(m_pTransformCom, fTimeDelta);
-	m_pColliderCom->Set_Position(m_pTransformCom->Get_State(Engine::STATE::POSITION));
 
 	return true;
 }
