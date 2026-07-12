@@ -71,7 +71,8 @@ void CTraceurClimbMove::SetUp_Animations()
 {
 	BLENDSPACE_2D_DESC bs{};
 	bs.pParam         = m_pMoveCom->Get_LocomotionWeight2DPtr();
-	bs.fBlendDuration = 0.2f;
+	bs.fBlendIn = 0.2f;
+	bs.fBlendOut = 0.2f;
 	bs.Samples        = {
 		{"HangingIdle",            0.f,  0.f},
 		{"LeftBracedHangShimmy",  -1.f,  0.f},

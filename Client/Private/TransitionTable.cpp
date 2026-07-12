@@ -162,6 +162,16 @@ HRESULT CTransitionTable::Parse(const _string& strFilePath,
 					}
 				}
 
+				if (Rule.contains("blend"))
+				{
+					if (!Rule["blend"].is_number() || Rule["blend"].get<_float>() < 0.f)
+					{
+						strOutError = strWhere + ": \"blend\"는 0 이상의 숫자여야 함";
+						return E_FAIL;
+					}
+					Data.fBlendOverride = Rule["blend"].get<_float>();
+				}
+
 				RuleList.push_back(move(Data));
 				++iRuleIndex;
 			}

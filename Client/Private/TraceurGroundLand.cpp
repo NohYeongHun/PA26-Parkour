@@ -36,10 +36,10 @@ void CTraceurGroundLand::Update_Animations(_float fTimeDelta)
 void CTraceurGroundLand::SetUp_Animations()
 {
 	CState::Add_Animations(ENUM_CLASS(ETraceurGroundLand::FallingToLanding),
-		{ &m_fTrackPosition, "FallingToLanding", 1.f, 0.1f, 0.f, false }, { 1.f, true, true, true });
+		{ &m_fTrackPosition, "FallingToLanding", 1.f, 0.1f, 0.2f, 0.f, false }, { 1.f, true, true, true });
 
 	CState::Add_Animations(ENUM_CLASS(ETraceurGroundLand::FallALandToStandingIdle),
-		{ &m_fTrackPosition, "FallALandToStandingIdle", 1.f, 0.1f, 0.f, false }, { 1.f, true, true, true });
+		{ &m_fTrackPosition, "FallALandToStandingIdle", 1.f, 0.1f, 0.2f, 0.f, false }, { 1.f, true, true, true });
 }
 
 

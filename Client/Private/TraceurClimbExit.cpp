@@ -44,7 +44,7 @@ void CTraceurClimbExit::Check_State()
 void CTraceurClimbExit::SetUp_Animations()
 {
 	CState::Add_Animations(ENUM_CLASS(ETraceurClimbExit::JumpFromWall),
-		{ &m_fTrackPosition, "JumpFromWall", 1.f, 0.05f, 0.f, false }, { 1.f, true, false, true });
+		{ &m_fTrackPosition, "JumpFromWall", 1.f, 0.05f, 0.2f, 0.f, false }, { 1.f, true, false, true });
 }
 
 CTraceurClimbExit* CTraceurClimbExit::Create(CTraceur* pOwner)

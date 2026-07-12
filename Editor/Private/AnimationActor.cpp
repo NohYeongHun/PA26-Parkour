@@ -146,7 +146,7 @@ void CAnimationActor::Update(_float fTimeDelta)
 	
 	ANIMATION_PLAY_DESC playDesc{};
 	playDesc.fSpeed = m_fAnimationSpeed;
-	playDesc.fBlendDuration = 0.2f;
+	playDesc.fBlendIn = 0.2f;
 	playDesc.strAnimationName = m_strCurrentAnimation;
 	playDesc.pTrackPosition = &m_fTrackPosition;
 

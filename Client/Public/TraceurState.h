@@ -12,6 +12,7 @@ struct BOUND_TRANSITION
 	_uint            iAnimGuard = UINT_MAX;
 	Engine::StateKey Next{ 0, 0 };
 	_uint            iNextAnim  = UINT_MAX;
+	_float           fBlendOverride = -1.f;
 	_bool            isDisabled = false;
 };
 

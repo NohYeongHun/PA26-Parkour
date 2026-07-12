@@ -14,6 +14,7 @@ struct TRANSITION_RULE_DATA
 	_uint            iAnimGuard = UINT_MAX;  // 현재 재생 애님 가드 (UINT_MAX = 없음)
 	Engine::StateKey Next{ 0, 0 };           // 다음 상태
 	_uint            iNextAnim = UINT_MAX;   // 진입 애님 (UINT_MAX = 대상 상태 기본값)
+	_float           fBlendOverride = -1.f;  // 크로스페이드 시간 오버라이드 (< 0 = 없음, 0 = 스냅)
 };
 
 class CTransitionTable final : public CBase

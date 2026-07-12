@@ -344,7 +344,8 @@ namespace Engine
 		_float* pTrackPosition = nullptr;
 		_string strAnimationName;
 		_float fSpeed = 1.f;
-		_float fBlendDuration = 0.2f;
+		_float fBlendIn = 0.2f;   // 이 애니로 들어올 때 크로스페이드 시간 재료
+		_float fBlendOut = 0.2f;  // 이 애니에서 나갈 때 크로스페이드 시간 재료
 		_float fEscapeTrackPosition = {};
 		_bool isFacial = false;
 	}ANIMATION_PLAY_DESC;
@@ -368,7 +369,8 @@ namespace Engine
 	{
 		const _float* pParam = nullptr;
 		vector<BLENDSPACE_SAMPLE> Samples;
-		_float fBlendDuration = 0.2f;
+		_float fBlendIn = 0.2f;
+		_float fBlendOut = 0.2f;
 		_float fPlayRate = 1.f;
 	}BLENDSPACE_1D_DESC;
 
@@ -376,7 +378,8 @@ namespace Engine
 	{
 		const _float2* pParam = nullptr; // X축
 		vector<BLENDSPACE_SAMPLE> Samples;
-		_float fBlendDuration = 0.2f;
+		_float fBlendIn = 0.2f;
+		_float fBlendOut = 0.2f;
 		_float fPlayRate = 1.f;
 	}BLENDSPACE_2D_DESC;
 

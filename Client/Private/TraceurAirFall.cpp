@@ -43,13 +43,13 @@ void CTraceurAirFall::Check_State()
 void CTraceurAirFall::SetUp_Animations()
 {
 	CState::Add_Animations(ENUM_CLASS(ETraceurAirFall::FallingIdle),
-		{ &m_fTrackPosition, "FallingIdle", 1.f, 0.05f, 0.f, false }, { 1.f, true, true, true });
+		{ &m_fTrackPosition, "FallingIdle", 1.f, 0.05f, 0.2f, 0.f, false }, { 1.f, true, true, true });
 
 	CState::Add_Animations(ENUM_CLASS(ETraceurAirFall::FallALoop),
-		{ &m_fTrackPosition, "FallALoop", 1.f, 0.1f, 0.f, false }, { 1.f, true, true, true });
+		{ &m_fTrackPosition, "FallALoop", 1.f, 0.1f, 0.2f, 0.f, false }, { 1.f, true, true, true });
 
 	CState::Add_Animations(ENUM_CLASS(ETraceurAirFall::JumpFromWall),
-		{ &m_fTrackPosition, "JumpFromWall", 1.f, 0.05f, 0.f, false }, { 1.f, true, true, true });
+		{ &m_fTrackPosition, "JumpFromWall", 1.f, 0.05f, 0.2f, 0.f, false }, { 1.f, true, true, true });
 }
 
 CTraceurAirFall* CTraceurAirFall::Create(CTraceur* pOwner)

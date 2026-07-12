@@ -76,7 +76,7 @@ void CTraceurAirJump::Check_Physics(_float fTimeDelta)
 void CTraceurAirJump::SetUp_Animations()
 {
 	CState::Add_Animations(ENUM_CLASS(ETraceurAirJump::Jump),
-		{ &m_fTrackPosition, "Jump", 1.f, 0.1f, 0.f, false }, { 1.f, true, true, true });
+		{ &m_fTrackPosition, "Jump", 1.f, 0.1f, 0.2f, 0.f, false }, { 1.f, true, true, true });
 }
 
 CTraceurAirJump* CTraceurAirJump::Create(CTraceur* pOwner)

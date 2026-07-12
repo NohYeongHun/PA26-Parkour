@@ -237,7 +237,7 @@ void CTraceur::Update_Animation(_float fTimeDelta)
 	if (IsPlayAnimationEnd) // 변경 설정만.
 	{
 		m_AnimPlayDesc.strAnimationName = "Idle";
-		m_AnimPlayDesc.fBlendDuration = 0.2f;
+		m_AnimPlayDesc.fBlendIn = 0.2f;
 		m_pColliderCom->Set_Gravity(true);
 	}
 }

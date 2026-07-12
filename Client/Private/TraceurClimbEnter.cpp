@@ -49,7 +49,7 @@ void CTraceurClimbEnter::Late_Anim_Update(_float fTimeDelta)
 void CTraceurClimbEnter::SetUp_Animations()
 {
 	CState::Add_ParkourAnimations(ENUM_CLASS(ETraceurClimbEnter::IdleToBracedHang),
-		{ &m_fTrackPosition, "IdleToBracedHang", 1.f, 0.2f, 0.f, false }, { 1.f, false, true, true }, {});
+		{ &m_fTrackPosition, "IdleToBracedHang", 1.f, 0.2f, 0.2f, 0.f, false }, { 1.f, false, true, true }, {});
 }
 
 

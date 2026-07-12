@@ -331,6 +331,7 @@ _bool CAnimation::Update_TrackPosition(_float fTimeDelta, _float* pTrackPosition
 		return true;
 	}
 
+	// Notify State 추가 예정.
 	while (m_iNotifyIndex < m_AnimNotifies.size() && m_fCurrentTrackPosition >= m_AnimNotifies[m_iNotifyIndex]->Get_TrackPosition())
 		m_AnimNotifies[m_iNotifyIndex++]->Execute();
 

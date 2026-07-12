@@ -1,4 +1,4 @@
-#include "ClientPch.h"
+﻿#include "ClientPch.h"
 #include "TraceurGroundMove.h"
 #include "Traceur.h"
 #include "TraceurState_Enum.h"
@@ -105,8 +105,9 @@ void CTraceurGroundMove::SetUp_Animations()
 {
 	BLENDSPACE_1D_DESC bs{};
 	bs.pParam         = m_pMoveCom->Get_LocomotionWeightPtr();
-	bs.fBlendDuration = 0.2f;
-	bs.Samples        = { {"Idle", 0.f}, {"Walk", 0.5f}, {"Run", 1.f} };
+	bs.fBlendIn = 0.2f;
+	bs.fBlendOut = 0.2f;
+	bs.Samples        = { {"StandingIdle01", 0.f}, {"StandingWalkForward", 0.5f}, {"StandingRunForward", 1.f} };
 
 	ROOTMOTION_DESC root{};
 	root.fRate = 1.f;

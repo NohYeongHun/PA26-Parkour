@@ -91,7 +91,7 @@ void CTraceurGroundVault::Check_StateTransition(_float fTimeDelta)
 void CTraceurGroundVault::SetUp_Animations()
 {
 	CState::Add_ParkourAnimations(ENUM_CLASS(ETraceurGroundVault::LowerVault),
-		{ &m_fTrackPosition, "LowVault", 1.f, 0.05f, 0.f, false }, { 1.f, false, true, true }, {});
+		{ &m_fTrackPosition, "LowVault", 1.f, 0.05f, 0.2f, 0.f, false }, { 1.f, false, true, true }, {});
 }
 
 void CTraceurGroundVault::State_Reset()

@@ -160,9 +160,10 @@ void CTraceurState::Bind_Rules(const CTransitionTable* pTable)
 	for (const TRANSITION_RULE_DATA& Data : *pRules)
 	{
 		BOUND_TRANSITION Bound{};
-		Bound.iAnimGuard = Data.iAnimGuard;
-		Bound.Next       = Data.Next;
-		Bound.iNextAnim  = Data.iNextAnim;
+		Bound.iAnimGuard    = Data.iAnimGuard;
+		Bound.Next          = Data.Next;
+		Bound.iNextAnim     = Data.iNextAnim;
+		Bound.fBlendOverride = Data.fBlendOverride;
 
 		auto ResolveSlots = [this, &Bound, &strWarnings](const vector<_string>& Names, vector<_uint>& OutSlots)
 		{
@@ -218,6 +219,10 @@ void CTraceurState::Evaluate_Transitions()
 				if (m_FlagValues[iSlot]) { isMatch = false; break; }
 		if (!isMatch)
 			continue;
+
+		// JSON 전환별 블렌드 오버라이드: 새 상태의 첫 Play_* 호출에서 CModel이 1회 소비
+		if (Rule.fBlendOverride >= 0.f)
+			m_pModelCom->Set_NextBlendOverride(Rule.fBlendOverride);
 
 		if (Rule.iNextAnim != UINT_MAX)
 		{
