@@ -508,7 +508,9 @@ _bool CModel::Play_Animation_CPU(const ANIMATION_PLAY_DESC& playDesc, const ROOT
 	if (m_isBlending)
 	{
 		m_fBlendElapsed += playDesc.fSpeed * fTimeDelta;
-		m_fBlendWeight = Saturate(m_fBlendElapsed / playDesc.fBlendDuration);
+		//m_fBlendWeight = Saturate(m_fBlendElapsed / playDesc.fBlendDuration);
+		_float t = Saturate(m_fBlendElapsed / playDesc.fBlendDuration);
+		m_fBlendWeight = t * t * (3.f - 2.f * t);
 		if (iter->second->Blend_TransformationMatrices(fTimeDelta * playDesc.fSpeed, m_Bones, m_fBlendWeight))
 			m_isBlending = false;
 	}

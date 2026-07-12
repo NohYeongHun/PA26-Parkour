@@ -68,7 +68,7 @@ void CTraceurGroundMove::Check_Physics(_float fTimeDelta)
 	else
 	{
 		m_fFallTime += fTimeDelta;
-		if (m_fFallTime >= 0.2f)
+		if (m_fFallTime >= 0.3f)
 			m_States[FALL] = true;
 	}
 

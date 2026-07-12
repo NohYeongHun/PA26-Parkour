@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "ClimbState.h"
 #include "Client_Struct.h"
 
@@ -11,6 +11,7 @@ private:
 		JUMP,
 		LAND,
 		FALL,
+		KNEE_HIT,
 		END
 	};
 

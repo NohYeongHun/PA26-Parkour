@@ -19,8 +19,8 @@ HRESULT CTraceurClimbExit::Initialize(CTraceur* pOwner)
 void CTraceurClimbExit::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
-	if (!pArg || static_cast<STATE_ENTER_DESC*>(pArg)->iAnimIndex == UINT_MAX)
-		m_iCurrentAnimIdx = ENUM_CLASS(ETraceurClimbExit::JumpFromWall);
+	/*if (!pArg || static_cast<STATE_ENTER_DESC*>(pArg)->iAnimIndex == UINT_MAX)
+		m_iCurrentAnimIdx = ENUM_CLASS(ETraceurClimbExit::JumpFromWall);*/
 	m_pColliderCom->Set_Gravity(true);
 }
 

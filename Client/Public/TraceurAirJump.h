@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "AirState.h"
 #include "Client_Struct.h"
 
@@ -26,6 +26,7 @@ public:
 private:
 	void Check_State() override;
 	void Update_Animations(_float fTimeDelta) override;
+	void Check_Physics(_float fTimeDelta) override;
 	void State_Reset() override;
 
 private:
@@ -33,7 +34,8 @@ private:
 	virtual void SetUp_Transitions() override;
 
 private:
-	_bool m_States[STATE::END] = {};
+	_bool  m_States[STATE::END] = {};
+	_float m_fVelocityY =		{};
 
 public:
 	static CTraceurAirJump* Create(class CTraceur* pOwner);

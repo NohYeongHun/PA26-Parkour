@@ -36,16 +36,11 @@ void CTraceurClimbMove::Check_State()
 	m_States[JUMP] = m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::SPACE));
 
 	const auto& Geo = m_pEnvQueryCom->Get_QueryResult().Geometry;
-	if (!Geo.KneeHit.isHit)
-	{
-		_vector vPos    = m_pColliderCom->Get_Position();
-		_vector vEndPos = vPos + XMVectorSet(0.f, -1.5f, 0.f, 0.f);
-		_float4 vOut    = {};
-		_bool   bNear   = CGameInstance::GetInstance()->Ray_Cast(vPos, vEndPos, &vOut);
+	m_States[KNEE_HIT] = Geo.KneeHit.isHit;
+	m_States[LAND] = m_pColliderCom->IsLand();
+		
 
-		m_States[LAND] = bNear;
-		m_States[FALL] = !bNear;
-	}
+	m_States[FALL] = !m_States[LAND];
 }
 
 void CTraceurClimbMove::Update_Animations(_float fTimeDelta)
@@ -90,17 +85,23 @@ void CTraceurClimbMove::SetUp_Animations()
 void CTraceurClimbMove::SetUp_Transitions()
 {
 	Add_Transition(
-		[this] { return m_States[JUMP]; },
-		{ ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Exit) }
+		[this] { 
+			return m_States[JUMP] && m_States[FALL];
+		},
+		{ ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Fall) },
+		ENUM_CLASS(ETraceurAirFall::FallALoop)
 	);
 	Add_Transition(
-		[this] { return m_States[LAND]; },
+		[this] { 
+
+			return !m_States[KNEE_HIT] && ( m_States[LAND] || (m_States[LAND] && m_States[JUMP])); },
 		{ ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Land) },
 		ENUM_CLASS(ETraceurGroundLand::FallingToLanding)
 	);
 	Add_Transition(
-		[this] { return m_States[FALL]; },
-		{ ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Exit) }
+		[this] { return !m_States[KNEE_HIT] && m_States[FALL]; },
+		{ ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Fall) },
+		ENUM_CLASS(ETraceurAirFall::FallALoop)
 	);
 }
 

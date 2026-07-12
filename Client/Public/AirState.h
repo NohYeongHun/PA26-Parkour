@@ -14,6 +14,8 @@ public:
 	virtual void OnUpdate(_float fTimeDelta) override;
 	virtual void OnExit() override;
 
+public:
+	virtual _bool Play_Animation(_float fTimeDelta) override;
 
 public:
 	virtual void Free() override;

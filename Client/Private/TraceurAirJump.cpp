@@ -1,4 +1,4 @@
-#include "ClientPch.h"
+﻿#include "ClientPch.h"
 #include "TraceurAirJump.h"
 #include "Traceur.h"
 #include "TraceurState_Enum.h"
@@ -16,11 +16,15 @@ HRESULT CTraceurAirJump::Initialize(CTraceur* pOwner)
 	return S_OK;
 }
 
+static constexpr _float JUMP_FORCE    = 450.f;
+static constexpr _float GRAVITY_ACCEL = 9.81f * 0.7f;
+
 void CTraceurAirJump::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
 	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurAirJump::Jump);
 	m_pColliderCom->Set_Gravity(false);
+	m_fVelocityY = JUMP_FORCE;
 	State_Reset();
 }
 
@@ -54,10 +58,21 @@ void CTraceurAirJump::Update_Animations(_float fTimeDelta)
 	m_pMoveCom->Move(vWorldDir, fTimeDelta, fTargetWeight);
 }
 
+void CTraceurAirJump::Check_Physics(_float fTimeDelta)
+{
+	//if (m_States[LAND]) return;
+
+	//m_fVelocityY -= GRAVITY_ACCEL * fTimeDelta;
+
+	_vector vPos = m_pTransformCom->Get_State(Engine::STATE::POSITION);
+	vPos = XMVectorSetY(vPos, XMVectorGetY(vPos) + m_fVelocityY * fTimeDelta);
+	m_pTransformCom->Set_State(Engine::STATE::POSITION, XMVectorSetW(vPos, 1.f));
+}
+
 void CTraceurAirJump::SetUp_Animations()
 {
 	CState::Add_Animations(ENUM_CLASS(ETraceurAirJump::Jump),
-		{ &m_fTrackPosition, "Jump", 1.f, 0.1f, 0.f, false }, { 3.f, true, true, true });
+		{ &m_fTrackPosition, "Jump", 1.f, 0.1f, 0.f, false }, { 1.f, true, true, true });
 }
 
 void CTraceurAirJump::SetUp_Transitions()

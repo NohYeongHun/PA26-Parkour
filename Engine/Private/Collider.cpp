@@ -129,27 +129,14 @@ HRESULT CCollider::Initialize_Clone(void* pArg)
 
 void CCollider::Update(const _fvector& vVelocity)
 {
-	// Ray Cast Ground Check
-	_vector vPos = StoreVector3(m_pCharacterVirtual->GetPosition()) + XMVectorSet(0.f, 0.1f, 0.f, 0.f);
-	_vector vEndPos = vPos + XMVectorSet(0.f, m_fRayOffset, 0.f, 0.f);
-
-	_float4 vOut = {};
-	m_isLand = m_pGameInstance->Ray_Cast(vPos, vEndPos, &vOut);
+	// IsLand()와 동일한 소스(IsSupported)로 중력 판단
+	_bool bSupported = m_pCharacterVirtual->IsSupported();
 
 	Vec3 Velocity = LoadVec3(vVelocity);
-	if (false == m_isLand && true == m_isGravity)
+	if (!bSupported && m_isGravity)
 		Velocity += XMVectorSet(0.f, -9.81f, 0.f, 0.f) * 0.7f;
 	else
-	{
 		Slide(Velocity);
-		//if (Velocity.GetY() < 0.f)
-		//	Velocity.SetY(0.f);
-	}
-
-	// Ground Check Error
-	CharacterVirtual::EGroundState GS = m_pCharacterVirtual->GetGroundState();
-	if ((false == m_isLand && CharacterVirtual::EGroundState::OnGround == GS) || (true == m_isLand && CharacterVirtual::EGroundState::OnGround != GS))
-		Velocity += XMVectorSet(0.f, -0.01f, 0.f, 0.f);
 
 	m_pCharacterVirtual->SetLinearVelocity(Velocity);
 	m_pGameInstance->Add_Virtual(m_pCharacterVirtual, m_iCollisionLayer);
