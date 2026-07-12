@@ -1,4 +1,4 @@
-﻿#include "ClientPch.h"
+#include "ClientPch.h"
 #include "TraceurAirJump.h"
 #include "Traceur.h"
 #include "TraceurState_Enum.h"
@@ -11,7 +11,7 @@ HRESULT CTraceurAirJump::Initialize(CTraceur* pOwner)
 		return E_FAIL;
 
 	SetUp_Animations();
-	m_iCurrentAnimIdx = 0;
+	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurAirJump::Jump);
 
 	return S_OK;
 }
@@ -19,30 +19,8 @@ HRESULT CTraceurAirJump::Initialize(CTraceur* pOwner)
 void CTraceurAirJump::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
-	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurAirFall::FallingIdle);
-	m_pColliderCom->Set_Gravity(true);
-	State_Reset();
-
-
-}
-
-void CTraceurAirJump::OnUpdate(_float fTimeDelta)
-{
-	__super::OnUpdate(fTimeDelta);
-
-	// 1. 입력 확인
-	Check_State();
-
-	// 2. 애니메이션 업데이트
-	Update_Animations(fTimeDelta);
-
-	// 3. 물리 체크
-	Check_Physics(fTimeDelta);
-
-	// 4. 상태 전환
-	Check_StateTransition(fTimeDelta);
-	
-	// 5. 상태 초기화
+	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurAirJump::Jump);
+	m_pColliderCom->Set_Gravity(false);
 	State_Reset();
 }
 
@@ -55,11 +33,14 @@ void CTraceurAirJump::OnExit()
 void CTraceurAirJump::Check_State()
 {
 	m_States[LAND] = m_pColliderCom->IsLand();
+	m_States[MOVE] = m_pInputControllerCom->Check_AnyInput(m_iMoveKey);
+	m_States[RUN]  = m_States[MOVE] && m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::LSHIFT));
 }
 
 void CTraceurAirJump::Update_Animations(_float fTimeDelta)
 {
 	CTraceurState::Play_Animation(fTimeDelta);
+
 	_float fTargetWeight = 0.f;
 	if (m_States[RUN])
 		fTargetWeight = 0.5f;
@@ -73,44 +54,25 @@ void CTraceurAirJump::Update_Animations(_float fTimeDelta)
 	m_pMoveCom->Move(vWorldDir, fTimeDelta, fTargetWeight);
 }
 
-void CTraceurAirJump::Check_Physics(_float fTimeDelta)
-{
-}
-
-void CTraceurAirJump::Check_StateTransition(_float fTimeDelta)
-{
-	/*if (m_States[LAND])
-	{
-		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND),
-			ENUM_CLASS(ETraceurGroundState::Land));
-		return;
-	}*/
-
-	if (m_IsAnimationEnd)
-	{
-		if (!m_States[LAND])
-		{
-			m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::AIR),
-				ENUM_CLASS(ETraceurAirState::Fall));
-			return;
-		}
-
-		if (m_States[LAND])
-		{
-			m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND),
-				ENUM_CLASS(ETraceurGroundState::Land));
-			return;
-		}
-
-		
-	}
-}
-
 void CTraceurAirJump::SetUp_Animations()
 {
-	
-	CState::Add_Animations(ENUM_CLASS(ETraceurAirFall::FallingIdle),
-		{ &m_fTrackPosition, "Jump", 1.f, 0.1f, 0.f, false }, { 1.f, true, true, true });
+	CState::Add_Animations(ENUM_CLASS(ETraceurAirJump::Jump),
+		{ &m_fTrackPosition, "Jump", 1.f, 0.1f, 0.f, false }, { 3.f, true, true, true });
+}
+
+void CTraceurAirJump::SetUp_Transitions()
+{
+	// AnimEnd + 미착지 → AirFall
+	Add_Transition(
+		[this] { return m_IsAnimationEnd && !m_States[LAND]; },
+		{ ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Fall) }
+	);
+	// 착지 → GroundLand (AnimEnd 없이도 착지하면 전환)
+	Add_Transition(
+		[this] { return m_States[LAND]; },
+		{ ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Land) },
+		ENUM_CLASS(ETraceurGroundLand::FallingToLanding)
+	);
 }
 
 void CTraceurAirJump::State_Reset()
@@ -118,8 +80,6 @@ void CTraceurAirJump::State_Reset()
 	for (_uint i = 0; i < STATE::END; ++i)
 		m_States[i] = false;
 }
-
-
 
 CTraceurAirJump* CTraceurAirJump::Create(CTraceur* pOwner)
 {
@@ -135,11 +95,7 @@ CTraceurAirJump* CTraceurAirJump::Create(CTraceur* pOwner)
 	return pInstance;
 }
 
-
 void CTraceurAirJump::Free()
 {
 	__super::Free();
 }
-
-
-

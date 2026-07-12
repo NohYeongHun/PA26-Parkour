@@ -24,22 +24,13 @@ void CTraceurGroundMove::OnEnter(void* pArg)
 	m_pColliderCom->Set_Gravity(true);
 	State_Reset();
 	m_pMoveCom->Set_MovementType(MOVEMENT_TYPE::GROUND);
-}
-
-void CTraceurGroundMove::OnUpdate(_float fTimeDelta)
-{
-	__super::OnUpdate(fTimeDelta);
-
-	Check_State();
-	Update_Animations(fTimeDelta);
-	Check_Physics(fTimeDelta);
-	Check_StateTransition(fTimeDelta);
-	State_Reset();
+	m_fFallTime = 0.f;
 }
 
 void CTraceurGroundMove::OnExit()
 {
 	__super::OnExit();
+	m_fFallTime = 0.f;
 }
 
 void CTraceurGroundMove::Check_State()
@@ -54,7 +45,6 @@ void CTraceurGroundMove::Update_Animations(_float fTimeDelta)
 {
 	CTraceurState::Play_Animation(fTimeDelta);
 
-	// 목표 가중치: 무입력 0 / 이동 0.5 / 이동+LSHIFT 1.0
 	_float fTargetWeight = 0.f;
 	if (m_States[RUN])
 		fTargetWeight = 1.f;
@@ -70,9 +60,21 @@ void CTraceurGroundMove::Update_Animations(_float fTimeDelta)
 
 void CTraceurGroundMove::Check_Physics(_float fTimeDelta)
 {
+	m_States[LAND] = m_pColliderCom->IsLand();
+	if (m_States[LAND])
+	{
+		m_fFallTime = 0.f;
+	}
+	else
+	{
+		m_fFallTime += fTimeDelta;
+		if (m_fFallTime >= 0.2f)
+			m_States[FALL] = true;
+	}
+
 	const ENV_QUERY_RESULT& EnvResult = m_pEnvQueryCom->Get_QueryResult();
 	if (!m_States[MOVE] || !m_States[RUN])
-		return; 
+		return;
 
 	if (EnvResult.isValid)
 	{
@@ -88,52 +90,14 @@ void CTraceurGroundMove::Check_Physics(_float fTimeDelta)
 			return;
 		}
 	}
-
-	
-}
-
-void CTraceurGroundMove::Check_StateTransition(_float fTimeDelta)
-{
-	if (!m_States[LAND])
-	{
-		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::AIR),
-			ENUM_CLASS(ETraceurAirState::Fall));
-
-		return;
-	}
-
-	if (m_States[JUMP])
-	{
-		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::AIR),
-			ENUM_CLASS(ETraceurAirState::Jump));
-
-		return;
-	}
-
-	if (m_States[CLIMB])
-	{
-		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::CLIMB),
-			ENUM_CLASS(ETraceurClimbState::Enter));
-		return;
-	}
-
-	if (m_States[VAULT])
-	{
-		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND),
-			ENUM_CLASS(ETraceurGroundState::Vault));
-		return;
-	}
-
-
-		
 }
 
 void CTraceurGroundMove::SetUp_Animations()
 {
 	BLENDSPACE_1D_DESC bs{};
-	bs.pParam   = m_pMoveCom->Get_LocomotionWeightPtr();
+	bs.pParam         = m_pMoveCom->Get_LocomotionWeightPtr();
 	bs.fBlendDuration = 0.2f;
-	bs.Samples  = { {"Idle", 0.f}, {"Walk", 0.5f}, {"Run", 1.f} };
+	bs.Samples        = { {"Idle", 0.f}, {"Walk", 0.5f}, {"Run", 1.f} };
 
 	ROOTMOTION_DESC root{};
 	root.fRate = 1.f;
@@ -141,10 +105,32 @@ void CTraceurGroundMove::SetUp_Animations()
 	Add_BlendSpace(ENUM_CLASS(ETraceurGroundMove::Move), bs, root);
 }
 
+void CTraceurGroundMove::SetUp_Transitions()
+{
+	Add_Transition(
+		[this] { return m_States[FALL]; },
+		{ ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Fall) },
+		ENUM_CLASS(ETraceurAirFall::FallALoop)
+	);
+	Add_Transition(
+		[this] { return m_States[JUMP]; },
+		{ ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Jump) }
+	);
+	Add_Transition(
+		[this] { return m_States[CLIMB]; },
+		{ ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Enter) }
+	);
+	Add_Transition(
+		[this] { return m_States[VAULT]; },
+		{ ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Vault) }
+	);
+}
+
 void CTraceurGroundMove::State_Reset()
 {
 	for (_uint i = 0; i < STATE::END; ++i)
 		m_States[i] = false;
+
 }
 
 CTraceurGroundMove* CTraceurGroundMove::Create(CTraceur* pOwner)

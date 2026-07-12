@@ -77,8 +77,9 @@ _vector CMovementComponent::Calc_GroundDir(ACTORDIR eDir, _fvector vCamForward, 
 
 _vector CMovementComponent::Calc_ClimbDir(ACTORDIR eDir, _fvector vClimbNormal, _fvector vWorldUp)
 {
-	_vector vRight = XMVector3Normalize(XMVector3Cross(vWorldUp, vClimbNormal));
-	_vector vUp = XMVector3Normalize(XMVector3Cross(vClimbNormal, vRight));
+	_vector vRight = XMVector3Normalize(XMVector3Cross(vWorldUp, -vClimbNormal));
+	//_vector vRight = XMVector3Normalize(XMVector3Cross(vClimbNormal, vWorldUp));
+	_vector vUp = -XMVector3Normalize(XMVector3Cross(vClimbNormal, vRight));
 
 
 	switch (eDir)

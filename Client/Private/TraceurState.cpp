@@ -1,4 +1,4 @@
-﻿#include "ClientPch.h"
+#include "ClientPch.h"
 #include "TraceurState.h"
 #include "Traceur.h"
 #include "Model.h"
@@ -11,7 +11,6 @@
 HRESULT CTraceurState::Initialize(CTraceur* pOwner)
 {
 	m_pOwner = pOwner;
-	/* Component 캐싱 */
 	if (nullptr == pOwner)
 		return E_FAIL;
 
@@ -43,11 +42,12 @@ HRESULT CTraceurState::Initialize(CTraceur* pOwner)
 	if (nullptr == m_pMoveCom)
 		return E_FAIL;
 
-	// 자주 사용하는 이동 키는 저장.
 	m_iMoveKey |= static_cast<_uint>(KEYINPUT::W);
 	m_iMoveKey |= static_cast<_uint>(KEYINPUT::A);
 	m_iMoveKey |= static_cast<_uint>(KEYINPUT::S);
 	m_iMoveKey |= static_cast<_uint>(KEYINPUT::D);
+
+	SetUp_Transitions();
 
 	return S_OK;
 }
@@ -55,11 +55,23 @@ HRESULT CTraceurState::Initialize(CTraceur* pOwner)
 void CTraceurState::OnEnter(void* pArg)
 {
 	CState::OnEnter(pArg);
+	if (pArg)
+	{
+		auto* pDesc = static_cast<STATE_ENTER_DESC*>(pArg);
+		if (pDesc->iAnimIndex != UINT_MAX)
+			m_iCurrentAnimIdx = pDesc->iAnimIndex;
+	}
 }
 
 void CTraceurState::OnUpdate(_float fTimeDelta)
 {
 	CState::OnUpdate(fTimeDelta);
+	Check_State();
+	Update_Animations(fTimeDelta);
+	Late_Anim_Update(fTimeDelta);
+	Check_Physics(fTimeDelta);
+	Evaluate_Transitions();
+	State_Reset();
 }
 
 void CTraceurState::OnExit()
@@ -73,7 +85,6 @@ _bool CTraceurState::IsVault() const
 	return (EStateCategory::GROUND == static_cast<EStateCategory>(stateKey.iCategory) &&
 		ETraceurGroundState::Vault == static_cast<ETraceurGroundState>(stateKey.iSubState));
 }
-
 
 _bool CTraceurState::Play_Animation(_float fTimeDelta)
 {
@@ -96,12 +107,42 @@ _bool CTraceurState::Play_Animation(_float fTimeDelta)
 		m_IsAnimationEnd = m_pModelCom->Play_Animation_CPU(iter->second.AnimPlayDesc, iter->second.RootMotionDesc, fTimeDelta);
 	}
 
-	m_pModelCom->Sync_RootNode(m_pTransformCom, fTimeDelta); // RootMotion이 항등행렬일 경우엔 아무런 문제가 없음
+	m_pModelCom->Sync_RootNode(m_pTransformCom, fTimeDelta);
 	m_pColliderCom->Set_Position(m_pTransformCom->Get_State(Engine::STATE::POSITION));
-	
+
 	return true;
 }
 
+void CTraceurState::Add_Transition(function<_bool()> Condition, Engine::StateKey Next, _uint iNextAnim)
+{
+	m_Transitions.push_back({ move(Condition), Next, iNextAnim, nullptr });
+}
+
+void CTraceurState::Add_Transition(function<_bool()> Condition, Engine::StateKey Next, shared_ptr<STATE_ENTER_DESC> pDesc)
+{
+	m_Transitions.push_back({ move(Condition), Next, UINT_MAX, move(pDesc) });
+}
+
+void CTraceurState::Evaluate_Transitions()
+{
+	for (auto& rule : m_Transitions)
+	{
+		if (!rule.Condition()) continue;
+
+		if (rule.pDesc)
+			m_pStateMachinCom->Change_State(rule.Next.iCategory, rule.Next.iSubState, rule.pDesc.get());
+		else if (rule.iNextAnim != UINT_MAX)
+		{
+			STATE_ENTER_DESC desc{ rule.iNextAnim };
+			m_pStateMachinCom->Change_State(rule.Next.iCategory, rule.Next.iSubState, &desc);
+		}
+		else
+		{
+			m_pStateMachinCom->Change_State(rule.Next.iCategory, rule.Next.iSubState);
+		}
+		return;
+	}
+}
 
 void CTraceurState::Free()
 {

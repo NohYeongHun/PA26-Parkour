@@ -1,16 +1,10 @@
-﻿#pragma once
+#pragma once
 #include "GroundState.h"
 #include "Client_Struct.h"
 
 NS_BEGIN(Client)
 class CTraceurGroundVault final : public CGroundState
 {
-private:
-	enum STATE
-	{
-		END
-	};
-
 public:
 	explicit CTraceurGroundVault() = default;
 	virtual ~CTraceurGroundVault() = default;
@@ -18,55 +12,39 @@ public:
 public:
 	virtual HRESULT Initialize(class CTraceur* pOwner);
 	virtual void OnEnter(void* pArg = nullptr) override;
-	virtual void OnUpdate(_float fTimeDelta) override;
 	virtual void OnExit() override;
 
 private:
-	// Update
-	void Check_State();
-	void Update_Animations(_float fTimeDelta);
-	void Check_Physics(_float fTimeDelta);
-	
+	void Update_Animations(_float fTimeDelta) override;
+	void Late_Anim_Update(_float fTimeDelta) override;
 
 private:
-	virtual void Check_StateTransition(_float fTimeDelta) override;
 	virtual void SetUp_Animations() override;
+	virtual void SetUp_Transitions() override;
 
 private:
-	void State_Reset();
-
-
-private:
-	_bool Ready_Enter();
-	void Build_Curve(); // 2차 Bezier 커브 (P0: 시작점, P1: 정점 제어점, P2: 착지점)
-	
+	_bool  Ready_Enter();
+	void   Build_Curve();
 
 #ifdef _DEBUG
 private:
 	void Draw_DebugCurve();
-#endif // _DEBUG
+#endif
 
 private:
-	void Move_AlongCurve(_float fTimeDelta);
+	void  Move_AlongCurve(_float fTimeDelta);
 	_bool Select_Animation();
 
-
-
 private:
-	_bool      m_bValidPlan = false;
 	ENV_QUERY_RESULT m_EnvQueryResult = {};
-
-private:
-	// Vault 비행 커브 (2차 Bezier)
-	_float3 m_vCurveP0 = {};
-	_float3 m_vCurveP1 = {};
-	_float3 m_vCurveP2 = {};
-	_float m_fCurveT = {};
+	_float3 m_vCurveP0    = {};
+	_float3 m_vCurveP1    = {};
+	_float3 m_vCurveP2    = {};
+	_float  m_fCurveT     = {};
 	_bool   m_bValidCurve = false;
 
 public:
 	static CTraceurGroundVault* Create(class CTraceur* pOwner);
 	virtual void Free() override;
-
 };
 NS_END

@@ -5,12 +5,13 @@
 NS_BEGIN(Client)
 class CTraceurAirFall final : public CAirState
 {
-private:
+public:
 	enum STATE
 	{
 		LAND,
 		END
 	};
+
 
 public:
 	explicit CTraceurAirFall() = default;
@@ -19,29 +20,24 @@ public:
 public:
 	virtual HRESULT Initialize(class CTraceur* pOwner);
 	virtual void OnEnter(void* pArg = nullptr) override;
-	virtual void OnUpdate(_float fTimeDelta) override;
 	virtual void OnExit() override;
 
 private:
-	// Update
-	void Check_State();
-	void Update_Animations(_float fTimeDelta);
-	void Check_Physics(_float fTimeDelta);
-	
+	void Update_Animations(_float fTimeDelta) override;
 
 private:
-	virtual void Check_StateTransition(_float fTimeDelta) override;
+	void Check_State() override;
+	void State_Reset() override;
+
+private:
 	virtual void SetUp_Animations() override;
+	virtual void SetUp_Transitions() override;
 
 private:
-	void State_Reset();
-
-private:
-	_bool m_States[STATE::LAND];
+	_bool m_States[STATE::END];
 
 public:
 	static CTraceurAirFall* Create(class CTraceur* pOwner);
 	virtual void Free() override;
-
 };
 NS_END

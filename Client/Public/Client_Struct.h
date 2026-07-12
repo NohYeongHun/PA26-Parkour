@@ -131,5 +131,18 @@ namespace Client
 	}VAULT_CURVE;
 #pragma endregion
 
+#pragma region STATE_ENTER
+	struct STATE_ENTER_DESC
+	{
+		_uint iAnimIndex = UINT_MAX;
+	};
+
+	struct VAULT_ENTER_DESC : STATE_ENTER_DESC
+	{
+		_float3 vLandingPos;
+		_float3 vObstacleTop;
+	};
+#pragma endregion
+
 
 }
