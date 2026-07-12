@@ -297,13 +297,28 @@ void CTransform::LookDir(const _fvector& vDir)
 
 void CTransform::LookLerp(const _fvector& vDir, _float fTimeDelta, _float fRate)
 {
-	_vector vLook = XMVector4Normalize(Get_State(STATE::LOOK));
+	if (XMVectorGetX(XMVector3LengthSq(vDir)) < 1e-8f)
+		return;
 
-	_float fDot = XMVector3Dot(vLook, vDir).m128_f32[0];
-	if (fabsf(fDot) > 0.9999f)
-		vLook = vDir;
+	_vector vLook = XMVector3Normalize(Get_State(STATE::LOOK));
+	_vector vTarget = XMVector3Normalize(vDir);
+
+	_float fDot = XMVectorGetX(XMVector3Dot(vLook, vTarget));
+	fDot = max(-1.f, min(1.f, fDot));
+
+	_float fAngle = acosf(fDot);
+	_float fMaxStep = m_fRotationPerSec * fTimeDelta * fRate;
+
+	if (fAngle <= fMaxStep)
+		vLook = vTarget;
 	else
-		vLook += vDir * m_fRotationPerSec * fTimeDelta * fRate;
+	{
+		_vector vAxis = XMVector3Cross(vLook, vTarget);
+		if (XMVectorGetX(XMVector3LengthSq(vAxis)) < 1e-6f)
+			vAxis = XMVectorSet(0.f, 1.f, 0.f, 0.f);
+
+		vLook = XMVector3Rotate(vLook, XMQuaternionRotationAxis(XMVector3Normalize(vAxis), fMaxStep));
+	}
 
 	_vector vRight = XMVector3Cross(XMVectorSet(0.f, 1.f, 0.f, 0.f), vLook);
 	_vector vUp = XMVector3Cross(vLook, vRight);

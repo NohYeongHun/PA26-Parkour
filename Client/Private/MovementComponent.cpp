@@ -130,7 +130,7 @@ void CMovementComponent::GroundMove(_fvector vWorldDir, _float fTimeDelta, _floa
 	if (bHasInput)
 	{
 		XMStoreFloat3(&m_vLastMoveDir, vWorldDir);
-		m_pTransformCom->LookLerp(vWorldDir, fTimeDelta, 10.f);
+		m_pTransformCom->LookLerp(vWorldDir, fTimeDelta, 3.f);
 	}
 
 	_fvector vMoveDir = bHasInput ? vWorldDir : XMLoadFloat3(&m_vLastMoveDir);
