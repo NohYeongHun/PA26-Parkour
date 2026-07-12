@@ -16,10 +16,10 @@ public:
 
 private:
 	void Update_Animations(_float fTimeDelta) override;
+	void Check_State() override;
 
 private:
 	virtual void SetUp_Animations() override;
-	virtual void SetUp_Transitions() override;
 
 public:
 	static CTraceurClimbExit* Create(class CTraceur* pOwner);

@@ -33,6 +33,8 @@
     <ClCompile Include="..\Private\TraceurGroundMove.cpp" />
     <ClCompile Include="..\Private\TraceurGroundVault.cpp" />
     <ClCompile Include="..\Private\TraceurState.cpp" />
+    <ClCompile Include="..\Private\TraceurStateNames.cpp" />
+    <ClCompile Include="..\Private\TransitionTable.cpp" />
     <ClCompile Include="..\Private\GameSystem.cpp" />
     <ClCompile Include="..\Private\Level_Loading.cpp" />
     <ClCompile Include="..\Private\Level_Test.cpp" />
@@ -73,6 +75,8 @@
     <ClInclude Include="..\Public\TraceurGroundMove.h" />
     <ClInclude Include="..\Public\TraceurGroundVault.h" />
     <ClInclude Include="..\Public\TraceurState.h" />
+    <ClInclude Include="..\Public\TraceurStateNames.h" />
+    <ClInclude Include="..\Public\TransitionTable.h" />
     <ClInclude Include="..\Public\Client_CharacterEnum.h" />
     <ClInclude Include="..\Public\Client_Define.h" />
     <ClInclude Include="..\Public\Client_Enum.h" />

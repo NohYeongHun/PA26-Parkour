@@ -156,6 +156,12 @@
     <ClCompile Include="..\Private\TraceurState.cpp">
       <Filter>04. Component\State</Filter>
     </ClCompile>
+    <ClCompile Include="..\Private\TraceurStateNames.cpp">
+      <Filter>04. Component\State</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TransitionTable.cpp">
+      <Filter>04. Component\State</Filter>
+    </ClCompile>
     <ClCompile Include="..\Private\GroundState.cpp">
       <Filter>04. Component\State\Ground</Filter>
     </ClCompile>
@@ -285,6 +291,12 @@
       <Filter>99. Define</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\TraceurState.h">
+      <Filter>04. Component\State</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurStateNames.h">
+      <Filter>04. Component\State</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TransitionTable.h">
       <Filter>04. Component\State</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\GroundState.h">

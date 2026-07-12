@@ -2,6 +2,7 @@
 #include "GameSystem.h"
 #include "Parser.h"
 #include "MouseController.h"
+#include "TransitionTable.h"
 
 
 
@@ -19,6 +20,8 @@ void CGameSystem::Ready_GameSystem(ID3D11Device* pDevice, ID3D11DeviceContext* p
 	m_pParser = CParser::Create(pDevice, pContext);
 	ASSERT_CRASH(m_pParser);
 
+	m_pTransitionTable = CTransitionTable::Create("../../Client/Bin/Data/TraceurTransitions.json");
+	ASSERT_CRASH(m_pTransitionTable);
 }
 
 void CGameSystem::Update(_float fTimeDelta)
@@ -53,6 +56,12 @@ void CGameSystem::Clone_MapObjects(LEVEL eLevel)
 	m_pParser->Clone_MapObjects(eLevel);
 }
 
+void CGameSystem::Reload_TransitionTable()
+{
+	if (m_pTransitionTable)
+		m_pTransitionTable->Reload();
+}
+
 #pragma region SONORO_MANAGER
 
 #pragma endregion
@@ -69,6 +78,7 @@ void CGameSystem::Release_System()
 {
 	Safe_Release(m_pParser);
 	Safe_Release(m_pMouseController);
+	Safe_Release(m_pTransitionTable);
 	Release();
 }
 

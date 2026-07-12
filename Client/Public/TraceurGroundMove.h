@@ -12,18 +12,6 @@ private:
 	static constexpr _float FVAULT_LANDING_MARGIN   = 0.3f;
 	static constexpr _float FVAULT_MAX_LANDING_DROP = 2.0f;
 
-	enum STATE
-	{
-		MOVE = 0,
-		RUN,
-		VAULT,
-		LAND,
-		CLIMB,
-		JUMP,
-		FALL,
-		END
-	};
-
 public:
 	explicit CTraceurGroundMove() = default;
 	virtual ~CTraceurGroundMove() = default;
@@ -37,14 +25,11 @@ private:
 	void Check_State() override;
 	void Update_Animations(_float fTimeDelta) override;
 	void Check_Physics(_float fTimeDelta) override;
-	void State_Reset() override;
 
 private:
 	virtual void SetUp_Animations() override;
-	virtual void SetUp_Transitions() override;
 
 private:
-	_bool  m_States[STATE::END] = {};
 	_float m_fFallTime = {};
 
 public:

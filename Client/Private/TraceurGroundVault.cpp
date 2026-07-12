@@ -58,13 +58,6 @@ void CTraceurGroundVault::SetUp_Animations()
 		{ &m_fTrackPosition, "LowVault", 1.2f, 0.05f, 0.f, false }, { 1.f, false, true, true }, {});
 }
 
-void CTraceurGroundVault::SetUp_Transitions()
-{
-	Add_Transition(
-		[this] { return m_IsAnimationEnd; },
-		{ ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move) }
-	);
-}
 
 _bool CTraceurGroundVault::Ready_Enter()
 {

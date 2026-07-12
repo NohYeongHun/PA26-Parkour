@@ -19,7 +19,6 @@ private:
 
 private:
 	virtual void SetUp_Animations() override;
-	virtual void SetUp_Transitions() override;
 
 public:
 	static CTraceurGroundLand* Create(class CTraceur* pOwner);

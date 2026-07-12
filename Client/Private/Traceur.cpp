@@ -171,6 +171,10 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 			ENUM_CLASS(ETraceurGroundState::Move));
 	}
 
+	// F9: 전환 테이블 핫리로드 (JSON 수정 후 게임 재시작 없이 반영)
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::F9), KEYSTATE::UP))
+		CGameSystem::GetInstance()->Reload_TransitionTable();
+
 	/*CCharacter::Move(CMovementComponent::Calculate_Direction(m_pInputControllerCom)
 		, m_pSpringCamera->Get_LookVector_NoPitch()
 		, m_pSpringCamera->Get_RightVector_NoPitch(), fTimeDelta, 0.5f);

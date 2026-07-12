@@ -268,7 +268,7 @@ void CEnvironmentQueryComponent::Judge_Condition()
 	m_EnvQueryResult.fApproachDot = fApproachDot;
 
 #ifdef _DEBUG
-	//cout << "현재 내적 값 : " << m_EnvQueryResult.fApproachDot << endl;
+	cout << "현재 내적 값 : " << m_EnvQueryResult.fApproachDot << endl;
 #endif // DEBUG
 
 	if (iCandidateFlag & ENUM_CLASS(PARKOUR_FLAG::VAULTABLE))

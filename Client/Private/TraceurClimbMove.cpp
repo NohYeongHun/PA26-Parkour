@@ -1,4 +1,4 @@
-﻿#include "ClientPch.h"
+#include "ClientPch.h"
 #include "TraceurClimbMove.h"
 #include "Traceur.h"
 #include "TraceurState_Enum.h"
@@ -9,6 +9,11 @@ HRESULT CTraceurClimbMove::Initialize(CTraceur* pOwner)
 {
 	if (FAILED(__super::Initialize(pOwner)))
 		return E_FAIL;
+
+	Register_Flag("Jump");
+	Register_Flag("Land");
+	Register_Flag("Fall");
+	Register_Flag("KneeHit");
 
 	SetUp_Animations();
 	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurClimbMove::Move);
@@ -22,7 +27,7 @@ void CTraceurClimbMove::OnEnter(void* pArg)
 	m_pColliderCom->Set_Gravity(false);
 	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurClimbMove::Move);
 	m_pMoveCom->Set_MovementType(MOVEMENT_TYPE::CLIMB);
-	State_Reset();
+	Clear_Flags();
 }
 
 void CTraceurClimbMove::OnExit()
@@ -33,14 +38,12 @@ void CTraceurClimbMove::OnExit()
 
 void CTraceurClimbMove::Check_State()
 {
-	m_States[JUMP] = m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::SPACE));
+	Set_Flag("Jump", m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::SPACE)));
 
 	const auto& Geo = m_pEnvQueryCom->Get_QueryResult().Geometry;
-	m_States[KNEE_HIT] = Geo.KneeHit.isHit;
-	m_States[LAND] = m_pColliderCom->IsLand();
-		
-
-	m_States[FALL] = !m_States[LAND];
+	Set_Flag("KneeHit", Geo.KneeHit.isHit);
+	Set_Flag("Land", m_pColliderCom->IsLand());
+	Set_Flag("Fall", !Get_Flag("Land"));
 }
 
 void CTraceurClimbMove::Update_Animations(_float fTimeDelta)
@@ -80,35 +83,6 @@ void CTraceurClimbMove::SetUp_Animations()
 	ROOTMOTION_DESC root{};
 	root.fRate = 1.f;
 	CState::Add_BlendSpace(ENUM_CLASS(ETraceurClimbMove::Move), bs, root);
-}
-
-void CTraceurClimbMove::SetUp_Transitions()
-{
-	Add_Transition(
-		[this] { 
-			return m_States[JUMP] && m_States[FALL];
-		},
-		{ ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Fall) },
-		ENUM_CLASS(ETraceurAirFall::FallALoop)
-	);
-	Add_Transition(
-		[this] { 
-
-			return !m_States[KNEE_HIT] && ( m_States[LAND] || (m_States[LAND] && m_States[JUMP])); },
-		{ ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Land) },
-		ENUM_CLASS(ETraceurGroundLand::FallingToLanding)
-	);
-	Add_Transition(
-		[this] { return !m_States[KNEE_HIT] && m_States[FALL]; },
-		{ ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Fall) },
-		ENUM_CLASS(ETraceurAirFall::FallALoop)
-	);
-}
-
-void CTraceurClimbMove::State_Reset()
-{
-	for (_uint i = 0; i < STATE::END; ++i)
-		m_States[i] = false;
 }
 
 CTraceurClimbMove* CTraceurClimbMove::Create(CTraceur* pOwner)

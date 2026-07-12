@@ -1,4 +1,4 @@
-﻿#include "ClientPch.h"
+#include "ClientPch.h"
 #include "TraceurClimbExit.h"
 #include "Traceur.h"
 #include "TraceurState_Enum.h"
@@ -9,6 +9,8 @@ HRESULT CTraceurClimbExit::Initialize(CTraceur* pOwner)
 {
 	if (FAILED(__super::Initialize(pOwner)))
 		return E_FAIL;
+
+	Register_Flag("Land");
 
 	SetUp_Animations();
 	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurClimbExit::JumpFromWall);
@@ -34,26 +36,15 @@ void CTraceurClimbExit::Update_Animations(_float fTimeDelta)
 	CTraceurState::Play_Animation(fTimeDelta);
 }
 
+void CTraceurClimbExit::Check_State()
+{
+	Set_Flag("Land", m_pColliderCom->IsLand());
+}
+
 void CTraceurClimbExit::SetUp_Animations()
 {
 	CState::Add_Animations(ENUM_CLASS(ETraceurClimbExit::JumpFromWall),
 		{ &m_fTrackPosition, "JumpFromWall", 1.f, 0.05f, 0.f, false }, { 1.f, true, false, true });
-}
-
-void CTraceurClimbExit::SetUp_Transitions()
-{
-	// 애니 종료 + 미착지 → AirFall (FallingIdle)
-	Add_Transition(
-		[this] { return m_IsAnimationEnd && !m_pColliderCom->IsLand(); },
-		{ ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Fall) },
-		ENUM_CLASS(ETraceurAirFall::FallALoop)
-	);
-	// 애니 종료 + 착지 → GroundLand
-	Add_Transition(
-		[this] { return m_IsAnimationEnd && m_pColliderCom->IsLand(); },
-		{ ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Land) },
-		ENUM_CLASS(ETraceurGroundLand::FallALandToStandingIdle)
-	);
 }
 
 CTraceurClimbExit* CTraceurClimbExit::Create(CTraceur* pOwner)

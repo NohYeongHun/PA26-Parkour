@@ -52,13 +52,6 @@ void CTraceurClimbEnter::SetUp_Animations()
 		{ &m_fTrackPosition, "IdleToBracedHang", 1.f, 0.2f, 0.f, false }, { 1.f, false, true, true }, {});
 }
 
-void CTraceurClimbEnter::SetUp_Transitions()
-{
-	Add_Transition(
-		[this] { return m_IsAnimationEnd; },
-		{ ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Move) }
-	);
-}
 
 _bool CTraceurClimbEnter::Ready_Enter()
 {

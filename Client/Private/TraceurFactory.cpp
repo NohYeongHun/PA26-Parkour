@@ -5,6 +5,7 @@
 #include "SpringCamera.h"
 
 #include "TraceurState_Enum.h"
+#include "TraceurState.h"
 
 // Ground State
 #include "TraceurGroundMove.h"
@@ -39,6 +40,7 @@ void CTraceurFactory::Register_KeyInputs(CInputController* pInputControllerCom, 
 
 	//pInputControllerCom->Register_KeyBoardKeyInput(ENUM_CLASS(KEYINPUT::G), DIK_G); // 임시 추가.
 	//pInputControllerCom->Register_KeyBoardKeyInput(ENUM_CLASS(KEYINPUT::F6), DIK_F6);
+	pInputControllerCom->Register_KeyBoardKeyInput(ENUM_CLASS(KEYINPUT::F9), DIK_F9);
 
 
 	pInputControllerCom->Register_MouseKeyInput(ENUM_CLASS(KEYINPUT::LB), MOUSEKEYSTATE::LB);
@@ -73,18 +75,22 @@ void CTraceurFactory::Register_Camera(LEVEL ePrototypeLevel, LEVEL eLevel, CTrac
 
 void CTraceurFactory::Register_States(CStateMachine* pStateMachineCom, CTraceur* pCharacter)
 {
-	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move), CTraceurGroundMove::Create(pCharacter));
-	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Vault), CTraceurGroundVault::Create(pCharacter));
-	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Land), CTraceurGroundLand::Create(pCharacter));
+	auto AddState = [&](_uint iCategory, _uint iSubState, CTraceurState* pState)
+	{
+		pState->Set_SelfKey({ iCategory, iSubState });
+		pStateMachineCom->Add_State(iCategory, iSubState, pState);
+	};
 
-	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Enter), CTraceurClimbEnter::Create(pCharacter));
-	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Move), CTraceurClimbMove::Create(pCharacter));
-	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Exit), CTraceurClimbExit::Create(pCharacter));
+	AddState(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move),  CTraceurGroundMove::Create(pCharacter));
+	AddState(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Vault), CTraceurGroundVault::Create(pCharacter));
+	AddState(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Land),  CTraceurGroundLand::Create(pCharacter));
 
-	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Fall), CTraceurAirFall::Create(pCharacter));
-	pStateMachineCom->Add_State(ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Jump), CTraceurAirJump::Create(pCharacter));
+	AddState(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Enter), CTraceurClimbEnter::Create(pCharacter));
+	AddState(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Move),  CTraceurClimbMove::Create(pCharacter));
+	AddState(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Exit),  CTraceurClimbExit::Create(pCharacter));
+
+	AddState(ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Fall), CTraceurAirFall::Create(pCharacter));
+	AddState(ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Jump), CTraceurAirJump::Create(pCharacter));
 
 	pStateMachineCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move));
-
-	
 }

@@ -42,13 +42,6 @@ void CTraceurGroundLand::SetUp_Animations()
 		{ &m_fTrackPosition, "FallALandToStandingIdle", 1.f, 0.1f, 0.f, false }, { 1.f, true, true, true });
 }
 
-void CTraceurGroundLand::SetUp_Transitions()
-{
-	Add_Transition(
-		[this] { return m_IsAnimationEnd; },
-		{ ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move) }
-	);
-}
 
 CTraceurGroundLand* CTraceurGroundLand::Create(CTraceur* pOwner)
 {

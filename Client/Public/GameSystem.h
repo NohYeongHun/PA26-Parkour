@@ -30,6 +30,11 @@ public:
 	void Clone_MapObjects(LEVEL eLevel);
 #pragma endregion
 
+#pragma region TRANSITION_TABLE
+	class CTransitionTable* Get_TransitionTable() const { return m_pTransitionTable; }
+	void Reload_TransitionTable();
+#pragma endregion
+
 #pragma region SONORO_MANAGER
 
 #pragma endregion
@@ -44,6 +49,7 @@ public:
 private:
 	class CParser* m_pParser = { nullptr };
 	class CMouseController* m_pMouseController = { nullptr };
+	class CTransitionTable* m_pTransitionTable = { nullptr };
 	unordered_map<_uint, vector<TriggerCallback>> m_TriggerEvents;
 	Mutex m_Mutex;
 

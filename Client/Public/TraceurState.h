@@ -5,12 +5,14 @@
 
 NS_BEGIN(Client)
 
-struct TransitionRule
+struct BOUND_TRANSITION
 {
-	function<_bool()>              Condition;
-	Engine::StateKey               Next;
-	_uint                          iNextAnim = UINT_MAX;
-	shared_ptr<STATE_ENTER_DESC>   pDesc     = nullptr;
+	vector<_uint>    WhenSlots;
+	vector<_uint>    WhenNotSlots;
+	_uint            iAnimGuard = UINT_MAX;
+	Engine::StateKey Next{ 0, 0 };
+	_uint            iNextAnim  = UINT_MAX;
+	_bool            isDisabled = false;
 };
 
 class CTraceurState abstract : public Engine::CState
@@ -26,25 +28,35 @@ public:
 	virtual void OnExit() override;
 
 public:
+	void Set_SelfKey(const Engine::StateKey& Key) { m_SelfKey = Key; }
+
+public:
 	_bool IsVault() const;
 	virtual _bool Play_Animation(_float fTimeDelta);
 
-public:
-	void Add_Transition(function<_bool()> Condition, Engine::StateKey Next, _uint iNextAnim = UINT_MAX);
-	void Add_Transition(function<_bool()> Condition, Engine::StateKey Next, shared_ptr<STATE_ENTER_DESC> pDesc);
+protected:
+	void  Register_Flag(const _string& strName);
+	void  Set_Flag(const _string& strName, _bool isOn);
+	_bool Get_Flag(const _string& strName) const;
+	void  Clear_Flags();
 
 protected:
 	virtual void Check_State() {}
 	virtual void Update_Animations(_float fTimeDelta) {}
 	virtual void Check_Physics(_float fTimeDelta) {}
 	virtual void Late_Anim_Update(_float fTimeDelta) {}
-	virtual void State_Reset() {}
 	virtual void SetUp_Animations() = 0;
-	virtual void SetUp_Transitions() {}
 
 private:
+	void Bind_Rules(const class CTransitionTable* pTable);
 	void Evaluate_Transitions();
-	vector<TransitionRule> m_Transitions;
+
+private:
+	map<_string, _uint>      m_FlagSlots;
+	vector<_bool>            m_FlagValues;
+	vector<BOUND_TRANSITION> m_BoundRules;
+	Engine::StateKey         m_SelfKey{ 0, 0 };
+	_uint                    m_iBoundVersion = 0;
 
 protected:
 	class CTraceur*                    m_pOwner              = { nullptr };

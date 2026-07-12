@@ -20,7 +20,6 @@ private:
 
 private:
 	virtual void SetUp_Animations() override;
-	virtual void SetUp_Transitions() override;
 
 private:
 	_bool  Ready_Enter();
