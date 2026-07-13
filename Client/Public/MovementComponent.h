@@ -24,7 +24,6 @@ public:
 
 public:
 	// fTargetWeight: 0~1 정규화 목표 가중치 (0=정지, 0.5=걷기, 1=달리기).
-	// 실제 이동 속도 = m_fLocomotionWeight * m_fMaxMoveSpeed
 	void Move(_fvector vWorldDir, _float fTimeDelta, _float fTargetWeight);
 
 	// eDir 기준 목표 (X,Y)로 m_fLocomotionWeight2D를 가속/감속 스무딩하며 갱신 (2D BlendSpace 파라미터 소스)

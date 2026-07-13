@@ -44,9 +44,6 @@ HRESULT CTraceur::Initialize_Clone(void* pArg)
 	if (FAILED(Ready_Components(pDesc)))
 		return E_FAIL;
 
-	// 애님 노티파이 로드 — 폴더 안의 <애님이름>.json만 읽고 없는 애님은 건너뜀.
-	// Com_Model은 CModel 복사 생성자에서 CAnimation을 개별 Clone하므로 프로토타입과 공유되지 않음 (확인됨).
-	// this 캡처는 Traceur가 단일 인스턴스라는 전제하에 안전.
 	m_pModelCom->Register_AllNotifies(
 		pDesc->strNotfiyFolderPath,
 		nullptr,   
@@ -78,6 +75,10 @@ void CTraceur::Update(_float fTimeDelta)
 {
 	__super::Update(fTimeDelta);
 
+#ifdef _DEBUG
+	Debug_Draw();
+#endif // _DEBUG
+
 	// 1. StateMachine => 이동량, 회전량 생성
 	m_pStateMachineCom->Update(fTimeDelta);
 
@@ -98,6 +99,10 @@ void CTraceur::Late_Update(_float fTimeDelta)
 	Sync_Transform();
 
 	Ready_Render();
+
+
+
+
 }
 
 void CTraceur::Render()
@@ -204,45 +209,8 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D5), KEYSTATE::UP))
 		CGameSystem::GetInstance()->Reload_TransitionTable();
 
-	/*CCharacter::Move(CMovementComponent::Calculate_Direction(m_pInputControllerCom)
-		, m_pSpringCamera->Get_LookVector_NoPitch()
-		, m_pSpringCamera->Get_RightVector_NoPitch(), fTimeDelta, 0.5f);
-
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D1), KEYSTATE::UP))
-	{
-		m_AnimPlayDesc.strAnimationName = "Run";
-		m_AnimPlayDesc.fBlendDuration = 0.2f;
-		m_RootModtionDesc.isEnable = false;
-		m_pColliderCom->Set_Gravity(true);
-	}
-
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D2), KEYSTATE::UP))
-	{
-		m_AnimPlayDesc.strAnimationName = "Idle";
-		m_AnimPlayDesc.fBlendDuration = 0.2f;
-		m_pColliderCom->Set_Gravity(true);
-	}
-
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D3), KEYSTATE::UP))
-	{
-		m_AnimPlayDesc.strAnimationName = "ForwardShortJump";
-		m_RootModtionDesc.isEnable = true;
-		m_AnimPlayDesc.fBlendDuration = 0.f;
-		m_pColliderCom->Set_Gravity(false);
-	}
-
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D4), KEYSTATE::PRESS))
-	{
-		m_pColliderCom->Set_Gravity(false);
-		m_pTransformCom->Go_Dir(XMVectorSet(0.f, 1.f, 0.f, 0.f), fTimeDelta);
-		
-	}
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D5), KEYSTATE::PRESS))
-	{
-		m_pColliderCom->Set_Gravity(true);
-	}*/
-
-	
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D6), KEYSTATE::UP))
+		m_IsShowTrajectory = !m_IsShowTrajectory;
 #endif // _DEBUG
 
 }
@@ -253,23 +221,6 @@ void CTraceur::Update_Collider(_float fTimeDelta)
 	m_pColliderCom->Update(vVelocity / fTimeDelta);
 }
 
-
-
-void CTraceur::Update_Animation(_float fTimeDelta)
-{
-
-	/* 임시 */
-	m_AnimPlayDesc.fSpeed = 1.f;
-	_bool IsPlayAnimationEnd = m_pModelCom->Play_Animation_CPU(m_AnimPlayDesc, m_RootMotionDesc, fTimeDelta);
-	m_pModelCom->Sync_RootNode(m_pTransformCom, m_AnimPlayDesc.fSpeed * fTimeDelta);
-
-	if (IsPlayAnimationEnd) // 변경 설정만.
-	{
-		m_AnimPlayDesc.strAnimationName = "Idle";
-		m_AnimPlayDesc.fBlendIn = 0.2f;
-		m_pColliderCom->Set_Gravity(true);
-	}
-}
 
 void CTraceur::Update_Physics(_float fTimeDelta)
 {
@@ -312,6 +263,9 @@ void CTraceur::Ready_Render()
 	if (FAILED(m_pGameInstance->Add_Render_Object(RENDERGROUP::DYNAMIC, this)))
 		return;
 }
+
+
+
 
 HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 {
@@ -370,15 +324,6 @@ HRESULT CTraceur::Ready_Variables(const CHARACTER_DESC* pDesc)
 	_fvector vPos = XMVectorSetW(XMLoadFloat3(&pDesc->vPosition), 1.f);
 	m_pTransformCom->Set_State(STATE::POSITION, vPos);
 	m_pTransformCom->Scale(pDesc->vScale);
-
-	m_AnimPlayDesc.strAnimationName = "Idle";
-	m_AnimPlayDesc.pTrackPosition = &m_fTrackPosition;
-	m_AnimPlayDesc.isFacial = false;
-
-	m_RootMotionDesc.fRate = 1.f;
-	m_RootMotionDesc.isEnable = true;
-	m_RootMotionDesc.isRotate = true;
-	m_RootMotionDesc.isTranslate = true;
 
 	m_pColliderCom->Set_Gravity(true);
 

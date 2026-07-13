@@ -62,6 +62,12 @@ protected:
 	map<_string, _bool>      m_NotifyLatch;
 
 #ifdef _DEBUG
+	_float4x4 m_StartMatrix = {};
+	_bool m_IsShowTrajectory = { false };
+#endif // _DEBUG
+
+
+#ifdef _DEBUG
 protected:
 	void Debug_PrintFlag();
 #endif // _DEBUG

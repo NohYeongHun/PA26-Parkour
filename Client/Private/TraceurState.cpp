@@ -66,11 +66,27 @@ void CTraceurState::OnEnter(void* pArg)
 	}
 	Clear_Flags();
 	m_NotifyLatch.clear(); // 상태 재진입 시 탈출 창 등 노티파이 래치 초기화
+
+#ifdef _DEBUG
+	// 시작 위치 저장
+	XMStoreFloat4x4(&m_StartMatrix, m_pTransformCom->Get_WorldMatrix());
+#endif // _DEBUG
 }
 
 void CTraceurState::OnUpdate(_float fTimeDelta)
 {
 	CState::OnUpdate(fTimeDelta);
+#ifdef _DEBUG
+	if (m_pOwner->Show_DebugTrajectory())
+	{
+		const _string& strAnimName = m_Animations[m_iCurrentAnimIdx].AnimPlayDesc.strAnimationName;
+		const ROOTMOTION_DESC& RootMotionDesc = m_Animations[m_iCurrentAnimIdx].RootMotionDesc;
+		m_pModelCom->Debug_RootMotionDraw(strAnimName, XMLoadFloat4x4(&m_StartMatrix), 0.1f, RootMotionDesc);
+	}
+#endif // _DEBUG
+
+	
+
 	Check_State();
 	Update_Animations(fTimeDelta);
 	Late_Anim_Update(fTimeDelta);

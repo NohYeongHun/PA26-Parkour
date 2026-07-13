@@ -30,6 +30,11 @@ public:
 	void OnCollider_During(_uint iLayer, void* pDesc, const ContactManifold& Manifold);
 	void OnCollider_Enter(_uint iLayer, void* pDesc, const ContactManifold& Manifold);
 
+#ifdef _DEBUG
+	_bool Show_DebugTrajectory() const { return m_IsShowTrajectory; } 
+#endif // _DEBUG
+
+
 private:
 	// SingleTon
 	class CGameSystem* m_pGameSystem = { nullptr };
@@ -50,9 +55,15 @@ private:
 private:
 	// 임시 Variables
 	_float m_fTrackPosition;
-	ANIMATION_PLAY_DESC m_AnimPlayDesc{}; 
-	ROOTMOTION_DESC m_RootMotionDesc{};
 
+#ifdef _DEBUG
+	// 루트모션 궤적 디버그
+	_bool     m_IsShowTrajectory = { false };
+	_float    m_fTrajectoryTimeStep = { 0.1f };
+	_ubyte    m_iTrajectoryToggleKey = { DIK_5 }; 
+	_float4x4 m_TrajectoryAnchor = {};
+	_string   m_strTrajectoryAnchorAnim = {};
+#endif
 
 private:
 	// Priority Update
@@ -61,9 +72,6 @@ private:
 	void Handle_Input(_float fTimeDelta);
 
 private:
-	// Update
-	void Update_Animation(_float fTimeDelta);
-
 	void Update_Physics(_float fTimeDelta);
 	void Update_EnvQuery(_float fTimeDelta);
 	void Sync_Camera(_float fTimeDelta);
@@ -72,6 +80,7 @@ private:
 	// Late Update
 	void Sync_Transform();
 	void Ready_Render();
+
 
 private:
 	HRESULT Ready_Components(const CHARACTER_DESC* pDesc);
