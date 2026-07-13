@@ -31,6 +31,19 @@ typedef struct tagTransitionSource
 	_float  fDuration = 0.f;
 }TRANSITION_SOURCE;
 
+#ifdef _DEBUG
+typedef struct TrajectorySample // 루트모션 전용.
+{
+	_float4 vQuat;
+	_float4 vPosition;
+	_float  fTimeInSeconds; // 실제 시간 단위로 찍기 => Frame 단위는 너무 많으므로.
+
+	void SetTransform(const _float4x4& TransformMatrix);
+	TrajectorySample TrajectoryLerp(const TrajectorySample& Other, _float fAlpha) const;
+};
+#endif // _DEBUG
+
+
 class ENGINE_DLL CModel final : public CComponent
 {
 public:
@@ -90,6 +103,7 @@ public:
 
 	_float Get_AnimProgress(const _string& strAnimName);
 #ifdef _DEBUG
+public:
 	const vector<_string>& Get_AnimationNames() const { return m_AnimationNames; }
 	_float* Get_TrackPositionPtr(const _string& strAnimName);
 	_float								Get_Duration(const _string& strAnimName);
@@ -101,6 +115,7 @@ public:
 	_bool Find_Animation(const _string& strAnimName);
 
 	void Print_ShapeKeyWeights();
+	void Debug_RootMotionDraw(_fmatrix WorldMatrix);
 #endif
 
 public:
@@ -148,9 +163,9 @@ public:
 	_bool	Play_FlyAnimation_GPU(class CComputeShader* pComputeShaderCom, CComputeShader* pMorphComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, const GPU_BLEND_INFO& gpuBlendInfo, _float fTimeDelta);
 	void	Clear_Animation(const _string& strAnimationName, _float fTrackPosition = 0.f);
 
-	_uint								Get_BoneSize() { return  static_cast<_uint>(m_Bones.size()); }
+	_uint			 Get_BoneSize() { return  static_cast<_uint>(m_Bones.size()); }
 	const _float4x4* Get_BoneMatrixPtr(_uint iBoneIndex);
-	void								Update_BoneMatrix_Map();
+	void			 Update_BoneMatrix_Map();
 private:
 	MODELTYPE							m_eType = { MODELTYPE::NONANIM };
 
@@ -207,6 +222,8 @@ private:
 #ifdef _DEBUG
 	vector<_string>					m_AnimationNames;
 	_uint m_iSelectIndex = { 0 };
+
+	
 #endif
 
 #pragma region FACIAL

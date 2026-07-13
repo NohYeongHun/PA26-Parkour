@@ -167,6 +167,21 @@ void CModel::Set_TrackPosition(const _string& strAnimName, const _float fTrackPo
 
 
 #ifdef _DEBUG
+void TrajectorySample::SetTransform(const _float4x4& TransformMatrix)
+{
+	_vector vScale{}, vRotation{}, vTranslation{};
+	XMMatrixDecompose(&vScale, &vRotation, &vTranslation, XMLoadFloat4x4(&TransformMatrix));
+	XMStoreFloat4(&vQuat, vRotation);
+	XMStoreFloat4(&vPosition, vTranslation);
+}
+
+TrajectorySample TrajectorySample::TrajectoryLerp(const TrajectorySample& Other, _float fAlpha) const
+{
+
+	TrajectorySample Result{};
+	return Result;
+}
+
 _float* CModel::Get_TrackPositionPtr(const _string& strAnimName)
 {
 	return m_Animations.at(strAnimName)->Get_TrackPositionPtr();
@@ -232,6 +247,10 @@ void CModel::Print_ShapeKeyWeights()
 	}
 
 	OutputDebugString(outString.c_str());
+}
+
+void CModel::Debug_RootMotionDraw(_fmatrix WorldMatrix)
+{
 }
 
 #endif // _DEBUG
@@ -2272,3 +2291,6 @@ void CModel::Free()
 	m_UAVs.clear();
 
 }
+
+
+
