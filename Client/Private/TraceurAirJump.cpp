@@ -1,4 +1,4 @@
-#include "ClientPch.h"
+﻿#include "ClientPch.h"
 #include "TraceurAirJump.h"
 #include "Traceur.h"
 #include "TraceurState_Enum.h"
@@ -13,6 +13,7 @@ HRESULT CTraceurAirJump::Initialize(CTraceur* pOwner)
 	Register_Flag("Land");
 	Register_Flag("Move");
 	Register_Flag("Run");
+	Register_Flag("ExitOpen");
 
 	SetUp_Animations();
 	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurAirJump::Jump);
@@ -20,34 +21,37 @@ HRESULT CTraceurAirJump::Initialize(CTraceur* pOwner)
 	return S_OK;
 }
 
-static constexpr _float JUMP_FORCE    = 450.f;
-static constexpr _float GRAVITY_ACCEL = 9.81f * 0.7f;
 
 void CTraceurAirJump::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
-	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurAirJump::Jump);
 	m_pColliderCom->Set_Gravity(false);
-	m_fVelocityY = JUMP_FORCE;
-	Clear_Flags();
 }
 
 void CTraceurAirJump::OnExit()
 {
 	__super::OnExit();
-	m_pColliderCom->Set_Gravity(false);
+	m_pColliderCom->Set_Gravity(true);
 }
 
 void CTraceurAirJump::Check_State()
 {
-	Set_Flag("Land", m_pColliderCom->IsLand());
+	_float3 vGroundN{};
+	_bool bSupported = m_pColliderCom->IsLand(&vGroundN);
+	_bool bLand = bSupported && vGroundN.y >= cosf(XMConvertToRadians(50.f));
+	Set_Flag("Land", bLand);
+	//Set_Flag("ExitOpen", Get_Flag("Land") && m_fTrackPosition > 40.f);
 	Set_Flag("Move", m_pInputControllerCom->Check_AnyInput(m_iMoveKey));
 	Set_Flag("Run",  Get_Flag("Move") && m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::LSHIFT)));
+
+#ifdef _DEBUG
+	Debug_PrintFlag();
+#endif // _DEBUG
 }
 
 void CTraceurAirJump::Update_Animations(_float fTimeDelta)
 {
-	CTraceurState::Play_Animation(fTimeDelta);
+	__super::Play_Animation(fTimeDelta);
 
 	_float fTargetWeight = 0.f;
 	if (Get_Flag("Run"))
@@ -59,18 +63,15 @@ void CTraceurAirJump::Update_Animations(_float fTimeDelta)
 		CMovementComponent::Calculate_Direction(m_pInputControllerCom),
 		m_pOwner->Get_CamForward(), m_pOwner->Get_CamRight());
 
+	// 기존 움직임 외에 추가적인 움직임
 	m_pMoveCom->Move(vWorldDir, fTimeDelta, fTargetWeight);
 }
 
 void CTraceurAirJump::Check_Physics(_float fTimeDelta)
 {
-	//if (Get_Flag("Land")) return;
-
-	//m_fVelocityY -= GRAVITY_ACCEL * fTimeDelta;
-
-	_vector vPos = m_pTransformCom->Get_State(Engine::STATE::POSITION);
-	vPos = XMVectorSetY(vPos, XMVectorGetY(vPos) + m_fVelocityY * fTimeDelta);
-	m_pTransformCom->Set_State(Engine::STATE::POSITION, XMVectorSetW(vPos, 1.f));
+#ifdef _DEBUG
+	//Debug_PrintFlag();
+#endif // _DEBUG
 }
 
 void CTraceurAirJump::SetUp_Animations()

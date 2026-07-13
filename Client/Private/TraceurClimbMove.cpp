@@ -1,4 +1,4 @@
-#include "ClientPch.h"
+﻿#include "ClientPch.h"
 #include "TraceurClimbMove.h"
 #include "Traceur.h"
 #include "TraceurState_Enum.h"
@@ -14,6 +14,8 @@ HRESULT CTraceurClimbMove::Initialize(CTraceur* pOwner)
 	Register_Flag("Land");
 	Register_Flag("Fall");
 	Register_Flag("KneeHit");
+	Register_Flag("InputDown");
+	Register_Flag("Mantle");
 
 	SetUp_Animations();
 	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurClimbMove::Move);
@@ -38,27 +40,36 @@ void CTraceurClimbMove::OnExit()
 
 void CTraceurClimbMove::Check_State()
 {
+	m_EnvQueryResult = m_pEnvQueryCom->Get_QueryResult();
+#ifdef _DEBUG
+	m_pEnvQueryCom->Print_Debug();
+#endif // _DEBUG
+
+	PARKOUR_ACTION eAction = m_EnvQueryResult.Decision.eBestAction;
+	Set_Flag("InputDown", m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::S)));
 	Set_Flag("Jump", m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::SPACE)));
 
-	const auto& Geo = m_pEnvQueryCom->Get_QueryResult().Geometry;
-	Set_Flag("KneeHit", Geo.KneeHit.isHit);
+	Set_Flag("KneeHit", m_EnvQueryResult.Scan.KneeHit.isHit);
 	Set_Flag("Land", m_pColliderCom->IsLand());
 	Set_Flag("Fall", !Get_Flag("Land"));
+	Set_Flag("Mantle", !m_EnvQueryResult.Scan.HeadHit.isHit);
+	
+	
 }
 
 void CTraceurClimbMove::Update_Animations(_float fTimeDelta)
 {
 	CTraceurState::Play_Animation(fTimeDelta);
 
-	const auto& Geo = m_pEnvQueryCom->Get_QueryResult().Geometry;
+	const OBSTACLE_SCAN& Scan = m_EnvQueryResult.Scan;
 
-	ACTORDIR eDir = Geo.ChestHit.isHit
+	ACTORDIR eDir = Scan.ChestHit.isHit
 		? CMovementComponent::Calculate_Direction(m_pInputControllerCom)
 		: ACTORDIR::END;
 
-	if (Geo.ChestHit.isHit)
+	if (Scan.ChestHit.isHit)
 	{
-		_vector vNormal   = XMLoadFloat3(&Geo.ChestHit.vHitNormal);
+		_vector vNormal   = XMLoadFloat3(&Scan.ChestHit.vHitNormal);
 		_vector vClimbDir = CMovementComponent::Calc_ClimbDir(
 			eDir, vNormal, XMVectorSet(0.f, 1.f, 0.f, 0.f));
 		m_pMoveCom->Move(vClimbDir, fTimeDelta, 1.f);

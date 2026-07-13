@@ -628,6 +628,9 @@
     <ClInclude Include="..\Public\SoundNotify.h">
       <Filter>01. Utility\04. Component\Model\Animation\Notify</Filter>
     </ClInclude>
+    <ClInclude Include="..\Public\StateFlagNotify.h">
+      <Filter>01. Utility\04. Component\Model\Animation\Notify</Filter>
+    </ClInclude>
     <ClInclude Include="..\Public\ColliderNotify.h">
       <Filter>01. Utility\04. Component\Model\Animation\Notify</Filter>
     </ClInclude>
@@ -1044,6 +1047,9 @@
       <Filter>01. Utility\04. Component\Model\Animation\Notify</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\SoundNotify.cpp">
+      <Filter>01. Utility\04. Component\Model\Animation\Notify</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\StateFlagNotify.cpp">
       <Filter>01. Utility\04. Component\Model\Animation\Notify</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\ColliderNotify.cpp">

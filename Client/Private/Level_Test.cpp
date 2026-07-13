@@ -185,6 +185,7 @@ void CLevel_Test::Ready_Layer_Player()
 	Desc.vScale = vScale;
 	Desc.vRotation = vRotation;
 	Desc.vPosition = vPosition;
+	Desc.strNotfiyFolderPath = "../../Client/Bin/Resource/AnimModel/Traceur/Notify";
 
 	if (FAILED(m_pGameInstance->Add_GameObject_ToLayer(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_GameObject_Traceur"),
 		ENUM_CLASS(m_eCurLevel), TEXT("Layer_Traceur"), &Desc)))

@@ -31,6 +31,7 @@
     <ClCompile Include="..\Private\TraceurClimbMove.cpp" />
     <ClCompile Include="..\Private\TraceurGroundLand.cpp" />
     <ClCompile Include="..\Private\TraceurGroundMove.cpp" />
+    <ClCompile Include="..\Private\TraceurGroundStand.cpp" />
     <ClCompile Include="..\Private\TraceurGroundVault.cpp" />
     <ClCompile Include="..\Private\TraceurState.cpp" />
     <ClCompile Include="..\Private\TraceurStateNames.cpp" />
@@ -73,6 +74,7 @@
     <ClInclude Include="..\Public\TraceurClimbMove.h" />
     <ClInclude Include="..\Public\TraceurGroundLand.h" />
     <ClInclude Include="..\Public\TraceurGroundMove.h" />
+    <ClInclude Include="..\Public\TraceurGroundStand.h" />
     <ClInclude Include="..\Public\TraceurGroundVault.h" />
     <ClInclude Include="..\Public\TraceurState.h" />
     <ClInclude Include="..\Public\TraceurStateNames.h" />

@@ -56,7 +56,7 @@ void CTraceurClimbEnter::SetUp_Animations()
 _bool CTraceurClimbEnter::Ready_Enter()
 {
 	m_EnvQueryResult = m_pEnvQueryCom->Get_QueryResult();
-	if (!m_EnvQueryResult.isValid || !m_EnvQueryResult.Geometry.HeadHit.isHit)
+	if (!m_EnvQueryResult.Decision.isValid || !m_EnvQueryResult.Scan.HeadHit.isHit)
 		return false;
 
 	if (!Select_Animation())
@@ -74,12 +74,12 @@ _bool CTraceurClimbEnter::Select_Animation()
 
 void CTraceurClimbEnter::Build_Curve()
 {
-	const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
+	const OBSTACLE_SCAN& Scan = m_EnvQueryResult.Scan;
 	_float fColliderRadius = m_pColliderCom->Get_Radius();
 
 	_vector vP0        = m_pTransformCom->Get_State(Engine::STATE::POSITION);
-	_vector vWallNormal = XMVector3Normalize(XMLoadFloat3(&Geo.HeadHit.vHitNormal));
-	_vector vP2        = XMVectorSetW(XMLoadFloat3(&Geo.HeadHit.vHitPosition), 1.f);
+	_vector vWallNormal = XMVector3Normalize(XMLoadFloat3(&Scan.HeadHit.vHitNormal));
+	_vector vP2        = XMVectorSetW(XMLoadFloat3(&Scan.HeadHit.vHitPosition), 1.f);
 	vP2 = XMVectorSetY(vP2 + (vWallNormal * (fColliderRadius + 0.1f)), XMVectorGetY(vP0));
 
 	_vector vP1    = (vP0 + vP2) * 0.5f;
@@ -96,7 +96,7 @@ void CTraceurClimbEnter::Build_Curve()
 
 #ifdef _DEBUG
 	XMStoreFloat3(&m_vDebugWallNormal, vWallNormal);
-	m_vDebugWallHitPos = Geo.HeadHit.vHitPosition;
+	m_vDebugWallHitPos = Scan.HeadHit.vHitPosition;
 	XMStoreFloat3(&m_vDebugWallEndPos, XMLoadFloat3(&m_vDebugWallHitPos) + vWallNormal);
 #endif
 }

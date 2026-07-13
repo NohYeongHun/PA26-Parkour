@@ -8,6 +8,7 @@
 #include "ColliderNotify.h"
 #include "EffectNotify.h"
 #include "ObjectFuncNotify.h"
+#include "StateFlagNotify.h"
 
 CAnimation::CAnimation()
 {
@@ -84,14 +85,14 @@ void CAnimation::Register_Notify(const NOTIFY& AnimNotify)
 	m_Notifies.push_back(AnimNotify);
 }
 
-void CAnimation::Load_Notify(const json& notifyJson, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback)
+void CAnimation::Load_Notify(const json& notifyJson, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback, function<void(const _string&, _bool)> StateFlagCallback)
 {
 	for (const auto& notifyObject : notifyJson)
 	{
 		string type = notifyObject["NotifyType"].get<string>();
 		CAnimNotify* pAnimNotify = { nullptr };
 
-		// 1. 
+		// 1.
 		if (type == "Sound")
 			pAnimNotify = CSoundNotify::From_Json(notifyObject);
 		else if (type == "Collider")
@@ -110,6 +111,23 @@ void CAnimation::Load_Notify(const json& notifyJson, function<void(const _wstrin
 			// ObjectNotify
 			pAnimNotify = CObjectFuncNotify::From_Json(notifyObject);
 			dynamic_cast<CObjectFuncNotify*>(pAnimNotify)->Set_ObjectCallback(ObjectCallback);
+		}
+		else if (type == "StateFlag")
+		{
+			// StateFlagNotify — 구간(EndTrackPosition)이 있으면 시작(on)/끝(off) 2개의 점으로 분해
+			CStateFlagNotify* pStateFlag = CStateFlagNotify::From_Json(notifyObject);
+			pStateFlag->Set_StateFlagCallback(StateFlagCallback);
+			pAnimNotify = pStateFlag;
+
+			if (notifyObject.contains("EndTrackPosition"))
+			{
+				CStateFlagNotify* pEndNotify = new CStateFlagNotify(
+					notifyObject["EndTrackPosition"],
+					notifyObject["FlagName"],
+					false); 
+				pEndNotify->Set_StateFlagCallback(StateFlagCallback);
+				m_AnimNotifies.emplace_back(pEndNotify);
+			}
 		}
 		ASSERT_CRASH(pAnimNotify);
 
@@ -248,10 +266,10 @@ _bool CAnimation::Update_TransformationMatrices_All(_float fTimeDelta, const vec
 	//while (m_iNotifyIndex < m_Notifies.size() && m_fCurrentTrackPosition >= m_Notifies[m_iNotifyIndex].fTrackPosition)
 	//	m_Notifies[m_iNotifyIndex++].Func();
 
-#ifdef _DEBUG
-	while (m_iNotifyIndex > 0 && m_fCurrentTrackPosition < m_AnimNotifies[m_iNotifyIndex]->Get_TrackPosition())
-		m_AnimNotifies[m_iNotifyIndex--]->Execute();
-#endif // _DEBUG
+//#ifdef _DEBUG
+//	while (m_iNotifyIndex > 0 && m_fCurrentTrackPosition < m_AnimNotifies[m_iNotifyIndex]->Get_TrackPosition())
+//		m_AnimNotifies[m_iNotifyIndex--]->Execute();
+//#endif // _DEBUG
 
 
 	while (m_iNotifyIndex < m_AnimNotifies.size() && m_fCurrentTrackPosition >= m_AnimNotifies[m_iNotifyIndex]->Get_TrackPosition())
@@ -317,6 +335,18 @@ void CAnimation::Blend_AtTrackPosition(_float fTrackPosition, const vector<class
 	_float fClamped = min(fTrackPosition, m_fDuration);
 	for (size_t i = 0; i < m_iNumChannels; ++i)
 		m_Channels[i]->Blend_TransformationMatrix_At(fClamped, Bones, fWeight);
+}
+
+void CAnimation::Sample_BoneAtTrackPosition(_float fTrackPosition, const vector<class CBone*>& Bones, _uint iBoneIndex)
+{
+	_float fClamped = min(fTrackPosition, m_fDuration);
+	for (size_t i = 0; i < m_iNumChannels; ++i)
+	{
+		if (m_Channels[i]->Get_BoneIndex() != iBoneIndex)
+			continue;
+		m_Channels[i]->Sample_TransformationMatrix(fClamped, Bones);
+		return;
+	}
 }
 
 _bool CAnimation::Update_TrackPosition(_float fTimeDelta, _float* pTrackPosition)

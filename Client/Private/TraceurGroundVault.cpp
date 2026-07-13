@@ -30,7 +30,7 @@ void CTraceurGroundVault::OnEnter(void* pArg)
 		return;
 	}
 
-	m_pColliderCom->Set_Gravity(false);
+	m_pColliderCom->Set_Gravity(true);
 }
 
 void CTraceurGroundVault::OnExit()
@@ -64,7 +64,7 @@ _bool CTraceurGroundVault::Ready_Enter()
 {
 	m_bValidCurve = false;
 	m_EnvQueryResult = m_pEnvQueryCom->Get_QueryResult();
-	if (!m_EnvQueryResult.isValid)
+	if (!m_EnvQueryResult.Decision.isValid)
 		return false;
 
 	if (!Select_Animation())

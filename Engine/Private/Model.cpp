@@ -259,8 +259,9 @@ void CModel::Register_Notify(const _string& strFilePath, const vector<function<v
 		Pair.second->Sort_Notify();
 }
 
-void CModel::Register_AllNotifies(const _string& strNotifyFolderPath, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback)
+void CModel::Register_AllNotifies(const _string& strNotifyFolderPath, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback, function<void(const _string&, _bool)> StateFlagCallback)
 {
+
 	for (auto& pair : m_Animations)
 	{
 		const _string& animName = pair.first;
@@ -278,8 +279,9 @@ void CModel::Register_AllNotifies(const _string& strNotifyFolderPath, function<v
 			inputFile.close();
 
 			if (notifyData.contains("Notifies") && notifyData["Notifies"].is_array())
-				pAnimation->Load_Notify(notifyData["Notifies"], ColliderCallback, EffectCallback, ObjectCallback);
-
+			{
+				pAnimation->Load_Notify(notifyData["Notifies"], ColliderCallback, EffectCallback, ObjectCallback, StateFlagCallback);
+			}
 		}
 
 	}
@@ -354,13 +356,7 @@ HRESULT CModel::Initialize_Prototype(MODELTYPE eType, _fmatrix PreTransformMatri
 	m_vPreRootPosition = _float4(0.f, 0.f, 0.f, 1.f);
 	m_RootMatrix = XMMatrixIdentity();
 
-
-	/*if (MODELTYPE::ANIM == m_eType || MODELTYPE::CHARACTER == m_eType)
-	{
-		if (FAILED(Ready_Shared_Buffers()))
-			return E_FAIL;
-
-	}*/
+	
 	return S_OK;
 }
 
@@ -497,10 +493,12 @@ _bool CModel::Play_Animation_CPU(const ANIMATION_PLAY_DESC& playDesc, const ROOT
 	_float fWeight = Update_TransitionSource(fTimeDelta);
 	if (fWeight < 1.f)
 	{
-		// 크로스페이드 중: 소스 포즈 위에 들어오는 클립을 fWeight로 합성.
-		// 트랙 진행·노티파이·종료 판정은 Update_TrackPosition이 담당한다.
+		// 크로스페이드 중
 		IsAnimationEnd = iter->second->Update_TrackPosition(playDesc.fSpeed * fTimeDelta, &fTrackPosition);
 		iter->second->Blend_AtTrackPosition(fTrackPosition, m_Bones, fWeight);
+
+		// 루트본은 블렌딩에서 제외하고 들어오는 클립의 원본 값으로 덮어쓴다.
+		iter->second->Sample_BoneAtTrackPosition(fTrackPosition, m_Bones, m_iRootBoneIndex);
 	}
 	else
 	{
@@ -1189,6 +1187,11 @@ _float3 CModel::Get_RootMotionTotalDisplacement(const _string& strAnimationName)
 		return vOut;
 	}
 	return _float3{};
+}
+
+_float CModel::Get_AnimProgress(const _string& strAnimName)
+{
+	return m_Animations[strAnimName]->Get_AnimProgress();
 }
 
 void CModel::Compute_RootAnimation(_float fRootMotionRate, _bool isRootMotionRotation, _bool isRootMotionTranslate, _bool IsRootMotionEnable)

@@ -11,6 +11,7 @@
 #include "TraceurGroundMove.h"
 #include "TraceurGroundVault.h"
 #include "TraceurGroundLand.h"
+#include "TraceurGroundStand.h"
 
 // Climb State
 #include "TraceurClimbEnter.h"
@@ -82,8 +83,10 @@ void CTraceurFactory::Register_States(CStateMachine* pStateMachineCom, CTraceur*
 	};
 
 	AddState(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move),  CTraceurGroundMove::Create(pCharacter));
+	AddState(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Stand), CTraceurGroundStand::Create(pCharacter));
 	AddState(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Vault), CTraceurGroundVault::Create(pCharacter));
 	AddState(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Land),  CTraceurGroundLand::Create(pCharacter));
+	
 
 	AddState(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Enter), CTraceurClimbEnter::Create(pCharacter));
 	AddState(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Move),  CTraceurClimbMove::Create(pCharacter));

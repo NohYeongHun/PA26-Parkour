@@ -20,7 +20,7 @@ public:
 		_float3 vScale = { 1.f, 1.f, 1.f };
 		_float3 vRotation = { 0.f, 0.f, 0.f };
 		_float3 vPosition = { 0.f, 0.f, 0.f };
-		_string strFolderPath = {};
+		_string strNotfiyFolderPath = {};
 	}CHARACTER_DESC;
 
 protected:

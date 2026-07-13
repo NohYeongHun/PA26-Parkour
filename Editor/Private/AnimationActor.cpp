@@ -354,9 +354,9 @@ void CAnimationActor::Set_TrackPosition(_float fTrackPosition)
 
         // 4. fTimeDelta = 0.f로 GPU 업데이트를 1회 실행합니다.
         //    (기존 주석 코드를 GPU 버전으로 변경)
-		//m_pModelCom->Play_Animation_CPU(m_strCurrentAnimation, 0.f, &m_fTrackPosition, false);
-        m_pModelCom->Play_Animation_GPU(m_pComputeShaderCom,
-			playDesc, rootMotionDesc, 0.f);
+		m_pModelCom->Play_Animation_CPU(playDesc, rootMotionDesc, m_fTimeDelta);
+        /*m_pModelCom->Play_Animation_GPU(m_pComputeShaderCom,
+			playDesc, rootMotionDesc, 0.f);*/
 
        // 5. 루트 모션도 멈춘 위치에서 동기화합니다.
        // m_pModelCom->Sync_RootNode(m_pTransformCom, 0.f);
@@ -389,12 +389,17 @@ void CAnimationActor::Register_AllNotifies(const _string& strFolderPath)
 		this->Object_Func(tag);
 		};
 
+	auto stateFlagCallBack = [this](const _string& strFlag, _bool isOn)
+	{
+		nullptr;
+	};
+
 #ifdef _DEBUG
 	m_pModelCom->Clear_AllNotifies();
 #endif // _DEBUG
 
 	
-	m_pModelCom->Register_AllNotifies(strFolderPath, colliderCallback, effectCallBack, objectCallBack);
+	m_pModelCom->Register_AllNotifies(strFolderPath, colliderCallback, effectCallBack, objectCallBack, stateFlagCallBack);
     
 }
 void CAnimationActor::Collider_Active(const _wstring&, _bool)

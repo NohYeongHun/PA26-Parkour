@@ -88,11 +88,12 @@ public:
 	void Set_TrackPosition(const _string& strAnimName, const _float fTrackPosition);
 	_float3 Get_RootMotionTotalDisplacement(const _string& strAnimationName);
 
-
+	_float Get_AnimProgress(const _string& strAnimName);
 #ifdef _DEBUG
 	const vector<_string>& Get_AnimationNames() const { return m_AnimationNames; }
 	_float* Get_TrackPositionPtr(const _string& strAnimName);
 	_float								Get_Duration(const _string& strAnimName);
+	
 
 	HRESULT Bind_Bone_to_GUI(_int& iBoneIndex, _fmatrix TransformMatrix);
 	void Render_Gizmo(_fmatrix TransformMatrix);
@@ -104,7 +105,7 @@ public:
 
 public:
 	void								Register_Notify(const _string& strFilePath, const vector<function<void()>>& Functions);
-	void								Register_AllNotifies(const _string& strNotifyFolderPath, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback);
+	void								Register_AllNotifies(const _string& strNotifyFolderPath, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback, function<void(const _string&, _bool)> StateFlagCallback = nullptr);
 
 #ifdef _DEBUG
 	void								Clear_AllNotifies(); // Debug 용도

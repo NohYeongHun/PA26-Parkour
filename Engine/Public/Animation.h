@@ -32,7 +32,7 @@ public:
 public:
 	void				Register_Notify(const NOTIFY& AnimNotify); 
 
-	void				Load_Notify(const json& notifyJson, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback);
+	void				Load_Notify(const json& notifyJson, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback, function<void(const _string&, _bool)> StateFlagCallback = nullptr);
 	
 
 	void				Sort_Notify();
@@ -53,6 +53,8 @@ public:
 	void				Sample_AtTrackPosition(_float fTrackPosition, const vector<class CBone*>& Bones);
 	// BlendSpace용: 지정된 트랙 위치의 포즈를 fWeight 비율로 현재 본 포즈에 블렌딩
 	void				Blend_AtTrackPosition(_float fTrackPosition, const vector<class CBone*>& Bones, _float fWeight);
+	// 크로스페이드용: 지정 본 하나만 이 클립의 원본 포즈로 덮어쓴다 (루트모션 델타 소스 분리)
+	void				Sample_BoneAtTrackPosition(_float fTrackPosition, const vector<class CBone*>& Bones, _uint iBoneIndex);
 
 	_bool			Update_TrackPosition(_float fTimeDelta, _float* pTrackPosition);
 

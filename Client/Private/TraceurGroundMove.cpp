@@ -85,15 +85,15 @@ void CTraceurGroundMove::Check_Physics(_float fTimeDelta)
 	if (!Get_Flag("Move") || !Get_Flag("Run"))
 		return;
 
-	if (EnvResult.isValid)
+	if (EnvResult.Decision.isValid)
 	{
-		if (EnvResult.eBestAction == PARKOUR_ACTION::LOW_VAULT)
+		if (EnvResult.Decision.eBestAction == PARKOUR_ACTION::LOW_VAULT)
 		{
 			Set_Flag("Vault", true);
 			return;
 		}
 
-		if (EnvResult.eBestAction == PARKOUR_ACTION::CLIMB)
+		if (EnvResult.Decision.eBestAction == PARKOUR_ACTION::CLIMB)
 		{
 			Set_Flag("Climb", true);
 			return;

@@ -48,59 +48,41 @@ void CEnvironmentQueryComponent::Execute()
 {
 	m_EnvQueryResult = {};
 
-	if (Detect_Obstacle())
-	{
-		Collect_RayInfo();
-		Classify_HitFlag();
-		Extract_Geometry();
-		Judge_Condition();
+	if (!Detect_Obstacle())
+		return;
+
+	Scan_Obstacle();
+	Measure_Geometry();
+	Judge_Actions();
 
 #ifdef _DEBUG
-		//Print_Debug();
-#endif
-	}
+	Draw_DebugMarkers();
+#endif // _DEBUG
 }
 
-// 1차적으로 Owner가 가지고 있는 Shape를 통한 충돌 가능성을 파악합니다.
+// [1단계] Owner의 Shape로 전방 충돌 가능성과 디자이너 태그를 파악합니다.
 _bool CEnvironmentQueryComponent::Detect_Obstacle()
 {
-	m_ShapeHit = {};
+	SHAPE_CAST_HIT ShapeHit{};
 	_bool isHit = m_pGameInstance->Shape_Cast(m_pOwnerColliderCom->Get_Shape(), m_pOwnerTransformCom->Get_Quaternion(),
 			m_pOwnerTransformCom->Get_State(STATE::POSITION) + m_pOwnerColliderCom->Get_Offset(),
-			m_pOwnerTransformCom->Get_State(STATE::LOOK), m_fShapeTraceDistance, ENUM_CLASS(m_eTargetLayer), m_ShapeHit);
+			m_pOwnerTransformCom->Get_State(STATE::LOOK), m_fShapeTraceDistance, ENUM_CLASS(m_eTargetLayer), ShapeHit);
 
-	if (isHit)
+	m_EnvQueryResult.Scan.isObstacleDetected = isHit;
+	if (isHit && (nullptr != ShapeHit.pDesc))
 	{
-		CALLBACK_CLIENT* pDesc = static_cast<CALLBACK_CLIENT*>(m_ShapeHit.pDesc);
-		m_eObjectParkourFlag = pDesc->eObjectParkourFlag; // 디자이너가 설정한 파쿠르 플래그를 받습니다.
+		CALLBACK_CLIENT* pDesc = static_cast<CALLBACK_CLIENT*>(ShapeHit.pDesc);
+		m_EnvQueryResult.Scan.eObjectFlag = pDesc->eObjectParkourFlag;
 	}
 
-	
 	return isHit;
 }
 
-// Ray Cast 를 통한 지형 지물의 정보를 저장합니다.
-void CEnvironmentQueryComponent::Collect_RayInfo()
-{
-	_vector vLook = XMVector3Normalize(m_pOwnerTransformCom->Get_State(STATE::LOOK));
-	_vector vCenter = m_pOwnerTransformCom->Get_State(STATE::POSITION) + m_pOwnerColliderCom->Get_Offset();
-	_float fTotalHeight = m_pOwnerColliderCom->Get_Height() + 2.f * m_pOwnerColliderCom->Get_Radius();
-
-	_vector vBottom     = vCenter - XMVectorSet(0.f, fTotalHeight * 0.5f, 0.f, 0.f);
-	_vector vKneeStart  = vBottom + XMVectorSet(0.f, fTotalHeight * FKNEE_RATIO,  0.f, 0.f);
-	_vector vChestStart = vBottom + XMVectorSet(0.f, fTotalHeight * FCHEST_RATIO, 0.f, 0.f);
-	_vector vHeadStart  = vBottom + XMVectorSet(0.f, fTotalHeight * FHEAD_RATIO,  0.f, 0.f);
-
-	m_KneeHit  = Ray_Cast(vKneeStart,  vKneeStart  + vLook * m_fLineTraceDistance);
-	m_ChestHit = Ray_Cast(vChestStart, vChestStart + vLook * m_fLineTraceDistance);
-	m_HeadHit  = Ray_Cast(vHeadStart,  vHeadStart  + vLook * m_fLineTraceDistance);
-
-}
-
-LINE_TRACE_HIT CEnvironmentQueryComponent::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos)
+// 모든 레이 캐스트의 단일 창구 — 디버그 빌드에서 자동 시각화되므로 레이를 빠뜨리고 그릴 수 없다.
+LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray(const _fvector& vStart, const _fvector& vEnd, _uint iLayer, RAY_KIND eKind)
 {
 	LINE_TRACE_HIT lineTrace;
-	RAY_CAST_HIT RayCastHit = m_pGameInstance->Ray_Cast(vStartPos, vEndPos, ENUM_CLASS(m_eTargetLayer));
+	RAY_CAST_HIT RayCastHit = m_pGameInstance->Ray_Cast(vStart, vEnd, iLayer);
 	if (RayCastHit.isHit)
 	{
 		lineTrace.isHit = true;
@@ -109,22 +91,60 @@ LINE_TRACE_HIT CEnvironmentQueryComponent::Ray_Cast(const _fvector& vStartPos, c
 		lineTrace.fCenterDistance = RayCastHit.fDistance; // 센터 기준 Distance
 	}
 
+#ifdef _DEBUG
+	if (m_pGameInstance->IsParkourDebug())
+	{
+		JPH::Color color = JPH::Color(128.f, 128.f, 128.f, 1.f); // 미스 = 회색
+		if (lineTrace.isHit)
+		{
+			switch (eKind)
+			{
+			case RAY_KIND::SCAN:    color = JPH::Color(0.f, 255.f, 0.f, 1.f);   break; // 수평 스캔 = 초록
+			case RAY_KIND::MEASURE: color = JPH::Color(0.f, 0.f, 255.f, 1.f);   break; // 수직 측정 = 파랑
+			case RAY_KIND::REFINE:  color = JPH::Color(0.f, 255.f, 255.f, 1.f); break; // 이진 탐색 = 하늘색
+			}
+		}
+		m_pGameInstance->Add_DebugLine(vStart, lineTrace.isHit ? XMLoadFloat3(&lineTrace.vHitPosition) : vEnd, color);
+	}
+#endif // _DEBUG
+
 	return lineTrace;
 }
 
-// 수평 레이의 Hit 패턴을 비트마스크로 분류합니다.
-void CEnvironmentQueryComponent::Classify_HitFlag()
+// [2단계] 수평 레이 5개의 히트 정보와 높이 패턴 비트마스크를 기록합니다.
+void CEnvironmentQueryComponent::Scan_Obstacle()
 {
-	m_iHeightFlag = 0;
-	if (m_KneeHit.isHit)  m_iHeightFlag |= ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE);
-	if (m_ChestHit.isHit) m_iHeightFlag |= ENUM_CLASS(HEIGHT_HIT_FLAG::CHEST);
-	if (m_HeadHit.isHit)  m_iHeightFlag |= ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD);
+	OBSTACLE_SCAN& Scan = m_EnvQueryResult.Scan;
+
+	_vector vLook = XMVector3Normalize(m_pOwnerTransformCom->Get_State(STATE::LOOK));
+	_vector vCenter = m_pOwnerTransformCom->Get_State(STATE::POSITION) + m_pOwnerColliderCom->Get_Offset();
+	_vector vRight = XMVector3Normalize(m_pOwnerTransformCom->Get_State(STATE::RIGHT));
+	_float fTotalHeight = m_pOwnerColliderCom->Get_Height() + 2.f * m_pOwnerColliderCom->Get_Radius();
+
+	_vector vBottom     = vCenter - XMVectorSet(0.f, fTotalHeight * 0.5f, 0.f, 0.f);
+	_vector vKneeStart  = vBottom + XMVectorSet(0.f, fTotalHeight * FKNEE_RATIO,  0.f, 0.f);
+	_vector vChestStart = vBottom + XMVectorSet(0.f, fTotalHeight * FCHEST_RATIO, 0.f, 0.f);
+	_vector vHeadStart  = vBottom + XMVectorSet(0.f, fTotalHeight * FHEAD_RATIO,  0.f, 0.f);
+	_vector vLeftChestStart = vChestStart - (vRight * m_pOwnerColliderCom->Get_Radius());
+	_vector vRightChestStart = vChestStart + (vRight * m_pOwnerColliderCom->Get_Radius());
+
+	Scan.KneeHit  = Cast_Ray(vKneeStart,  vKneeStart  + vLook * m_fLineTraceDistance, ENUM_CLASS(m_eTargetLayer), RAY_KIND::SCAN);
+	Scan.ChestHit = Cast_Ray(vChestStart, vChestStart + vLook * m_fLineTraceDistance, ENUM_CLASS(m_eTargetLayer), RAY_KIND::SCAN);
+	Scan.HeadHit  = Cast_Ray(vHeadStart,  vHeadStart  + vLook * m_fLineTraceDistance, ENUM_CLASS(m_eTargetLayer), RAY_KIND::SCAN);
+	Scan.LeftChestHit  = Cast_Ray(vLeftChestStart,  vLeftChestStart  + (vLook * m_fLineTraceDistance), ENUM_CLASS(m_eTargetLayer), RAY_KIND::SCAN);
+	Scan.RightChestHit = Cast_Ray(vRightChestStart, vRightChestStart + (vLook * m_fLineTraceDistance), ENUM_CLASS(m_eTargetLayer), RAY_KIND::SCAN);
+
+	Scan.iHeightFlag = 0;
+	if (Scan.KneeHit.isHit)  Scan.iHeightFlag |= ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE);
+	if (Scan.ChestHit.isHit) Scan.iHeightFlag |= ENUM_CLASS(HEIGHT_HIT_FLAG::CHEST);
+	if (Scan.HeadHit.isHit)  Scan.iHeightFlag |= ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD);
 }
 
-// 수직 레이로 장애물의 상단면·두께·착지 공간을 추출합니다.
-void CEnvironmentQueryComponent::Extract_Geometry()
+// [3단계] 수직 레이로 장애물의 상단면·두께·착지 공간을 추출합니다.
+void CEnvironmentQueryComponent::Measure_Geometry()
 {
-	if (m_iHeightFlag == 0) return;
+	const OBSTACLE_SCAN& Scan = m_EnvQueryResult.Scan;
+	if (Scan.iHeightFlag == 0) return;
 
 	_vector vLook = XMVector3Normalize(m_pOwnerTransformCom->Get_State(STATE::LOOK));
 	_vector vCenter = m_pOwnerTransformCom->Get_State(STATE::POSITION) + m_pOwnerColliderCom->Get_Offset();
@@ -132,35 +152,30 @@ void CEnvironmentQueryComponent::Extract_Geometry()
 	_float fTotalHeight = m_pOwnerColliderCom->Get_Height() + 2.f * fRadius;
 	_vector vBottom = vCenter - XMVectorSet(0.f, fTotalHeight * 0.5f, 0.f, 0.f);
 
-	// 가장 높이 히트한 수평 레이의 지점에서 안쪽으로 밀어 Down Ray 시작점 결정
-	const LINE_TRACE_HIT& TopHit = m_HeadHit.isHit ? m_HeadHit
-		: m_ChestHit.isHit ? m_ChestHit : m_KneeHit;
-
-	
 	OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
 
-	Geo.KneeHit = m_KneeHit;
-	Geo.ChestHit = m_ChestHit;
-	Geo.HeadHit = m_HeadHit;
+	// 가장 높이 히트한 수평 레이의 지점에서 안쪽으로 밀어 Down Ray 시작점 결정
+	const LINE_TRACE_HIT& TopHit = Scan.HeadHit.isHit ? Scan.HeadHit
+		: Scan.ChestHit.isHit ? Scan.ChestHit : Scan.KneeHit;
 
 	// 전면 히트: 가장 낮은 수평 레이
-	const LINE_TRACE_HIT& FrontHit = m_KneeHit.isHit ? m_KneeHit
-		: m_ChestHit.isHit ? m_ChestHit : m_HeadHit;
+	const LINE_TRACE_HIT& FrontHit = Scan.KneeHit.isHit ? Scan.KneeHit
+		: Scan.ChestHit.isHit ? Scan.ChestHit : Scan.HeadHit;
 
 	_vector vTraversal = vLook;
 	if (FrontHit.isHit)
 	{
+		Geo.hasFront = true;
 		Geo.vFrontHitPos = FrontHit.vHitPosition;
 		Geo.vFrontNormal = FrontHit.vHitNormal;
 
 		_vector vNormalXZ = XMVectorSetY(XMLoadFloat3(&Geo.vFrontNormal), 0.f);
 		if (XMVectorGetX(XMVector3LengthSq(vNormalXZ)) > 1e-4f) // 노멀이 거의 수직(윗면 히트)이면 vLook 폴백 유지
 			vTraversal = -XMVector3Normalize(vNormalXZ);
-		XMStoreFloat3(&Geo.vTraversalDir, vTraversal);
 
 		Geo.fFrontDistance = XMVectorGetX(XMVector3Length(XMLoadFloat3(&Geo.vFrontHitPos) - m_pOwnerTransformCom->Get_State(STATE::POSITION)));
 	}
-
+	XMStoreFloat3(&Geo.vTraversalDir, vTraversal);
 
 	_float fInset = fRadius * 0.5f;
 	_vector vStartXZ = XMLoadFloat3(&TopHit.vHitPosition) + vTraversal * fInset;
@@ -170,7 +185,7 @@ void CEnvironmentQueryComponent::Extract_Geometry()
 	_vector vDownEnd = XMVectorSetY(vStartXZ, XMVectorGetY(vBottom));
 
 	// 상단면 Down Ray의 위치, 노멀, 높이 값 저장
-	RAY_CAST_HIT TopDownRay = m_pGameInstance->Ray_Cast(vDownStart, vDownEnd, ENUM_CLASS(m_eTargetLayer));
+	LINE_TRACE_HIT TopDownRay = Cast_Ray(vDownStart, vDownEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
 
 	if (!TopDownRay.isHit)
 	{
@@ -181,153 +196,319 @@ void CEnvironmentQueryComponent::Extract_Geometry()
 	}
 
 	Geo.isTopReachable  = true;
-	Geo.vTopEdgePos     = TopDownRay.vHitPosition;
 	Geo.vTopNormal      = TopDownRay.vHitNormal;
 	Geo.fObstacleHeight = TopDownRay.vHitPosition.y - XMVectorGetY(vBottom);
 
-	// 두께 탐지 — 상단면 위에서 전방으로 Down RayCast를 발사.
-	_float fTopSurfaceY = TopDownRay.vHitPosition.y;
-	_float fSampleStep = fRadius;
-	Geo.fDepth = fInset; // TopDownRay 지점의 깊이 파악
-	for (_uint i = 1; i <= FDEPTH_SAMPLE_COUNT; ++i)
+	// 앞모서리 = (전면 히트의 XZ, 상단면 Y).
+	// 다운레이 시작점이 인셋(fRadius*0.5)만큼 안쪽이므로 히트 지점을 그대로 쓰면
+	// 모서리가 인셋만큼 밀린다 — 커브/모션워핑 타겟 오차의 원인이었다.
+	if (Geo.hasFront)
 	{
-		_vector vSample = vStartXZ + vTraversal * (fSampleStep * static_cast<_float>(i));
-		_vector vSStart = XMVectorSetY(vSample, fStartY);
-		_vector vSEnd   = XMVectorSetY(vSample, fTopSurfaceY);
-		if (!m_pGameInstance->Ray_Cast(vSStart, vSEnd, ENUM_CLASS(m_eTargetLayer)).isHit)
-			break;
-		Geo.fDepth += fSampleStep;
+		_vector vFrontXZ = XMLoadFloat3(&Geo.vFrontHitPos);
+		Geo.vTopEdgePos = _float3(XMVectorGetX(vFrontXZ), TopDownRay.vHitPosition.y, XMVectorGetZ(vFrontXZ));
+	}
+	else
+		Geo.vTopEdgePos = TopDownRay.vHitPosition; // 전면 정보가 없으면 종전 방식 폴백
+
+	// 상단면 폭 — 다운레이 시작점의 좌/우(횡축) fRadius 지점 2개.
+	// 양쪽 다 히트하면 캐릭터 폭(2R)을 감당하는 상단면으로 본다.
+	_vector vSideAxis = XMVector3Normalize(XMVector3Cross(XMVectorSet(0.f, 1.f, 0.f, 0.f), vTraversal));
+	Geo.fTopWidth = 0.f;
+	{
+		const _float SideOffsets[2] = { -fRadius, fRadius };
+		for (_uint i = 0; i < 2; ++i)
+		{
+			_vector vWSample = vStartXZ + vSideAxis * SideOffsets[i];
+			_vector vWStart  = XMVectorSetY(vWSample, fStartY);
+			_vector vWEnd    = XMVectorSetY(vWSample, TopDownRay.vHitPosition.y);
+			if (Cast_Ray(vWStart, vWEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE).isHit)
+				Geo.fTopWidth += fRadius;
+		}
 	}
 
-	// 착지점 탐지 — 뒷모서리 너머 아래로 긴 레이 1개
+	// 두께 탐지 — 거친 샘플로 [마지막 히트, 첫 미스] 구간을 찾는다
+	_float fTopSurfaceY = TopDownRay.vHitPosition.y;
+	_float fSampleStep  = fRadius;
+
+	_float fLastHit   = 0.f;  // vStartXZ 기준, 마지막으로 상단면이 확인된 전방 거리
+	_float fFirstMiss = -1.f; // 첫 미스 거리 (-1 = 탐지 범위 내 미스 없음)
+	for (_uint i = 1; i <= FDEPTH_SAMPLE_COUNT; ++i)
+	{
+		_float  fDist   = fSampleStep * static_cast<_float>(i);
+		_vector vSample = vStartXZ + vTraversal * fDist;
+		_vector vSStart = XMVectorSetY(vSample, fStartY);
+		_vector vSEnd   = XMVectorSetY(vSample, fTopSurfaceY);
+		if (Cast_Ray(vSStart, vSEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE).isHit)
+			fLastHit = fDist;
+		else
+		{
+			fFirstMiss = fDist;
+			break;
+		}
+	}
+
+	if (fFirstMiss < 0.f)
+	{
+		// 탐지 범위 끝까지 상단면이 이어짐 — 두께는 하한값만 보장 (기존과 동일한 값)
+		Geo.fDepth   = fInset + fSampleStep * static_cast<_float>(FDEPTH_SAMPLE_COUNT);
+		Geo.hasDepth = true;
+	}
+	else
+	{
+		// 이진 탐색으로 [fLastHit, fFirstMiss] 사이의 뒷모서리를 좁힌다
+		_float fLo = fLastHit;
+		_float fHi = fFirstMiss;
+		for (_uint i = 0; i < FEDGE_REFINE_ITERATIONS; ++i)
+		{
+			_float  fMid    = (fLo + fHi) * 0.5f;
+			_vector vSample = vStartXZ + vTraversal * fMid;
+			_vector vSStart = XMVectorSetY(vSample, fStartY);
+			_vector vSEnd   = XMVectorSetY(vSample, fTopSurfaceY);
+			if (Cast_Ray(vSStart, vSEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::REFINE).isHit)
+				fLo = fMid;
+			else
+				fHi = fMid;
+		}
+		Geo.fDepth   = fInset + (fLo + fHi) * 0.5f;
+		Geo.hasDepth = true;
+	}
+
+	// 착지점 탐지 — 뒷모서리 너머 아래로 긴 레이 1개 + 평탄성 검증 레이 2개
 	_vector vLandXZ    = vStartXZ + vTraversal * (Geo.fDepth + fRadius);
 	_vector vLandStart = XMVectorSetY(vLandXZ, fTopSurfaceY + 0.05f);
 	_vector vLandEnd   = XMVectorSetY(vLandXZ, XMVectorGetY(vBottom) - fTotalHeight);
 
-	// 바닥은 MAP 레이어
-	RAY_CAST_HIT LandRayHit = m_pGameInstance->Ray_Cast(vLandStart, vLandEnd, ENUM_CLASS(m_eTargetLayer));
+	// 바닥은 MAP 레이어 폴백
+	LINE_TRACE_HIT LandRayHit = Cast_Ray(vLandStart, vLandEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
 	if (false == LandRayHit.isHit)
-		LandRayHit = m_pGameInstance->Ray_Cast(vLandStart, vLandEnd, ENUM_CLASS(COLLISIONLAYER::MAP));
+		LandRayHit = Cast_Ray(vLandStart, vLandEnd, ENUM_CLASS(COLLISIONLAYER::MAP), RAY_KIND::MEASURE);
 
 	Geo.hasLandingSpace = LandRayHit.isHit;
 	if (LandRayHit.isHit)
+	{
 		Geo.vLandingPos = LandRayHit.vHitPosition;
 
+		// 착지점 전후가 낭떠러지·급경사면 착지 공간으로 보지 않는다
+		const _float ProbeOffsets[2] = { -fRadius * 0.75f, fRadius * 0.75f };
+		for (_uint i = 0; i < 2; ++i)
+		{
+			_vector vProbeXZ = vLandXZ + vTraversal * ProbeOffsets[i];
+			_vector vPStart  = XMVectorSetY(vProbeXZ, fTopSurfaceY + 0.05f);
+			_vector vPEnd    = XMVectorSetY(vProbeXZ, XMVectorGetY(vBottom) - fTotalHeight);
 
+			LINE_TRACE_HIT ProbeHit = Cast_Ray(vPStart, vPEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
+			if (false == ProbeHit.isHit)
+				ProbeHit = Cast_Ray(vPStart, vPEnd, ENUM_CLASS(COLLISIONLAYER::MAP), RAY_KIND::MEASURE);
+
+			if (!ProbeHit.isHit || fabsf(ProbeHit.vHitPosition.y - Geo.vLandingPos.y) > FLANDING_MAX_HEIGHT_DIFF)
+			{
+				Geo.hasLandingSpace = false;
+				break;
+			}
+		}
+	}
 }
 
-// LineTrace의 Hit 패턴, 정해진 파쿠르 태그, 기하 정보로 최종 액션 판정.
-void CEnvironmentQueryComponent::Judge_Condition()
+// [4단계] 판정기를 전부 실행해 액션별 가능/탈락 사유를 기록하고, 우선순위(CLIMB > VAULT > MANTLE)로 최종 액션 확정.
+void CEnvironmentQueryComponent::Judge_Actions()
 {
-	// 기하 정보가 없으면 판정 불가
-	if (m_EnvQueryResult.Geometry.fObstacleHeight <= 0.f) return;
-
-	// 높이 패턴 1차 후보
-	const bool bKnee  = (m_iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE))  != 0;
-	const bool bChest = (m_iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::CHEST)) != 0;
-	const bool bHead  = (m_iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD))  != 0;
-
-	_uint iCandidateFlag = 0;
-	if (bKnee && !bHead)
-		iCandidateFlag = ENUM_CLASS(PARKOUR_FLAG::VAULTABLE) | ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE);
-	else if (bKnee && bChest && bHead)
-		iCandidateFlag = ENUM_CLASS(PARKOUR_FLAG::CLIMBABLE);
-
-	// 디자이너 PARKOUR_FLAG 적용 — END는 ALL로 처리
-	_uint iParkourMask = ENUM_CLASS(m_eObjectParkourFlag);
-	if (iParkourMask >= ENUM_CLASS(PARKOUR_FLAG::END))
-		iParkourMask = ENUM_CLASS(PARKOUR_FLAG::ALL);
-	iCandidateFlag &= iParkourMask;
-
-	// 기하 정보로 세부 필터
-	_float fRadius = m_pOwnerColliderCom->Get_Radius();
-	_float fTotalHeight = m_pOwnerColliderCom->Get_Height() + 2.f * fRadius;
+	const OBSTACLE_SCAN& Scan = m_EnvQueryResult.Scan;
 	const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
+	PARKOUR_DECISION& Decision = m_EnvQueryResult.Decision;
 
+	// 기하 정보가 없으면 판정 불가 (Verdicts는 기본값 = NONE 사유로 남는다)
+	if (Geo.fObstacleHeight <= 0.f) return;
 
-	// 상단 미도달 벽은 모서리 기반 동작(VAULT/MANTLE) 불가
-	if (!Geo.isTopReachable)
-		iCandidateFlag &= ENUM_CLASS(PARKOUR_FLAG::CLIMBABLE);
-
-	if (iCandidateFlag & ENUM_CLASS(PARKOUR_FLAG::VAULTABLE) && !Geo.hasLandingSpace)
-		iCandidateFlag &= ~ENUM_CLASS(PARKOUR_FLAG::VAULTABLE);
-
-	if (iCandidateFlag & ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE))
-		if (Geo.fDepth < fRadius * FMANTLE_MIN_DEPTH_MULT)
-			iCandidateFlag &= ~ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE);
-
-	// 높이 제한은 모서리를 잡고 오르는 경우에만 적용 — 상단 미도달 벽은 벽타기로 무제한 허용
-	if (iCandidateFlag & ENUM_CLASS(PARKOUR_FLAG::CLIMBABLE))
-		if (Geo.isTopReachable && Geo.fObstacleHeight > fTotalHeight * FMAX_CLIMBABLE_HEIGHT_RATIO)
-			iCandidateFlag &= ~ENUM_CLASS(PARKOUR_FLAG::CLIMBABLE);
-
-	// 접근 각도 게이트 — 장애물 traversal 축과 캐릭터 진행 방향의 정렬도
+	// 접근 각도 — 장애물 traversal 축과 캐릭터 진행 방향의 정렬도
 	_vector vLook = m_pOwnerTransformCom->Get_State(STATE::LOOK);
 	_vector vApproachDir = XMVector3Normalize(XMVectorSetY(vLook, 0.f));
-	_float fApproachDot = XMVectorGetX(XMVector3Dot(vApproachDir, XMLoadFloat3(&Geo.vTraversalDir)));
-	m_EnvQueryResult.fApproachDot = fApproachDot;
+	Decision.fApproachDot = XMVectorGetX(XMVector3Dot(vApproachDir, XMLoadFloat3(&Geo.vTraversalDir)));
+
+	// 판정기는 항상 전부 실행 — 전 액션의 탈락 사유가 디버그에 남는다
+	const ACTION_VERDICT VaultVerdict = Judge_Vault(Scan, Geo, Decision.fApproachDot);
+
+	// LOW/HIGH_VAULT 배정: 판정기는 하나, 측정 높이 임계값으로 어느 쪽인지 확정하고 그쪽에만 기록
+	_float fTotalHeight = m_pOwnerColliderCom->Get_Height() + 2.f * m_pOwnerColliderCom->Get_Radius();
+	const _bool isHighVault = Geo.fObstacleHeight >= fTotalHeight * VAULT_TH.fHighVaultHeightRatio;
+	const ACTION_VERDICT NoMatch{ false, REJECT_REASON::NO_HEIGHT_MATCH };
+	Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::LOW_VAULT)]  = isHighVault ? NoMatch : VaultVerdict;
+	Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::HIGH_VAULT)] = isHighVault ? VaultVerdict : NoMatch;
+	Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::MANTLE)] = Judge_Mantle(Scan, Geo, Decision.fApproachDot);
+	Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::CLIMB)]  = Judge_Climb(Scan, Geo);
+	Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::HANG)]   = Judge_Hang(Scan, Geo);
+
+	// 후보 비트마스크 (PARKOUR_FLAG 비트 재사용 — 기존 소비자 호환)
+	Decision.iCandidateFlag = 0;
+	if (VaultVerdict.isPossible)
+		Decision.iCandidateFlag |= ENUM_CLASS(PARKOUR_FLAG::VAULTABLE);
+	if (Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::MANTLE)].isPossible)
+		Decision.iCandidateFlag |= ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE);
+	if (Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::CLIMB)].isPossible)
+		Decision.iCandidateFlag |= ENUM_CLASS(PARKOUR_FLAG::CLIMBABLE);
+
+	// 우선순위 결정 (CLIMB > VAULT > MANTLE — 현행 유지)
+	if (Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::CLIMB)].isPossible)
+	{
+		Decision.eBestAction = PARKOUR_ACTION::CLIMB;
+		Decision.isValid = true;
+	}
+	else if (VaultVerdict.isPossible)
+	{
+		Decision.eBestAction = isHighVault ? PARKOUR_ACTION::HIGH_VAULT : PARKOUR_ACTION::LOW_VAULT;
+		Decision.isValid = true;
+	}
+	else if (Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::MANTLE)].isPossible)
+	{
+		Decision.eBestAction = PARKOUR_ACTION::MANTLE;
+		Decision.isValid = true;
+	}
+}
+
+void CEnvironmentQueryComponent::Judge_TopReaced(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo)
+{
+	m_EnvQueryResult.Decision.isTopReached;
+}
+
+// 디자이너 태그 정규화 — END(태그 없음)는 ALL로 취급 (기존 Judge_Condition 동작 유지)
+_uint CEnvironmentQueryComponent::Get_ObjectFlagMask(const OBSTACLE_SCAN& Scan) const
+{
+	_uint iMask = ENUM_CLASS(Scan.eObjectFlag);
+	if (iMask >= ENUM_CLASS(PARKOUR_FLAG::END))
+		iMask = ENUM_CLASS(PARKOUR_FLAG::ALL);
+	return iMask;
+}
+
+// Vault: 무릎 히트 + 머리 미스 높이의 장애물을 넘는다. 상단 도달·착지 공간·접근 각도 필요.
+ACTION_VERDICT CEnvironmentQueryComponent::Judge_Vault(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const
+{
+	const _bool bKnee = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE)) != 0;
+	const _bool bHead = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD)) != 0;
+	if (!bKnee || bHead)
+		return { false, REJECT_REASON::NO_HEIGHT_MATCH };
+
+	if (!(Get_ObjectFlagMask(Scan) & ENUM_CLASS(PARKOUR_FLAG::VAULTABLE)))
+		return { false, REJECT_REASON::FLAG_DENIED };
+
+	if (!Geo.isTopReachable)
+		return { false, REJECT_REASON::TOP_UNREACHABLE };
+
+	if (!Geo.hasLandingSpace)
+		return { false, REJECT_REASON::NO_LANDING };
+
+	if (fApproachDot <= VAULT_TH.fMinApproachDot)
+		return { false, REJECT_REASON::BAD_ANGLE };
+
+	return { true, REJECT_REASON::NONE };
+}
+
+// Mantle: 무릎 히트 + 머리 미스 높이의 장애물 위로 올라선다. 상단 도달·최소 두께·접근 각도 필요.
+ACTION_VERDICT CEnvironmentQueryComponent::Judge_Mantle(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const
+{
+	const _bool bKnee = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE)) != 0;
+	const _bool bHead = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD)) != 0;
+	if (!bKnee || bHead)
+		return { false, REJECT_REASON::NO_HEIGHT_MATCH };
+
+	if (!(Get_ObjectFlagMask(Scan) & ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE)))
+		return { false, REJECT_REASON::FLAG_DENIED };
+
+	if (!Geo.isTopReachable)
+		return { false, REJECT_REASON::TOP_UNREACHABLE };
+
+	_float fRadius = m_pOwnerColliderCom->Get_Radius();
+	if (Geo.fDepth < fRadius * MANTLE_TH.fMinDepthMult)
+		return { false, REJECT_REASON::TOO_THIN };
+
+	if (Geo.fTopWidth < fRadius * MANTLE_TH.fMinWidthMult)
+		return { false, REJECT_REASON::TOO_NARROW };
+
+	if (fApproachDot <= MANTLE_TH.fMinApproachDot)
+		return { false, REJECT_REASON::BAD_ANGLE };
+
+	return { true, REJECT_REASON::NONE };
+}
+
+// Climb: 무릎+가슴+머리 전부 히트하는 키 이상 벽. 상단이 측정됐다면 도달 가능 높이여야 한다.
+ACTION_VERDICT CEnvironmentQueryComponent::Judge_Climb(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo) const
+{
+	const _bool bKnee  = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE))  != 0;
+	const _bool bChest = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::CHEST)) != 0;
+	const _bool bHead  = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD))  != 0;
+	if (!(bKnee && bChest && bHead))
+		return { false, REJECT_REASON::NO_HEIGHT_MATCH };
+
+	if (!(Get_ObjectFlagMask(Scan) & ENUM_CLASS(PARKOUR_FLAG::CLIMBABLE)))
+		return { false, REJECT_REASON::FLAG_DENIED };
+
+	// 상단 미도달 벽은 벽타기로 무제한 허용 (기존 동작 유지)
+	_float fTotalHeight = m_pOwnerColliderCom->Get_Height() + 2.f * m_pOwnerColliderCom->Get_Radius();
+	if (Geo.isTopReachable && Geo.fObstacleHeight > fTotalHeight * CLIMB_TH.fMaxHeightRatio)
+		return { false, REJECT_REASON::TOO_HIGH };
+
+	return { true, REJECT_REASON::NONE };
+}
+
+// Hang: 미구현 — 확장 지점. 구현 시 이 함수만 채우면 파이프라인에 그대로 편입된다.
+ACTION_VERDICT CEnvironmentQueryComponent::Judge_Hang(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo) const
+{
+	(void)Scan; (void)Geo;
+	return { false, REJECT_REASON::NOT_IMPLEMENTED };
+}
 
 #ifdef _DEBUG
-	//cout << "현재 내적 값 : " << m_EnvQueryResult.fApproachDot << endl;
-#endif // DEBUG
+// 측정 결과 마커 — 앞모서리(빨강), 착지점(노랑)
+void CEnvironmentQueryComponent::Draw_DebugMarkers()
+{
+	if (!m_pGameInstance->IsParkourDebug())
+		return;
 
-	if (iCandidateFlag & ENUM_CLASS(PARKOUR_FLAG::VAULTABLE))
-		if (fApproachDot <= FVAULT_MIN_APPROACT_DOT)
-			iCandidateFlag &= ~ENUM_CLASS(PARKOUR_FLAG::VAULTABLE);
-
-	if (iCandidateFlag & ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE))
-		if (fApproachDot <= FMANTLE_MIN_APPROACT_DOT)
-			iCandidateFlag &= ~ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE);
-
-	// 우선순위 결정 (CLIMB > VAULT > MANTLE)
-	m_EnvQueryResult.iCandidateFlag = iCandidateFlag;
-	m_EnvQueryResult.isValid        = false;
-	m_EnvQueryResult.eBestAction    = PARKOUR_ACTION::NONE;
-
-	if (iCandidateFlag & ENUM_CLASS(PARKOUR_FLAG::CLIMBABLE))
-	{
-		m_EnvQueryResult.eBestAction = PARKOUR_ACTION::CLIMB;
-		m_EnvQueryResult.isValid = true;
-	}
-	else if (iCandidateFlag & ENUM_CLASS(PARKOUR_FLAG::VAULTABLE))
-	{
-		// 가슴 레이까지 히트한 높은 장애물은 HIGH_VAULT로 구분
-		m_EnvQueryResult.eBestAction = bChest ? PARKOUR_ACTION::HIGH_VAULT : PARKOUR_ACTION::LOW_VAULT;
-		m_EnvQueryResult.isValid = true;
-	}
-	else if (iCandidateFlag & ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE))
-	{
-		m_EnvQueryResult.eBestAction = PARKOUR_ACTION::MANTLE;
-		m_EnvQueryResult.isValid = true;
-	}
-	
+	const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
+	if (Geo.isTopReachable)
+		m_pGameInstance->Add_DebugSphere(XMLoadFloat3(&Geo.vTopEdgePos), 0.07f, JPH::Color(255.f, 0.f, 0.f, 1.f));
+	if (Geo.hasLandingSpace)
+		m_pGameInstance->Add_DebugSphere(XMLoadFloat3(&Geo.vLandingPos), 0.07f, JPH::Color(255.f, 255.f, 0.f, 1.f));
 }
+#endif // _DEBUG
 
 #ifdef _DEBUG
 void CEnvironmentQueryComponent::Print_Debug()
 {
-	if (m_KneeHit.isHit)  cout << "Knee Hit"  << endl;
-	if (m_ChestHit.isHit) cout << "Chest Hit" << endl;
-	if (m_HeadHit.isHit)  cout << "Head Hit"  << endl;
+	const OBSTACLE_SCAN&     Scan     = m_EnvQueryResult.Scan;
+	const OBSTACLE_GEOMETRY& Geo      = m_EnvQueryResult.Geometry;
+	const PARKOUR_DECISION&  Decision = m_EnvQueryResult.Decision;
 
-	const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
-	if (Geo.fObstacleHeight > 0.f)
+	static const char* s_ActionNames[] = { "NONE", "LOW_VAULT", "HIGH_VAULT", "MANTLE", "CLIMB", "HANG" };
+	static const char* s_RejectNames[] = { "OK", "NO_HEIGHT_MATCH", "FLAG_DENIED", "TOP_UNREACHABLE",
+		"NO_LANDING", "TOO_THIN", "TOO_NARROW", "TOO_HIGH", "BAD_ANGLE", "NOT_IMPLEMENTED" };
+
+	cout << "[Scan]     Knee " << (Scan.KneeHit.isHit ? "O" : "X")
+	     << "  Chest " << (Scan.ChestHit.isHit ? "O" : "X")
+	     << "  Head " << (Scan.HeadHit.isHit ? "O" : "X")
+	     << "  L " << (Scan.LeftChestHit.isHit ? "O" : "X")
+	     << "  R " << (Scan.RightChestHit.isHit ? "O" : "X")
+	     << "  ObjectFlag=" << ENUM_CLASS(Scan.eObjectFlag) << endl;
+
+	cout << "[Geometry] H=" << Geo.fObstacleHeight
+	     << " D=" << Geo.fDepth
+	     << " W=" << Geo.fTopWidth
+	     << " Front=" << Geo.fFrontDistance
+	     << " Top=" << (Geo.isTopReachable ? "O" : "X")
+	     << " Landing=" << (Geo.hasLandingSpace ? "O" : "X")
+	     << " Dot=" << Decision.fApproachDot << endl;
+
+	cout << "[Judge]    ";
+	for (_uint i = ENUM_CLASS(PARKOUR_ACTION::LOW_VAULT); i < ENUM_CLASS(PARKOUR_ACTION::END); ++i)
 	{
-		cout << "[Geometry] H=" << Geo.fObstacleHeight
-		     << " D=" << Geo.fDepth
-		     << " Landing=" << Geo.hasLandingSpace
-		     << " TopReach=" << Geo.isTopReachable << endl;
+		const ACTION_VERDICT& Verdict = Decision.Verdicts[i];
+		cout << s_ActionNames[i] << ":" << (Verdict.isPossible ? "OK"
+			: Verdict.eReject == REJECT_REASON::NONE ? "SKIP"
+			: s_RejectNames[ENUM_CLASS(Verdict.eReject)]);
+		if (i + 1 < ENUM_CLASS(PARKOUR_ACTION::END))
+			cout << " | ";
 	}
-
-	
-
-	if (m_EnvQueryResult.isValid)
-	{
-		static const char* s_ActionNames[] = { "NONE", "VAULT", "HIGH_VAULT", "MANTLE", "CLIMB", "HANG" };
-		cout << "[Action] " << s_ActionNames[ENUM_CLASS(m_EnvQueryResult.eBestAction)] << endl;
-	}
-
 	cout << endl;
+
+	cout << "[Best]     " << s_ActionNames[ENUM_CLASS(Decision.eBestAction)] << endl << endl;
 }
 #endif // _DEBUG
 

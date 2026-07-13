@@ -492,7 +492,7 @@ void CPhysicsManager::DrawShapeCast(const Shape* pShape, const RMat44& StartMatr
 
 	Color ArrowColor = Color(255.f, 255.f, 0.f, 1.f);
 	m_pDebugRenderer->DrawArrow(StartMatrix * vBottomLocal, EndMatrix * vBottomLocal, ArrowColor, 0.05f);
-	m_pDebugRenderer->DrawArrow(StartMatrix * vCenterLocal, EndMatrix * vCenterLocal, ArrowColor, 0.05f);
+	//m_pDebugRenderer->DrawArrow(StartMatrix * vCenterLocal, EndMatrix * vCenterLocal, ArrowColor, 0.05f);
 	m_pDebugRenderer->DrawArrow(StartMatrix * vTopLocal, EndMatrix * vTopLocal, ArrowColor, 0.05f);
 
 	// 히트 지점 마커

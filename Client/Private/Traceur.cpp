@@ -10,6 +10,7 @@
 #include "EnvironmentQueryComponent.h"
 #include "TraceurFactory.h"
 #include "TraceurState_Enum.h"
+#include "TraceurState.h"
 
 
 CTraceur::CTraceur(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
@@ -42,6 +43,16 @@ HRESULT CTraceur::Initialize_Clone(void* pArg)
 
 	if (FAILED(Ready_Components(pDesc)))
 		return E_FAIL;
+
+	// 애님 노티파이 로드 — 폴더 안의 <애님이름>.json만 읽고 없는 애님은 건너뜀.
+	// Com_Model은 CModel 복사 생성자에서 CAnimation을 개별 Clone하므로 프로토타입과 공유되지 않음 (확인됨).
+	// this 캡처는 Traceur가 단일 인스턴스라는 전제하에 안전.
+	m_pModelCom->Register_AllNotifies(
+		pDesc->strNotfiyFolderPath,
+		nullptr,   
+		nullptr,   
+		nullptr,   
+		[this](const _string& strFlag, _bool isOn) { Notify_StateFlag(strFlag, isOn); });
 
 	if (FAILED(Ready_Variables(pDesc)))
 		return E_FAIL;
@@ -124,6 +135,17 @@ _vector CTraceur::Get_CamRight() const
 	return m_pSpringCamera->Get_RightVector_NoPitch();
 }
 
+// 현재 상태에 Notify 등록시 설정한 Flag를 SetFlag 
+void CTraceur::Notify_StateFlag(const _string& strFlag, _bool isOn)
+{
+	if (nullptr == m_pStateMachineCom)
+		return;
+
+	CTraceurState* pState = dynamic_cast<CTraceurState*>(m_pStateMachineCom->Get_CurrentState());
+	if (pState)
+		pState->Latch_NotifyFlag(strFlag, isOn);
+}
+
 // 객체 생성시에 pDesc에 등록된 정보를 가져올 수 있습니다.
 void CTraceur::OnCollider_During(_uint iLayer, void* pDesc, const ContactManifold& Manifold)
 {
@@ -169,10 +191,17 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 		m_pColliderCom->Set_Gravity(true);
 		m_pStateMachineCom->Change_State(ENUM_CLASS(EStateCategory::GROUND),
 			ENUM_CLASS(ETraceurGroundState::Move));
+		return;
 	}
 
-	// F9: 전환 테이블 핫리로드 (JSON 수정 후 게임 재시작 없이 반영)
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::F9), KEYSTATE::UP))
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D4), KEYSTATE::UP))
+	{
+		m_pStateMachineCom->Change_State(ENUM_CLASS(EStateCategory::CLIMB),
+			ENUM_CLASS(ETraceurClimbState::Exit));
+		return;
+	}
+
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D5), KEYSTATE::UP))
 		CGameSystem::GetInstance()->Reload_TransitionTable();
 
 	/*CCharacter::Move(CMovementComponent::Calculate_Direction(m_pInputControllerCom)

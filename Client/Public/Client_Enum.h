@@ -21,6 +21,20 @@ namespace Client
 		NONE, LOW_VAULT, HIGH_VAULT, MANTLE, CLIMB, HANG, END
 	};
 
+	// 액션 판정 탈락 사유 — PARKOUR_DECISION::Verdicts가 기록, Print_Debug가 출력
+	enum class REJECT_REASON {
+		NONE,             // 통과
+		NO_HEIGHT_MATCH,  // 높이 패턴이 후보 조건에 안 맞음
+		FLAG_DENIED,      // 디자이너 PARKOUR_FLAG가 금지
+		TOP_UNREACHABLE,  // 상단면 도달 불가 (모서리 기반 액션 불가)
+		NO_LANDING,       // 반대편 착지 공간 없음 (Vault)
+		TOO_THIN,         // 상단 두께 부족 (Mantle)
+		TOO_NARROW,       // 상단 폭 부족 (Mantle)
+		TOO_HIGH,         // 도달 불가 높이 (Climb)
+		BAD_ANGLE,        // 접근 각도 미달
+		NOT_IMPLEMENTED,  // 미구현 액션 (HANG)
+		END
+	};
 
 	enum class MOVEMENT_TYPE {
 		GROUND,

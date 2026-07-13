@@ -1,4 +1,4 @@
-#include "ClientPch.h"
+﻿#include "ClientPch.h"
 #include "TraceurAirFall.h"
 #include "Traceur.h"
 #include "TraceurState_Enum.h"
@@ -33,11 +33,19 @@ void CTraceurAirFall::OnExit()
 void CTraceurAirFall::Update_Animations(_float fTimeDelta)
 {
 	CTraceurState::Play_Animation(fTimeDelta);
+
+	
+	_vector vDown = XMVectorSet(0.f, -1.f, 0.f, 0.f);
+	m_pTransformCom->Go_Dir(vDown, fTimeDelta * 0.2f);
 }
 
 void CTraceurAirFall::Check_State()
 {
 	Set_Flag("Land", m_pColliderCom->IsLand());
+
+
+
+	
 }
 
 void CTraceurAirFall::SetUp_Animations()

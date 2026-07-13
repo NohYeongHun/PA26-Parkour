@@ -23,6 +23,10 @@ public:
 	_vector Get_CamRight()   const;
 
 public:
+	// StateFlag 애님 노티파이 콜백 진입점 — 현재 상태의 래치로 포워딩
+	void Notify_StateFlag(const _string& strFlag, _bool isOn);
+
+public:
 	void OnCollider_During(_uint iLayer, void* pDesc, const ContactManifold& Manifold);
 	void OnCollider_Enter(_uint iLayer, void* pDesc, const ContactManifold& Manifold);
 

@@ -1,13 +1,13 @@
 ﻿#pragma once
-#include "AirState.h"
+#include "GroundState.h"
 #include "Client_Struct.h"
 
 NS_BEGIN(Client)
-class CTraceurAirJump final : public CAirState
+class CTraceurGroundStand final : public CGroundState
 {
 public:
-	explicit CTraceurAirJump() = default;
-	virtual ~CTraceurAirJump() = default;
+	explicit CTraceurGroundStand() = default;
+	virtual ~CTraceurGroundStand() = default;
 
 public:
 	virtual HRESULT Initialize(class CTraceur* pOwner);
@@ -15,15 +15,13 @@ public:
 	virtual void OnExit() override;
 
 private:
-	void Check_State() override;
 	void Update_Animations(_float fTimeDelta) override;
-	void Check_Physics(_float fTimeDelta) override;
 
 private:
 	virtual void SetUp_Animations() override;
 
 public:
-	static CTraceurAirJump* Create(class CTraceur* pOwner);
+	static CTraceurGroundStand* Create(class CTraceur* pOwner);
 	virtual void Free() override;
 };
 NS_END

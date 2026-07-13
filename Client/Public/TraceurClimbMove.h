@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "ClimbState.h"
 #include "Client_Struct.h"
 
@@ -20,6 +20,10 @@ private:
 
 private:
 	virtual void SetUp_Animations() override;
+
+
+private:
+	ENV_QUERY_RESULT m_EnvQueryResult = {};
 
 public:
 	static CTraceurClimbMove* Create(class CTraceur* pOwner);

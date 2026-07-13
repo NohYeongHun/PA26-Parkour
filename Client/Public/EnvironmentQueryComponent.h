@@ -33,13 +33,28 @@ private:
 
 	// 두께 탐지
 	static constexpr _uint  FDEPTH_SAMPLE_COUNT    = 3;
-	static constexpr _float FVAULT_MAX_DEPTH_MULT  = 2.0f; // Vault 가능 최대 두께 (반지름 배율)
-	static constexpr _float FMANTLE_MIN_DEPTH_MULT = 1.0f; // Mantle 가능 최소 두께 (반지름 배율)
-	static constexpr _float FMAX_CLIMBABLE_HEIGHT_RATIO = FMAX_REACH_RATIO;
+	static constexpr _uint  FEDGE_REFINE_ITERATIONS = 4; // 뒷모서리 이진 탐색 횟수 (오차 = 샘플 간격 / 2^4)
+	static constexpr _float FLANDING_MAX_HEIGHT_DIFF = 0.3f; // 착지점 주변 검증 레이의 허용 높이 차
 
-	static constexpr _float FVAULT_MIN_APPROACT_DOT = 0.9f;
-	static constexpr _float FCLIMB_MIN_APPROACT_DOT = 0.8f;
-	static constexpr _float FMANTLE_MIN_APPROACT_DOT = 0.5f;
+	// 액션별 판정 임계값 — 이후 JSON 튜닝 테이블로 이관 가능한 형태로 묶는다
+	struct VAULT_THRESHOLDS {
+		_float fMinApproachDot       = 0.9f;
+		_float fHighVaultHeightRatio = 0.8f; // 전고 배율 — 이상이면 HIGH_VAULT (기존 가슴 레이 높이와 동일)
+	};
+	struct MANTLE_THRESHOLDS {
+		_float fMinDepthMult   = 1.0f; // 반지름 배율 — 최소 상단 두께
+		_float fMinWidthMult   = 2.0f; // 반지름 배율 — 최소 상단 폭 (Task 6에서 적용)
+		_float fMinApproachDot = 0.5f;
+	};
+	struct CLIMB_THRESHOLDS {
+		_float fMaxHeightRatio = 1.5f; // 전고 배율 — 모서리 도달 가능 최대 높이
+	};
+	static constexpr VAULT_THRESHOLDS  VAULT_TH{};
+	static constexpr MANTLE_THRESHOLDS MANTLE_TH{};
+	static constexpr CLIMB_THRESHOLDS  CLIMB_TH{};
+
+	// 디버그 레이 색 분류 — Cast_Ray가 시각화에 사용
+	enum class RAY_KIND { SCAN, MEASURE, REFINE };
 
 protected:
 	explicit CEnvironmentQueryComponent(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
@@ -58,16 +73,29 @@ public:
 	_bool Find_Ground(const _fvector& vProbePos, _float fUpOffset, _float fMaxDrop, _float3& vOutGroundPos);
 
 private:
-	_bool Detect_Obstacle();
-	void Collect_RayInfo();
-	void Classify_HitFlag();
-	void Extract_Geometry();
-	void Judge_Condition();
+	_bool Detect_Obstacle();    
+	void  Scan_Obstacle();      
+	void  Measure_Geometry();   
+	void  Judge_Actions();      
+
+	void Judge_TopReaced(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo);
+
+	ACTION_VERDICT Judge_Vault(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const;
+	ACTION_VERDICT Judge_Mantle(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const;
+	ACTION_VERDICT Judge_Climb(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo) const;
+	ACTION_VERDICT Judge_Hang(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo) const;
+	_uint          Get_ObjectFlagMask(const OBSTACLE_SCAN& Scan) const; // END(태그 없음)는 ALL로 정규화
 
 private:
-	LINE_TRACE_HIT Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos);
+	LINE_TRACE_HIT Cast_Ray(const _fvector& vStart, const _fvector& vEnd, _uint iLayer, RAY_KIND eKind);
 
 #ifdef _DEBUG
+private:
+	void Draw_DebugMarkers();
+#endif // _DEBUG
+
+#ifdef _DEBUG
+public:
 	void Print_Debug();
 #endif // _DEBUG
 
@@ -82,15 +110,6 @@ private:
 	COLLISIONLAYER m_eTargetLayer = { COLLISIONLAYER::END };
 
 private:
-	// ShapeCast로 탐지한 Object의 태그.
-	PARKOUR_FLAG m_eObjectParkourFlag = { PARKOUR_FLAG::END };
-	SHAPE_CAST_HIT m_ShapeHit{};
-	LINE_TRACE_HIT m_KneeHit{};
-	LINE_TRACE_HIT m_ChestHit{};
-	LINE_TRACE_HIT m_HeadHit{};
-
-	// 수평 레이 Hit 패턴
-	_uint m_iHeightFlag = {};
 	ENV_QUERY_RESULT m_EnvQueryResult{};
 
 public:
