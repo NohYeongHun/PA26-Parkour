@@ -63,6 +63,7 @@ public:
 
 	// 현재 State 정보 반환
 	StateKey Get_CurrentStateKey() const { return m_CurrentStateKey; }
+	class CState* Get_CurrentState() const { return m_pCurrentState; }
 	_uint Get_CurrentCategory() const { return m_CurrentStateKey.iCategory; }
 	_uint Get_CurrentSubState() const { return m_CurrentStateKey.iSubState; }
 
