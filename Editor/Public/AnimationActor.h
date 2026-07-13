@@ -58,6 +58,8 @@ public:
 	HRESULT Bind_Bone_to_GUI();
 
 	void Change_CurrentAnimation(_string strAnimName);
+	// 루트모션 궤적: 애니 시작 트랜스폼 앵커로 현재 애니 궤적을 그린다.
+	void Debug_DrawRootMotionTrajectory(_float fTimeStepSec, const ROOTMOTION_DESC& rootDesc);
 	void Set_TrackPosition(_float fTrackPosition);
 	void Set_PlayAnimation(_bool IsPlay);
 
@@ -107,6 +109,8 @@ private:
 	vector<CAnimationActor*> m_ChildActors = { nullptr };
 	CAnimationActor* m_pChildActor = { nullptr };
 	_float4x4 m_CombinedMatrix = {};
+
+	_float4x4 m_StartMatrix = {};
 	_float4 m_vInitPosition = {};
 
 	_uint m_iShaderPath = {};
@@ -134,6 +138,7 @@ private:
 
 #ifdef _DEBUG
 	// PartObject
+	_float4x4 m_TrajectoryAnchor = {}; // 애니 변경 시점의 월드 트랜스폼 스냅샷
 #endif
 
 private:

@@ -166,7 +166,6 @@ void CModel::Set_TrackPosition(const _string& strAnimName, const _float fTrackPo
 }
 
 
-#ifdef _DEBUG
 void TrajectorySample::SetTransform(const _float4x4& TransformMatrix)
 {
 	_vector vScale{}, vRotation{}, vTranslation{};
@@ -177,11 +176,19 @@ void TrajectorySample::SetTransform(const _float4x4& TransformMatrix)
 
 TrajectorySample TrajectorySample::TrajectoryLerp(const TrajectorySample& Other, _float fAlpha) const
 {
-
 	TrajectorySample Result{};
+	_vector vPosA = XMLoadFloat4(&vPosition);
+	_vector vPosB = XMLoadFloat4(&Other.vPosition);
+	_vector vQuatA = XMLoadFloat4(&vQuat);
+	_vector vQuatB = XMLoadFloat4(&Other.vQuat);
+
+	XMStoreFloat4(&Result.vPosition, XMVectorLerp(vPosA, vPosB, fAlpha));
+	XMStoreFloat4(&Result.vQuat, XMQuaternionSlerp(vQuatA, vQuatB, fAlpha));
+	Result.fTimeInSeconds = fTimeInSeconds + (Other.fTimeInSeconds - fTimeInSeconds) * fAlpha;
 	return Result;
 }
 
+#ifdef _DEBUG
 _float* CModel::Get_TrackPositionPtr(const _string& strAnimName)
 {
 	return m_Animations.at(strAnimName)->Get_TrackPositionPtr();
@@ -249,8 +256,52 @@ void CModel::Print_ShapeKeyWeights()
 	OutputDebugString(outString.c_str());
 }
 
-void CModel::Debug_RootMotionDraw(_fmatrix WorldMatrix)
+void CModel::Debug_RootMotionDraw(const _string& strAnimName, _fmatrix StartWorldMatrix, _float fTimeStepSec, const ROOTMOTION_DESC& rootDesc)
 {
+	vector<TrajectorySample> Samples = Get_RootMotionTrajectory(strAnimName, fTimeStepSec);
+	if (Samples.size() < 2)
+		return;
+
+	CGameInstance* pGI = CGameInstance::GetInstance();
+
+	const JPH::Color LineColor(0.f, 255.f, 0.f, 1.f);   
+	const JPH::Color PointColor(0.f, 255.f, 255.f, 1.f);
+
+	_vector vPrevWorld{};
+	_bool   bHasPrev = false;
+
+	for (const TrajectorySample& sample : Samples)
+	{
+		_vector vRelPos = XMLoadFloat4(&sample.vPosition); // w=1
+		_vector qRelRot = XMLoadFloat4(&sample.vQuat);
+
+		if (rootDesc.isEnable)
+		{
+			if (!rootDesc.isTranslate)
+				vRelPos = XMVectorSet(0.f, 0.f, 0.f, 1.f);
+			else
+				vRelPos = XMVectorSetW(XMVectorScale(vRelPos, rootDesc.fRate), 1.f);
+
+			if (!rootDesc.isRotate)
+				qRelRot = XMQuaternionIdentity();
+		}
+
+		_matrix matLocal = XMMatrixAffineTransformation(
+			XMVectorSet(1.f, 1.f, 1.f, 1.f),
+			XMVectorSet(0.f, 0.f, 0.f, 1.f),
+			qRelRot,
+			vRelPos);
+
+		_matrix matWorld = matLocal * StartWorldMatrix;
+		_vector vWorldPos = matWorld.r[3];
+
+		pGI->Add_DebugSphere(vWorldPos, 0.03f, PointColor);
+		if (bHasPrev)
+			pGI->Add_DebugLine(vPrevWorld, vWorldPos, LineColor);
+
+		vPrevWorld = vWorldPos;
+		bHasPrev = true;
+	}
 }
 
 #endif // _DEBUG
@@ -1206,6 +1257,75 @@ _float3 CModel::Get_RootMotionTotalDisplacement(const _string& strAnimationName)
 		return vOut;
 	}
 	return _float3{};
+}
+
+vector<TrajectorySample> CModel::Get_RootMotionTrajectory(const _string& strAnimName, _float fTimeStepSec)
+{
+	vector<TrajectorySample> Samples;
+
+	if (fTimeStepSec <= 0.f)
+		return Samples;
+
+	CAnimation* pAnim = Get_AnimationOrNull(strAnimName);
+	if (nullptr == pAnim)
+		return Samples;
+
+	const _float fTPS = pAnim->Get_TickPerSecond();
+	if (fTPS <= 0.f)
+		return Samples;
+
+	const _float fDurSec = pAnim->Get_Duration() / fTPS;
+	if (fDurSec <= 0.f)
+		return Samples;
+
+	// 루트 본 채널 탐색
+	CChannel* pRootChannel = nullptr;
+	for (CChannel* pChannel : pAnim->Get_Channels())
+	{
+		if (pChannel->Get_BoneIndex() == m_iRootBoneIndex)
+		{
+			pRootChannel = pChannel;
+			break;
+		}
+	}
+	if (nullptr == pRootChannel)
+		return Samples;
+
+	_matrix matConversion = XMLoadFloat4x4(&m_ConversionMatrix);
+	_vector qConversion = XMQuaternionRotationMatrix(matConversion);
+
+	// t=0 기준값
+	_vector vScale0{}, vRot0{}, vTrans0{};
+	pRootChannel->Sample_SRT(0.f, vScale0, vRot0, vTrans0);
+	_vector vConvT0 = XMVector3Transform(vTrans0, matConversion);
+	_vector qConvR0 = XMQuaternionMultiply(qConversion, vRot0);
+	_vector qConvR0Inv = XMQuaternionInverse(qConvR0);
+
+	auto AddSampleAt = [&](_float t)
+		{
+			_vector vScale{}, vRot{}, vTrans{};
+			pRootChannel->Sample_SRT(t * fTPS, vScale, vRot, vTrans);
+
+			_vector vConvT = XMVector3Transform(vTrans, matConversion);
+			_vector qConvR = XMQuaternionMultiply(qConversion, vRot);
+
+			// 애니 시작 기준 상대화 (Get_RootMotionTotalDisplacement와 동일한 변환·스케일)
+			_vector vRelPos = XMVectorScale(vConvT - vConvT0, m_fPreScale);
+			_vector qRelRot = XMQuaternionMultiply(qConvR, qConvR0Inv);
+
+			TrajectorySample sample{};
+			XMStoreFloat4(&sample.vPosition, XMVectorSetW(vRelPos, 1.f));
+			XMStoreFloat4(&sample.vQuat, qRelRot);
+			sample.fTimeInSeconds = t;
+			Samples.push_back(sample);
+		};
+
+	// 초 단위 샘플 + 끝점 항상 포함
+	for (_float t = 0.f; t < fDurSec - 1e-4f; t += fTimeStepSec)
+		AddSampleAt(t);
+	AddSampleAt(fDurSec);
+
+	return Samples;
 }
 
 _float CModel::Get_AnimProgress(const _string& strAnimName)

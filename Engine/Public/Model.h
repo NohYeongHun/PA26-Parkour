@@ -24,24 +24,22 @@ typedef struct tagTransitionSource
 	_float  fFrozenParamX = 0.f;
 	_float  fFrozenParamY = 0.f;
 	_float  fPhase = 0.f;
-	// FROZEN (인터럽트 시 본 로컬 포즈 스냅샷)
+	// FROZEN (중간 인터럽트 시 본 로컬 포즈 스냅샷)
 	vector<_float4x4> FrozenPose;
 	// 크로스페이드 진행
 	_float  fElapsed = 0.f;
 	_float  fDuration = 0.f;
 }TRANSITION_SOURCE;
 
-#ifdef _DEBUG
 typedef struct TrajectorySample // 루트모션 전용.
 {
 	_float4 vQuat;
 	_float4 vPosition;
-	_float  fTimeInSeconds; // 실제 시간 단위로 찍기 => Frame 단위는 너무 많으므로.
+	_float  fTimeInSeconds; // 실제 시간 단위로 찍기, 프레임 단위는 너무 많음.
 
 	void SetTransform(const _float4x4& TransformMatrix);
 	TrajectorySample TrajectoryLerp(const TrajectorySample& Other, _float fAlpha) const;
-};
-#endif // _DEBUG
+} TrajectorySample;
 
 
 class ENGINE_DLL CModel final : public CComponent
@@ -100,6 +98,9 @@ public:
 	_uint Get_NumShapeKeys() { return static_cast<_uint>(m_ShapeKeyNames.size()); }
 	void Set_TrackPosition(const _string& strAnimName, const _float fTrackPosition);
 	_float3 Get_RootMotionTotalDisplacement(const _string& strAnimationName);
+	// 루트모션 궤적을 초 단위로 샘플링해 애니 시작 기준 누적 위치·회전을 반환 (원본 전체 경로, 끝점 포함).
+	// preScale/ConversionMatrix가 적용된 엔진 좌표계. rate/축 마스킹은 소비자가 적용.
+	vector<TrajectorySample> Get_RootMotionTrajectory(const _string& strAnimName, _float fTimeStepSec);
 
 	_float Get_AnimProgress(const _string& strAnimName);
 #ifdef _DEBUG
@@ -115,7 +116,9 @@ public:
 	_bool Find_Animation(const _string& strAnimName);
 
 	void Print_ShapeKeyWeights();
-	void Debug_RootMotionDraw(_fmatrix WorldMatrix);
+	// 애니 시작 트랜스폼(StartWorldMatrix)을 앵커로 루트모션 궤적을 선/점으로 그린다.
+	// rootDesc.isEnable이면 rate/축 마스킹을 적용, 아니면 원본 경로 그대로 표시.
+	void Debug_RootMotionDraw(const _string& strAnimName, _fmatrix StartWorldMatrix, _float fTimeStepSec, const ROOTMOTION_DESC& rootDesc);
 #endif
 
 public:

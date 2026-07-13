@@ -34,6 +34,12 @@ public:
 	// BlendSpace용: 지정 트랙 위치의 포즈를 현재 본 로컬 행렬과 fWeight로 블렌딩
 	void					Blend_TransformationMatrix_At(_float fTrackPosition, const vector<class CBone*>& Bones, _float fWeight);
 
+	// 임의 트랙 위치의 SRT를 샘플링 (내부 Compute_SRT 재사용, 내부 상태 변경 없음)
+	void Sample_SRT(_float fTrackPosition, _vector& vScale, _vector& vRotation, _vector& vTranslation) const
+	{
+		Compute_SRT(fTrackPosition, vScale, vRotation, vTranslation);
+	}
+
 private:
 	void					Compute_SRT(_float fTrackPosition, _vector& vScale, _vector& vRotation, _vector& vTranslation) const;
 

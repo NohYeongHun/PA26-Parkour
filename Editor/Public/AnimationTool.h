@@ -42,6 +42,7 @@ private:
 	void Render_DebugWindow();
 	void Render_Menu();
 	void RenderUI_EditState();
+	void Render_RootMotionTrajectory();
 
 private:
 	// 2 Depth Menu
@@ -163,6 +164,12 @@ private:
 	_bool m_IsVisibleNotify = { false };
 	_bool m_IsPlayAnimation = { true };
 	_bool m_IsStateTransition = { false };
+
+	// 루트모션 궤적 디버그
+	_bool   m_bShowTrajectory = { false };
+	_float  m_fTrajectoryTimeStep = { 0.1f };
+	_ubyte  m_iTrajectoryToggleKey = { DIK_5 };   
+	_bool   m_bCapturingToggleKey = { false };   // 키 리바인드 캡처 모드
 
 private:
 	_float m_fEditorAlpha = { 1.f };

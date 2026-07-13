@@ -1364,6 +1364,7 @@ void CAnimationTool::Render_Animation_Detail()
 		Render_Animation_ChildDetail();
 	}
 
+	Render_RootMotionTrajectory();
 
 #endif // _DEBUG
 
@@ -1377,7 +1378,59 @@ void CAnimationTool::Render_Animation_ChildDetail()
 	{
 		m_AnimationActors[m_wSelected_AnimActorTag]->Child_Render();
 	}
-	
+
+}
+
+void CAnimationTool::Render_RootMotionTrajectory()
+{
+	if (m_wSelected_AnimActorTag.empty() || m_Selected_AnimationTag.empty())
+		return;
+
+	ImGui::Separator();
+	ImGui::Checkbox("Root Motion Trajectory", &m_bShowTrajectory);
+	ImGui::InputFloat("Traj Step(sec)", &m_fTrajectoryTimeStep);
+	if (m_fTrajectoryTimeStep < 0.01f)
+		m_fTrajectoryTimeStep = 0.01f;
+
+	// 토글 키 리바인드
+	ImGui::Text("Toggle Key (DIK): 0x%02X", m_iTrajectoryToggleKey);
+	ImGui::SameLine();
+	if (m_bCapturingToggleKey)
+	{
+		ImGui::TextColored(ImVec4(1.f, 1.f, 0.f, 1.f), "Press any key...");
+		for (_int i = 0; i < 256; ++i)
+		{
+			if (KEYSTATE::DOWN == m_pGameInstance->Get_DIKeyState(static_cast<_ubyte>(i)))
+			{
+				m_iTrajectoryToggleKey = static_cast<_ubyte>(i);
+				m_bCapturingToggleKey = false;
+				break;
+			}
+		}
+	}
+	else if (ImGui::Button("Rebind"))
+	{
+		m_bCapturingToggleKey = true;
+	}
+
+	// 키 토글 (캡처 중에는 무시)
+	if (!m_bCapturingToggleKey &&
+		KEYSTATE::DOWN == m_pGameInstance->Get_DIKeyState(m_iTrajectoryToggleKey))
+	{
+		m_bShowTrajectory = !m_bShowTrajectory;
+	}
+
+	// 매 프레임 드로우
+	if (m_bShowTrajectory)
+	{
+		ROOTMOTION_DESC desc{};
+		desc.isEnable = m_isRootMotion;
+		desc.isRotate = m_isRootMotionRotate;
+		desc.isTranslate = m_isRootMotionTranslate;
+		desc.fRate = m_fRootMotionRate;
+
+		m_AnimationActors[m_wSelected_AnimActorTag]->Debug_DrawRootMotionTrajectory(m_fTrajectoryTimeStep, desc);
+	}
 }
 
 #endif // _DEBUG

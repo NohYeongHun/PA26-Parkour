@@ -95,7 +95,8 @@ HRESULT CAnimationActor::Initialize_Clone(void* pArg)
     m_pModelCom->Play_Animation_GPU(m_pComputeShaderCom, playDesc, rootMotionDesc, m_fTimeDelta);
 
 #ifdef _DEBUG
-	XMStoreFloat4(&m_vInitPosition, m_pTransformCom->Get_State(STATE::POSITION));
+	XMStoreFloat4x4(&m_StartMatrix, m_pTransformCom->Get_WorldMatrix());
+	//XMStoreFloat4(&m_vInitPosition, m_pTransformCom->Get_State(STATE::POSITION));
 #endif // _DEBUG
 
 	// ParentActor가 있으면 아래 Ready_Camera 실행하지않음.
@@ -193,7 +194,10 @@ void CAnimationActor::Update(_float fTimeDelta)
 
 
     if (IsAnimationEnd)
-        m_pTransformCom->Set_State(STATE::POSITION, XMLoadFloat4(&m_vInitPosition));
+	{
+		m_pTransformCom->Set_WorldMatrix(XMLoadFloat4x4(&m_StartMatrix));
+	}
+        //m_pTransformCom->Set_State(STATE::POSITION, XMLoadFloat4(&m_vInitPosition));
   
 
     //m_pModelCom->Sync_RootNode(m_pTransformCom, 0.f);
@@ -317,11 +321,22 @@ void CAnimationActor::Change_CurrentAnimation(_string strAnimName)
 		if (!m_pModelCom->Find_Animation(strAnimName))  // 만약 없는 애니메이션이면? 아무것도 하지마라.
 			return;
 		m_strCurrentAnimation = strAnimName;
-		
-		
+
+		// 애니 변경 시점의 월드 트랜스폼을 궤적 앵커로 스냅샷
+		if (nullptr != m_pTransformCom)
+			XMStoreFloat4x4(&m_TrajectoryAnchor, m_pTransformCom->Get_WorldMatrix());
+
 		if (nullptr != m_pChildActor)
 			m_pChildActor->Change_CurrentAnimation(strAnimName);
 	}
+}
+
+void CAnimationActor::Debug_DrawRootMotionTrajectory(_float fTimeStepSec, const ROOTMOTION_DESC& rootDesc)
+{
+	if (nullptr == m_pModelCom || m_strCurrentAnimation.empty())
+		return;
+
+	m_pModelCom->Debug_RootMotionDraw(m_strCurrentAnimation, XMLoadFloat4x4(&m_TrajectoryAnchor), fTimeStepSec, rootDesc);
 }
 
 void CAnimationActor::Set_TrackPosition(_float fTrackPosition)
