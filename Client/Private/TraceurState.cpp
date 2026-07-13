@@ -64,6 +64,8 @@ void CTraceurState::OnEnter(void* pArg)
 		if (pDesc->iAnimIndex != UINT_MAX)
 			m_iCurrentAnimIdx = pDesc->iAnimIndex;
 	}
+	Clear_Flags();
+	m_NotifyLatch.clear(); // 상태 재진입 시 탈출 창 등 노티파이 래치 초기화
 }
 
 void CTraceurState::OnUpdate(_float fTimeDelta)
@@ -74,8 +76,12 @@ void CTraceurState::OnUpdate(_float fTimeDelta)
 	Late_Anim_Update(fTimeDelta);
 	Check_Physics(fTimeDelta);
 	Set_Flag("AnimEnd", m_IsAnimationEnd);
+
+	for (const auto& Pair : m_NotifyLatch)
+		if (m_FlagSlots.find(Pair.first) != m_FlagSlots.end())
+			Set_Flag(Pair.first, Pair.second);
+
 	Evaluate_Transitions();
-	// 플래그는 프레임 스코프: Check_* 세팅 → Evaluate 소비 → 즉시 초기화 (외부에서 Get_Flag 금지)
 	Clear_Flags();
 }
 
@@ -236,6 +242,22 @@ void CTraceurState::Evaluate_Transitions()
 		return;
 	}
 }
+
+#ifdef _DEBUG
+void CTraceurState::Debug_PrintFlag()
+{
+	for (auto& Pair : m_FlagSlots)
+	{
+		const _string& strFlagName = Pair.first;
+		if (m_FlagValues[Pair.second])
+		{
+			cout << "[ " << strFlagName << " ] Slot On " << endl;
+		}
+	}
+}
+#endif // _DEBUG
+
+
 
 void CTraceurState::Free()
 {

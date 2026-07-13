@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "State.h"
 #include "StateMachine.h"
 #include "Client_Struct.h"
@@ -34,6 +34,7 @@ public:
 public:
 	_bool IsVault() const;
 	virtual _bool Play_Animation(_float fTimeDelta);
+	void Latch_NotifyFlag(const _string& strName, _bool isOn) { m_NotifyLatch[strName] = isOn; }
 
 protected:
 	void  Register_Flag(const _string& strName);
@@ -52,12 +53,21 @@ private:
 	void Bind_Rules(const class CTransitionTable* pTable);
 	void Evaluate_Transitions();
 
-private:
+protected:
 	map<_string, _uint>      m_FlagSlots;
 	vector<_bool>            m_FlagValues;
 	vector<BOUND_TRANSITION> m_BoundRules;
 	Engine::StateKey         m_SelfKey{ 0, 0 };
 	_uint                    m_iBoundVersion = 0;
+	map<_string, _bool>      m_NotifyLatch;
+
+#ifdef _DEBUG
+protected:
+	void Debug_PrintFlag();
+#endif // _DEBUG
+
+
+
 
 protected:
 	class CTraceur*                    m_pOwner              = { nullptr };

@@ -1,4 +1,4 @@
-#include "ClientPch.h"
+﻿#include "ClientPch.h"
 #include "TraceurStateNames.h"
 #include "TraceurState_Enum.h"
 
@@ -21,6 +21,7 @@ namespace
 		static const map<_uint, map<_string, _uint>> Table = {
 			{ ENUM_CLASS(EStateCategory::GROUND), {
 				{ "Move",   ENUM_CLASS(ETraceurGroundState::Move) },
+				{ "Stand",   ENUM_CLASS(ETraceurGroundState::Stand) },
 				{ "Sprint", ENUM_CLASS(ETraceurGroundState::Sprint) },
 				{ "Land",   ENUM_CLASS(ETraceurGroundState::Land) },
 				{ "Vault",  ENUM_CLASS(ETraceurGroundState::Vault) },
@@ -45,7 +46,11 @@ namespace
 			{ { ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move) }, {
 				{ "Move", ENUM_CLASS(ETraceurGroundMove::Move) },
 			}},
-			// GROUND/Sprint: 아직 미구현 상태(스테이트 머신 미등록) — 애님 테이블 항목 없음
+			{ { ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Stand) }, {
+				{ "ClimbingStand", ENUM_CLASS(ETraceurGroundStand::ClimbingStand) },
+				{ "StandingIdleToActionIdle", ENUM_CLASS(ETraceurGroundStand::StandingIdleToActionIdle) },
+			}},
+
 			{ { ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Vault) }, {
 				{ "LowerVault", ENUM_CLASS(ETraceurGroundVault::LowerVault) },
 			}},
@@ -73,7 +78,7 @@ namespace
 				{ "Mantle", ENUM_CLASS(ETraceurClimbMantle::Mantle) },
 			}},
 			{ { ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Exit) }, {
-				{ "JumpFromWall", ENUM_CLASS(ETraceurClimbExit::JumpFromWall) },
+				{ "Climbing", ENUM_CLASS(ETraceurClimbExit::Climbing) },
 			}},
 		};
 		return Table;
