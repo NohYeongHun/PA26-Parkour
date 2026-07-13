@@ -323,8 +323,11 @@ void CAnimationActor::Change_CurrentAnimation(_string strAnimName)
 		m_strCurrentAnimation = strAnimName;
 
 		// 애니 변경 시점의 월드 트랜스폼을 궤적 앵커로 스냅샷
+		/*if (nullptr != m_pTransformCom)
+			XMStoreFloat4x4(&m_TrajectoryAnchor, m_pTransformCom->Get_WorldMatrix());*/
+
 		if (nullptr != m_pTransformCom)
-			XMStoreFloat4x4(&m_TrajectoryAnchor, m_pTransformCom->Get_WorldMatrix());
+			m_TrajectoryAnchor = m_StartMatrix;
 
 		if (nullptr != m_pChildActor)
 			m_pChildActor->Change_CurrentAnimation(strAnimName);
