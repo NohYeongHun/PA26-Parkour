@@ -11,6 +11,7 @@ HRESULT CTraceurAirJump::Initialize(CTraceur* pOwner)
 		return E_FAIL;
 
 	Register_Flag("Land");
+	Register_Flag("Fall");
 	Register_Flag("Move");
 	Register_Flag("Run");
 	Register_Flag("ExitOpen");
@@ -40,6 +41,7 @@ void CTraceurAirJump::Check_State()
 	_bool bSupported = m_pColliderCom->IsLand(&vGroundN);
 	_bool bLand = bSupported && vGroundN.y >= cosf(XMConvertToRadians(50.f));
 	Set_Flag("Land", bLand);
+	Set_Flag("Fall", !bLand);
 	//Set_Flag("ExitOpen", Get_Flag("Land") && m_fTrackPosition > 40.f);
 	Set_Flag("Move", m_pInputControllerCom->Check_AnyInput(m_iMoveKey));
 	Set_Flag("Run",  Get_Flag("Move") && m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::LSHIFT)));
@@ -69,9 +71,6 @@ void CTraceurAirJump::Update_Animations(_float fTimeDelta)
 
 void CTraceurAirJump::Check_Physics(_float fTimeDelta)
 {
-#ifdef _DEBUG
-	//Debug_PrintFlag();
-#endif // _DEBUG
 }
 
 void CTraceurAirJump::SetUp_Animations()

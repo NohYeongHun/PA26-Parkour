@@ -75,9 +75,6 @@ void CTraceur::Update(_float fTimeDelta)
 {
 	__super::Update(fTimeDelta);
 
-#ifdef _DEBUG
-	Debug_Draw();
-#endif // _DEBUG
 
 	// 1. StateMachine => 이동량, 회전량 생성
 	m_pStateMachineCom->Update(fTimeDelta);
@@ -192,24 +189,9 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 	}
 
 	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D3), KEYSTATE::UP))
-	{
-		m_pColliderCom->Set_Gravity(true);
-		m_pStateMachineCom->Change_State(ENUM_CLASS(EStateCategory::GROUND),
-			ENUM_CLASS(ETraceurGroundState::Move));
-		return;
-	}
-
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D4), KEYSTATE::UP))
-	{
-		m_pStateMachineCom->Change_State(ENUM_CLASS(EStateCategory::CLIMB),
-			ENUM_CLASS(ETraceurClimbState::Exit));
-		return;
-	}
-
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D5), KEYSTATE::UP))
 		CGameSystem::GetInstance()->Reload_TransitionTable();
 
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D6), KEYSTATE::UP))
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D4), KEYSTATE::UP))
 		m_IsShowTrajectory = !m_IsShowTrajectory;
 #endif // _DEBUG
 

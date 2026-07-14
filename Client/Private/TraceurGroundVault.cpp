@@ -30,7 +30,7 @@ void CTraceurGroundVault::OnEnter(void* pArg)
 		return;
 	}
 
-	m_pColliderCom->Set_Gravity(true);
+	m_pColliderCom->Set_Gravity(false);
 }
 
 void CTraceurGroundVault::OnExit()
@@ -42,7 +42,7 @@ void CTraceurGroundVault::OnExit()
 void CTraceurGroundVault::Update_Animations(_float fTimeDelta)
 {
 	CTraceurState::Play_Animation(fTimeDelta);
-	m_pColliderCom->Set_Position(m_pTransformCom->Get_State(Engine::STATE::POSITION));
+	//m_pColliderCom->Set_Position(m_pTransformCom->Get_State(Engine::STATE::POSITION));
 }
 
 void CTraceurGroundVault::Late_Anim_Update(_float fTimeDelta)

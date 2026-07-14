@@ -34,9 +34,13 @@ void CTraceurAirFall::Update_Animations(_float fTimeDelta)
 {
 	CTraceurState::Play_Animation(fTimeDelta);
 
-	
-	_vector vDown = XMVectorSet(0.f, -1.f, 0.f, 0.f);
-	m_pTransformCom->Go_Dir(vDown, fTimeDelta * 0.2f);
+	_vector vWorldDir = CMovementComponent::Calc_GroundDir(
+		CMovementComponent::Calculate_Direction(m_pInputControllerCom),
+		m_pOwner->Get_CamForward(), m_pOwner->Get_CamRight());
+
+	m_pMoveCom->Move(vWorldDir, fTimeDelta, 0.2f);
+	//_vector vDown = XMVectorSet(0.f, -1.f, 0.f, 0.f);
+	//m_pTransformCom->Go_Dir(vDown, fTimeDelta * 0.2f);
 }
 
 void CTraceurAirFall::Check_State()

@@ -109,8 +109,9 @@ void CAnimation::Load_Notify(const json& notifyJson, function<void(const _wstrin
 		else if (type == "Object")
 		{
 			// ObjectNotify
-			pAnimNotify = CObjectFuncNotify::From_Json(notifyObject);
-			dynamic_cast<CObjectFuncNotify*>(pAnimNotify)->Set_ObjectCallback(ObjectCallback);
+			CObjectFuncNotify* pObjectNotify = CObjectFuncNotify::From_Json(notifyObject);
+			pObjectNotify->Set_ObjectCallback(ObjectCallback);
+			pAnimNotify = pObjectNotify;
 		}
 		else if (type == "StateFlag")
 		{
