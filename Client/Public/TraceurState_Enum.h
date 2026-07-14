@@ -55,6 +55,7 @@ enum class ETraceurGroundLand : _uint
 {
 	FallingToLanding = 0,
 	FallALandToStandingIdle,
+	Landing,
 	MoveEnd
 };
 
@@ -110,6 +111,9 @@ enum class ETraceurClimbExit : _uint
 {
 	JumpFromWall = 0,
 	Climbing, // Mantle
+	BracedHangToCrouch,
+	BracedHangDrop,
+	ClimbingToTop,
 	ClimbExitEnd
 };
 

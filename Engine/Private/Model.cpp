@@ -12,6 +12,12 @@
 #include "Model_Streaming.h"
 #include "BoneReadbackProfiler.h"
 
+namespace {
+	constexpr _float MW_EPS            = 1e-4f;
+	constexpr _float MW_MAX_WARP_RATIO = 3.0f;
+	constexpr _float MW_MAX_ABS_STEP   = 0.3f;
+}
+
 const string CModel::kRibPrefix = "Rib_";
 
 CModel::CModel(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
@@ -107,10 +113,77 @@ void CModel::Copy_BoneMatrices(_float4x4* pOutMatrices, _uint iMeshIndex)
 }
 
 
+void CModel::Begin_MotionWarp(const _float3& vTargetPos, const _float4* pTargetRot,
+                              _float fWindowEndTrackPos, _bool bTrans, _bool bRot)
+{
+	m_WarpState.isActive           = true;
+	m_WarpState.vTargetPos         = vTargetPos;
+	m_WarpState.hasTargetRot       = (nullptr != pTargetRot);
+	m_WarpState.qTargetRot         = (nullptr != pTargetRot) ? *pTargetRot : _float4{ 0.f, 0.f, 0.f, 1.f };
+	m_WarpState.fWindowEndTrackPos = fWindowEndTrackPos;
+	m_WarpState.fPrevTrackPos      = m_fCurPlayTrackPos;   // 창 시작 시점 트랙pos
+	m_WarpState.bWarpTranslation   = bTrans;
+	m_WarpState.bWarpRotation      = bRot;
+	m_WarpState.bStartCaptured     = false;   // 시작 위치는 Sync_RootNode 첫 프레임에 캡처
+}
+
+void CModel::End_MotionWarp()
+{
+	m_WarpState = MOTION_WARP_STATE{};   // 배율 1.0 복귀 (isActive=false)
+}
+
 void CModel::Sync_RootNode(CTransform* pOwnerTransform, _float fTimeDelta)
 {
-	_matrix matWorld = pOwnerTransform->Get_WorldMatrix();
-	_matrix ResultMatrix = m_RootMatrix * pOwnerTransform->Get_WorldMatrix();
+	_matrix matWorld     = pOwnerTransform->Get_WorldMatrix();
+	_matrix ResultMatrix = m_RootMatrix * matWorld;   // 루트모션 적용 결과 (기존 동작)
+
+	if (m_WarpState.isActive && m_WarpState.bWarpTranslation)
+	{
+		_vector vCurWorldPos   = matWorld.r[3];        // 워프 전 현재 월드 위치
+		_vector vBakedWorldPos = ResultMatrix.r[3];    // 이번 프레임 원래 갔을 위치
+		_vector vTarget        = XMVectorSetW(XMLoadFloat3(&m_WarpState.vTargetPos), 1.f);
+
+		if (!m_WarpState.bStartCaptured)
+		{
+			XMStoreFloat3(&m_WarpState.vStartPos, vCurWorldPos);
+			m_WarpState.bStartCaptured = true;
+		}
+
+		_vector vToTarget      = vTarget - vCurWorldPos;
+		_vector vBakedFrame    = vBakedWorldPos - vCurWorldPos;
+		_float  fBakedFrameLen = XMVectorGetX(XMVector3Length(vBakedFrame));
+
+		_float fRemainTrack = m_WarpState.fWindowEndTrackPos - m_WarpState.fPrevTrackPos;
+		_float fTrackDelta  = m_fCurPlayTrackPos - m_WarpState.fPrevTrackPos;
+		m_WarpState.fPrevTrackPos = m_fCurPlayTrackPos;
+
+		if (fRemainTrack <= MW_EPS)
+		{
+			// 마지막 프레임: 잔여분 스냅
+			ResultMatrix.r[3] = vTarget;
+		}
+		else
+		{
+			_float fFrac = fTrackDelta / fRemainTrack;
+			if (fFrac < 0.f) fFrac = 0.f;
+			if (fFrac > 1.f) fFrac = 1.f;
+
+			_vector vWarped    = vToTarget * fFrac;     // 남은 목표를 진행 비율대로 소비
+			_float  fWarpedLen = XMVectorGetX(XMVector3Length(vWarped));
+
+			_bool bAbortWarp = (fBakedFrameLen > MW_EPS)
+				? (fWarpedLen > fBakedFrameLen * MW_MAX_WARP_RATIO)
+				: (fWarpedLen > MW_MAX_ABS_STEP);
+			if (bAbortWarp)
+			{
+				End_MotionWarp();   // 베이크 폴백 (ResultMatrix는 이미 베이크 결과)
+			}
+			else
+			{
+				ResultMatrix.r[3] = XMVectorSetW(vCurWorldPos + vWarped, 1.f);
+			}
+		}
+	}
 
 	pOwnerTransform->Set_WorldMatrix(ResultMatrix);
 }
@@ -329,7 +402,7 @@ void CModel::Register_Notify(const _string& strFilePath, const vector<function<v
 		Pair.second->Sort_Notify();
 }
 
-void CModel::Register_AllNotifies(const _string& strNotifyFolderPath, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback, function<void(const _string&, _bool)> StateFlagCallback)
+void CModel::Register_AllNotifies(const _string& strNotifyFolderPath, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback, function<void(const _string&, _bool)> StateFlagCallback, function<void(const _string&, _bool, _float, _bool, _bool)> WarpCallback)
 {
 
 	for (auto& pair : m_Animations)
@@ -350,7 +423,7 @@ void CModel::Register_AllNotifies(const _string& strNotifyFolderPath, function<v
 
 			if (notifyData.contains("Notifies") && notifyData["Notifies"].is_array())
 			{
-				pAnimation->Load_Notify(notifyData["Notifies"], ColliderCallback, EffectCallback, ObjectCallback, StateFlagCallback);
+				pAnimation->Load_Notify(notifyData["Notifies"], ColliderCallback, EffectCallback, ObjectCallback, StateFlagCallback, WarpCallback);
 			}
 		}
 

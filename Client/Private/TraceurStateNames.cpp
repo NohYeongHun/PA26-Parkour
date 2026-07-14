@@ -55,6 +55,7 @@ namespace
 				{ "LowerVault", ENUM_CLASS(ETraceurGroundVault::LowerVault) },
 			}},
 			{ { ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Land) }, {
+				{ "Landing",        ENUM_CLASS(ETraceurGroundLand::Landing) },
 				{ "FallingToLanding",        ENUM_CLASS(ETraceurGroundLand::FallingToLanding) },
 				{ "FallALandToStandingIdle", ENUM_CLASS(ETraceurGroundLand::FallALandToStandingIdle) },
 			}},
@@ -79,6 +80,9 @@ namespace
 			}},
 			{ { ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Exit) }, {
 				{ "Climbing", ENUM_CLASS(ETraceurClimbExit::Climbing) },
+				{ "BracedHangDrop", ENUM_CLASS(ETraceurClimbExit::BracedHangDrop) },
+				{ "BracedHangToCrouch", ENUM_CLASS(ETraceurClimbExit::BracedHangToCrouch) },
+				{ "ClimbingToTop", ENUM_CLASS(ETraceurClimbExit::ClimbingToTop) }
 			}},
 		};
 		return Table;

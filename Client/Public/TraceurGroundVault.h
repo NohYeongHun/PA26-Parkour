@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "GroundState.h"
 #include "Client_Struct.h"
 
@@ -23,24 +23,26 @@ private:
 
 private:
 	_bool  Ready_Enter();
-	void   Build_Curve();
-
-#ifdef _DEBUG
-private:
-	void Draw_DebugCurve();
-#endif
-
-private:
-	void  Move_AlongCurve(_float fTimeDelta);
 	_bool Select_Animation();
 
 private:
 	ENV_QUERY_RESULT m_EnvQueryResult = {};
-	_float3 m_vCurveP0    = {};
-	_float3 m_vCurveP1    = {};
-	_float3 m_vCurveP2    = {};
-	_float  m_fCurveT     = {};
-	_bool   m_bValidCurve = false;
+#ifdef _DEBUG
+	_float3 m_vCurveP0 = {};
+	_float3 m_vCurveP1 = {};
+	_float3 m_vCurveP2 = {};
+	_float  m_fCurveT = {};
+#endif // _DEBUG
+
+
+#ifdef _DEBUG
+private:
+	void Draw_Debug();
+#endif // _DEBUG
+
+
+
+	
 
 public:
 	static CTraceurGroundVault* Create(class CTraceur* pOwner);

@@ -8,6 +8,7 @@
 #include "Collider.h"
 #include "MovementComponent.h"
 #include "EnvironmentQueryComponent.h"
+#include "MotionWarpingComponent.h"
 #include "TraceurFactory.h"
 #include "TraceurState_Enum.h"
 #include "TraceurState.h"
@@ -49,7 +50,15 @@ HRESULT CTraceur::Initialize_Clone(void* pArg)
 		nullptr,   
 		nullptr,   
 		nullptr,   
-		[this](const _string& strFlag, _bool isOn) { Notify_StateFlag(strFlag, isOn); });
+		[this](const _string& strFlag, _bool isOn) { Notify_StateFlag(strFlag, isOn); },
+		[this](const _string& strName, _bool isStart, _float fEndPos, _bool bTrans, _bool bRot) {
+			if (m_pMotionWarpCom && m_pColliderCom)
+			{
+				m_pMotionWarpCom->On_WarpNotify(strName, isStart, fEndPos, bTrans, bRot);
+				m_pColliderCom->Set_Gravity(false);
+			}
+				
+		});
 
 	if (FAILED(Ready_Variables(pDesc)))
 		return E_FAIL;
@@ -57,8 +66,6 @@ HRESULT CTraceur::Initialize_Clone(void* pArg)
 	CTraceurFactory::Register_Camera(LEVEL::STATIC, m_eCurLevel, this, m_pGameInstance, &m_pSpringCamera);
 	CTraceurFactory::Register_KeyInputs(m_pInputControllerCom, this);
 	CTraceurFactory::Register_States(m_pStateMachineCom, this);
-
-	
 
 	return S_OK;
 }
@@ -94,12 +101,15 @@ void CTraceur::Late_Update(_float fTimeDelta)
 	__super::Late_Update(fTimeDelta);
 	// 1. 물리 반영된 위치로 지정
 	Sync_Transform();
-
 	Ready_Render();
 
+#ifdef _DEBUG
+	m_pGameInstance->Add_DebugSphere(m_pTransformCom->Get_State(STATE::POSITION), 0.2f, JPH::Color(0.F, 0.F, 0.F));
+	if (m_pMotionWarpCom)
+		m_pMotionWarpCom->Update_DebugTrail();
+#endif // _DEBUG
 
-
-
+	
 }
 
 void CTraceur::Render()
@@ -207,8 +217,6 @@ void CTraceur::Update_Collider(_float fTimeDelta)
 void CTraceur::Update_Physics(_float fTimeDelta)
 {
 	Update_Collider(fTimeDelta);
-	
-	
 }
 
 void CTraceur::Update_EnvQuery(_float fTimeDelta)
@@ -296,6 +304,12 @@ HRESULT CTraceur::Ready_EnvQueryComponents(const CHARACTER_DESC* pDesc)
 		TEXT("Com_EnvQuery"), reinterpret_cast<CComponent**>(&m_pEnvQueryCom), &EnvCompDesc)))
 		return E_FAIL;
 
+	CMotionWarpingComponent::MOTION_WARP_DESC WarpDesc{};
+	WarpDesc.pOwner = this;
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_MotionWarp"),
+		TEXT("Com_MotionWarp"), reinterpret_cast<CComponent**>(&m_pMotionWarpCom), &WarpDesc)))
+		return E_FAIL;
+
 	return S_OK;
 }
 
@@ -367,5 +381,6 @@ void CTraceur::Free()
 	Safe_Release(m_pRigidbodyCom);
 	Safe_Release(m_pColliderCom);
 	Safe_Release(m_pEnvQueryCom);
-	
+	Safe_Release(m_pMotionWarpCom);
+
 }

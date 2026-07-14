@@ -29,7 +29,7 @@ HRESULT CMapObject::Initialize_Clone(void* pArg)
 	Ready_Components(pDesc);
 	m_iNumLOD = m_pModelCom->Get_LastLODIndex();
 	m_pGameInstance->Add_To_OctoTree(this, m_pBoundingBox);
-	Sync_Sectors();
+	//Sync_Sectors();
 
 	// Env Map Bake
 
@@ -122,6 +122,8 @@ void CMapObject::Render(ID3D11DeviceContext* pDeferredContext, _uint iIndex)
 
 void CMapObject::Render_Shadow()
 {
+	return;
+
 	_uint iLODIndex = 0;
 	if (iLODIndex > m_pModelCom->Get_LastLODIndex())
 		return;

@@ -126,6 +126,7 @@
     <ClInclude Include="..\Public\ShapeKey.h" />
     <ClInclude Include="..\Public\SoundNotify.h" />
     <ClInclude Include="..\Public\StateFlagNotify.h" />
+    <ClInclude Include="..\Public\MotionWarpNotify.h" />
     <ClInclude Include="..\public\SSAO.h" />
     <ClInclude Include="..\Public\State.h" />
     <ClInclude Include="..\Public\StateMachine.h" />
@@ -269,6 +270,7 @@
     <ClCompile Include="..\Private\ShapeKey.cpp" />
     <ClCompile Include="..\Private\SoundNotify.cpp" />
     <ClCompile Include="..\Private\StateFlagNotify.cpp" />
+    <ClCompile Include="..\Private\MotionWarpNotify.cpp" />
     <ClCompile Include="..\private\SSAO.cpp" />
     <ClCompile Include="..\Private\State.cpp" />
     <ClCompile Include="..\Private\StateMachine.cpp" />

@@ -41,6 +41,21 @@ typedef struct TrajectorySample // 루트모션 전용.
 	TrajectorySample TrajectoryLerp(const TrajectorySample& Other, _float fAlpha) const;
 } TrajectorySample;
 
+// 이름 없는 순수 월드좌표 워프 상태. Client가 이름→좌표 해석 후 Begin_MotionWarp로 채운다.
+typedef struct tagMotionWarpState
+{
+	_bool   isActive = false;
+	_float3 vTargetPos{};
+	_bool   hasTargetRot = false;
+	_float4 qTargetRot{};
+	_float  fWindowEndTrackPos = 0.f; // 이 트랙pos에서 워프 종료 (오버슛 가드)
+	_float  fPrevTrackPos = 0.f;      // 이전 프레임 트랙pos (프레임 진행도 산출용)
+	_bool   bWarpTranslation = true;
+	_bool   bWarpRotation = false;
+	_float3 vStartPos{};              // 워프 시작 시점 월드 위치 (디버그 구간 그리기용)
+	_bool   bStartCaptured = false;   // vStartPos 캡처 여부
+}MOTION_WARP_STATE;
+
 
 class ENGINE_DLL CModel final : public CComponent
 {
@@ -82,7 +97,12 @@ private:
 	virtual ~CModel() = default;
 
 public:
+	const _bool	Is_MotionWarping() { return m_WarpState.isActive; }
+
 	const ROOT_MOTION_DELTA&			Get_RootMotionDelta();
+	void Begin_MotionWarp(const _float3& vTargetPos, const _float4* pTargetRot,
+	                      _float fWindowEndTrackPos, _bool bTrans, _bool bRot);
+	void End_MotionWarp();
 	_uint								Get_NumBones(_uint iMeshIndex);
 	void								Copy_BoneMatrices(_float4x4* pOutMatrices, _uint iMeshIndex);
 	const vector<class CBone*>			Get_Bones() { return m_Bones; }
@@ -99,7 +119,6 @@ public:
 	void Set_TrackPosition(const _string& strAnimName, const _float fTrackPosition);
 	_float3 Get_RootMotionTotalDisplacement(const _string& strAnimationName);
 	// 루트모션 궤적을 초 단위로 샘플링해 애니 시작 기준 누적 위치·회전을 반환 (원본 전체 경로, 끝점 포함).
-	// preScale/ConversionMatrix가 적용된 엔진 좌표계. rate/축 마스킹은 소비자가 적용.
 	vector<TrajectorySample> Get_RootMotionTrajectory(const _string& strAnimName, _float fTimeStepSec);
 
 	_float Get_AnimProgress(const _string& strAnimName);
@@ -123,7 +142,7 @@ public:
 
 public:
 	void								Register_Notify(const _string& strFilePath, const vector<function<void()>>& Functions);
-	void								Register_AllNotifies(const _string& strNotifyFolderPath, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback, function<void(const _string&, _bool)> StateFlagCallback = nullptr);
+	void								Register_AllNotifies(const _string& strNotifyFolderPath, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback, function<void(const _string&, _bool)> StateFlagCallback = nullptr, function<void(const _string&, _bool, _float, _bool, _bool)> WarpCallback = nullptr);
 
 #ifdef _DEBUG
 	void								Clear_AllNotifies(); // Debug 용도
@@ -194,6 +213,8 @@ private:
 
 
 	ROOT_MOTION_DELTA m_RootMotionDelta;
+
+	MOTION_WARP_STATE m_WarpState{};
 
 	_bool									m_isChangeAnimation = { false };
 

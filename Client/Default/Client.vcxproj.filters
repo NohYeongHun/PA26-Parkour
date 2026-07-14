@@ -150,6 +150,9 @@
     <ClCompile Include="..\Private\EnvironmentQueryComponent.cpp">
       <Filter>04. Component\Environment</Filter>
     </ClCompile>
+    <ClCompile Include="..\Private\MotionWarpingComponent.cpp">
+      <Filter>04. Component\Environment</Filter>
+    </ClCompile>
     <ClCompile Include="..\Private\MovementComponent.cpp">
       <Filter>04. Component\Move</Filter>
     </ClCompile>
@@ -195,9 +198,11 @@
     <ClCompile Include="..\Private\TraceurAirJump.cpp">
       <Filter>04. Component\State\Air</Filter>
     </ClCompile>
-    <ClCompile Include="..\Private\TraceurClimbExit.cpp" />
     <ClCompile Include="..\Private\TraceurGroundStand.cpp">
       <Filter>04. Component\State\Ground</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TraceurClimbExit.cpp">
+      <Filter>04. Component\State\Climb</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -285,6 +290,9 @@
     <ClInclude Include="..\Public\EnvironmentQueryComponent.h">
       <Filter>04. Component\Environment</Filter>
     </ClInclude>
+    <ClInclude Include="..\Public\MotionWarpingComponent.h">
+      <Filter>04. Component\Environment</Filter>
+    </ClInclude>
     <ClInclude Include="..\Public\MovementComponent.h">
       <Filter>04. Component\Move</Filter>
     </ClInclude>
@@ -339,9 +347,11 @@
     <ClInclude Include="..\Public\TraceurAirJump.h">
       <Filter>04. Component\State\Air</Filter>
     </ClInclude>
-    <ClInclude Include="..\Public\TraceurClimbExit.h" />
     <ClInclude Include="..\Public\TraceurGroundStand.h">
       <Filter>04. Component\State\Ground</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurClimbExit.h">
+      <Filter>04. Component\State\Climb</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

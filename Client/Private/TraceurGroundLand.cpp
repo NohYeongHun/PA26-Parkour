@@ -13,6 +13,8 @@ HRESULT CTraceurGroundLand::Initialize(CTraceur* pOwner)
 	SetUp_Animations();
 	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurGroundLand::FallingToLanding);
 
+	Register_Flag("ExitOpen");
+
 	return S_OK;
 }
 
@@ -33,8 +35,16 @@ void CTraceurGroundLand::Update_Animations(_float fTimeDelta)
 	CTraceurState::Play_Animation(fTimeDelta);
 }
 
+void CTraceurGroundLand::Check_State()
+{
+	
+}
+
 void CTraceurGroundLand::SetUp_Animations()
 {
+	CState::Add_Animations(ENUM_CLASS(ETraceurGroundLand::Landing),
+		{ &m_fTrackPosition, "Landing", 1.f, 0.1f, 0.2f, 0.f, false }, { 1.f, true, true, true });
+
 	CState::Add_Animations(ENUM_CLASS(ETraceurGroundLand::FallingToLanding),
 		{ &m_fTrackPosition, "FallingToLanding", 1.f, 0.1f, 0.2f, 0.f, false }, { 1.f, true, true, true });
 

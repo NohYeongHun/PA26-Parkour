@@ -43,6 +43,8 @@ void CTraceurGroundMove::OnExit()
 
 void CTraceurGroundMove::Check_State()
 {
+	
+
 	Set_Flag("Move", m_pInputControllerCom->Check_AnyInput(m_iMoveKey));
 	Set_Flag("Run",  Get_Flag("Move") && m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::LSHIFT)));
 	Set_Flag("Land", m_pColliderCom->IsLand());
@@ -55,9 +57,9 @@ void CTraceurGroundMove::Update_Animations(_float fTimeDelta)
 
 	_float fTargetWeight = 0.f;
 	if (Get_Flag("Run"))
-		fTargetWeight = 1.f;
+		fTargetWeight = 1.5f;
 	else if (Get_Flag("Move"))
-		fTargetWeight = 0.5f;
+		fTargetWeight = 1.f;
 
 	_vector vWorldDir = CMovementComponent::Calc_GroundDir(
 		CMovementComponent::Calculate_Direction(m_pInputControllerCom),

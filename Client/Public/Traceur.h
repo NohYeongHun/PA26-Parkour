@@ -50,7 +50,8 @@ private:
 	class CCollider*	 m_pColliderCom = { nullptr };
 	class CStateMachine* m_pStateMachineCom = { nullptr };
 	class CEnvironmentQueryComponent* m_pEnvQueryCom = { nullptr };
-	
+	class CMotionWarpingComponent* m_pMotionWarpCom = { nullptr };
+
 
 private:
 	// 임시 Variables

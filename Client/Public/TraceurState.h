@@ -83,6 +83,7 @@ protected:
 	class CStateMachine*               m_pStateMachinCom     = { nullptr };
 	class CInputController*            m_pInputControllerCom = { nullptr };
 	class CEnvironmentQueryComponent*  m_pEnvQueryCom        = { nullptr };
+	class CMotionWarpingComponent*     m_pMotionWarpCom      = { nullptr };
 	class CMovementComponent*          m_pMoveCom            = { nullptr };
 
 protected:

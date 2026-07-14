@@ -46,10 +46,6 @@ void CTraceurAirFall::Update_Animations(_float fTimeDelta)
 void CTraceurAirFall::Check_State()
 {
 	Set_Flag("Land", m_pColliderCom->IsLand());
-
-
-
-	
 }
 
 void CTraceurAirFall::SetUp_Animations()

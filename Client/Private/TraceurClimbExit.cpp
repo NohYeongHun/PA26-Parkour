@@ -4,6 +4,7 @@
 #include "TraceurState_Enum.h"
 #include "MovementComponent.h"
 #include "EnvironmentQueryComponent.h"
+#include "MotionWarpingComponent.h"
 
 HRESULT CTraceurClimbExit::Initialize(CTraceur* pOwner)
 {
@@ -12,7 +13,9 @@ HRESULT CTraceurClimbExit::Initialize(CTraceur* pOwner)
 
 	Register_Flag("Land");
 	Register_Flag("Mantle");
-
+	Register_Flag("Fall");
+	Register_Flag("WallDrop");
+	Register_Flag("HangDropEnd");
 	SetUp_Animations();
 	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurClimbExit::Climbing);
 
@@ -24,14 +27,34 @@ void CTraceurClimbExit::OnEnter(void* pArg)
 	__super::OnEnter(pArg);
 	m_pColliderCom->Set_Gravity(true);
 	m_EnvQueryResult = m_pEnvQueryCom->Get_QueryResult();
-	// Mantle -> Land -> Move
-	Set_Flag("Mantle", true);
-	Set_Flag("Land", m_pColliderCom->IsLand());
+
+	ETraceurClimbExit eType = static_cast<ETraceurClimbExit>(m_iCurrentAnimIdx);
+	Set_Flag("Mantle", eType == ETraceurClimbExit::ClimbingToTop || eType == ETraceurClimbExit::BracedHangToCrouch);
+	Set_Flag("WallDrop", eType == ETraceurClimbExit::BracedHangDrop);
+	
 	if (Get_Flag("Mantle"))
 	{
-		Build_Curve();
+		const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
+		m_pMotionWarpCom->Clear_WarpTargets();
+		
+		_vector vPos = m_pTransformCom->Get_State(STATE::POSITION) + 
+			XMVector3Normalize(m_pTransformCom->Get_State(STATE::LOOK)) * m_pColliderCom->Get_Radius();
+		// X, Z를 추출한다.
+		_float3 vSkyPos = {};
+		XMStoreFloat3(&vSkyPos, vPos);
+
+		if (Geo.isTopReachable)
+		{
+			vSkyPos.y = Geo.vTopStandPos.y;
+			//m_pMotionWarpCom->Set_WarpTarget("VaultFix", vSkyPos);
+			m_pMotionWarpCom->Set_WarpTarget("VaultTop", Geo.vTopStandPos);
+		}
+			
+		if (Geo.hasLandingSpace)
+			m_pMotionWarpCom->Set_WarpTarget("VaultLand", Geo.vLandingPos);
+		m_isMantle = true;
+		m_pColliderCom->Set_Gravity(false);
 	};
-	
 }
 
 void CTraceurClimbExit::OnExit()
@@ -42,58 +65,75 @@ void CTraceurClimbExit::OnExit()
 void CTraceurClimbExit::Update_Animations(_float fTimeDelta)
 {
 	CTraceurState::Play_Animation(fTimeDelta);
+
+
 }
 
 void CTraceurClimbExit::Late_Anim_Update(_float fTimeDelta)
 {
-	Move_AlongCurve(fTimeDelta);
+	if (Get_Flag("Mantle"))
+	{
+		//Move_AlongCurve(fTimeDelta);
 #ifdef _DEBUG
-	Draw_DebugCurve();
+		Draw_DebugCurve();
+		
 #endif // _DEBUG
-
+	}
 }
 
 void CTraceurClimbExit::Check_State()
 {
-	Set_Flag("Land", m_pColliderCom->IsLand());
+	_float3 vGroundN{};
+	_bool isSupported = m_pColliderCom->IsLand(&vGroundN);
+	_bool isLand = isSupported && vGroundN.y >= cosf(XMConvertToRadians(50.f));
+
+	Set_Flag("Land", isLand);
+	Set_Flag("Fall", !isLand);
+	ETraceurClimbExit eType = static_cast<ETraceurClimbExit>(m_iCurrentAnimIdx);
+	Set_Flag("Mantle", eType == ETraceurClimbExit::Climbing || eType == ETraceurClimbExit::BracedHangToCrouch);
+	
+	if (Get_Flag("HangDropEnd"))
+	{
+		m_pColliderCom->Set_Gravity(true);
+	}
+	
 
 #ifdef _DEBUG
-
+	//Debug_PrintFlag();
 #endif // _DEBUG
-
 }
 
 void CTraceurClimbExit::SetUp_Animations()
 {
-	CState::Add_Animations(ENUM_CLASS(ETraceurClimbExit::Climbing),
-		{ &m_fTrackPosition, "Climbing", 1.f, 0.05f, 0.2f, 0.f, false }, { 1.f, false, true, true });
-
 	CState::Add_Animations(ENUM_CLASS(ETraceurClimbExit::JumpFromWall),
 		{ &m_fTrackPosition, "JumpFromWall", 1.f, 0.05f, 0.2f, 0.f, false }, { 1.f, true, true, true });
 
+	CState::Add_Animations(ENUM_CLASS(ETraceurClimbExit::Climbing),
+		{ &m_fTrackPosition, "Climbing", 1.f, 0.05f, 0.2f, 0.f, false }, { 1.f, true, true, true });
+
+	CState::Add_Animations(ENUM_CLASS(ETraceurClimbExit::ClimbingToTop),
+		{ &m_fTrackPosition, "ClimbingToTop", 1.f, 0.05f, 0.2f, 0.f, false }, { 1.f, true, true, true });
+	
+	CState::Add_Animations(ENUM_CLASS(ETraceurClimbExit::BracedHangToCrouch),
+		{ &m_fTrackPosition, "BracedHangToCrouch", 1.f, 0.05f, 0.2f, 0.f, false }, { 1.f, true, true, true });
+
+	CState::Add_Animations(ENUM_CLASS(ETraceurClimbExit::BracedHangDrop),
+		{ &m_fTrackPosition, "BracedHangDrop", 1.f, 0.05f, 0.2f, 0.f, false }, { 1.f, true, true, true });
 	
 }
 
 #ifdef _DEBUG
 void CTraceurClimbExit::Draw_DebugCurve()
 {
-	if (!m_bValidCurve)
-		return;
-
+	const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
 	CGameInstance* pGI = CGameInstance::GetInstance();
 
-	_vector vPrev = QuadraticCurve(m_vCurveP0, m_vCurveP1, m_vCurveP2, 0.f);
-	for (_uint i = 1; i <= 20; ++i)
-	{
-		_vector vCur = QuadraticCurve(m_vCurveP0, m_vCurveP1, m_vCurveP2,
-			static_cast<_float>(i) / static_cast<_float>(20));
-		pGI->Add_DebugLine(vPrev, vCur, JPH::Color(0.f, 255.f, 0.f, 1.f));
-		vPrev = vCur;
-	}
+	pGI->Add_DebugSphere(XMLoadFloat3(&Geo.vTopStandPos), 0.3f, JPH::Color(0.f, 255.f, 255.f, 1.f));
+	//pGI->Add_DebugSphere(XMLoadFloat3(&Geo.vLandingPos), 0.3f, JPH::Color(255.f, 255.f, 255.f, 1.f));
+	return;
 
-	pGI->Add_DebugSphere(XMLoadFloat3(&m_vCurveP0), 0.1f, JPH::Color(0.f, 255.f, 255.f, 1.f));
-	pGI->Add_DebugSphere(XMLoadFloat3(&m_vCurveP1), 0.1f, JPH::Color(255.f, 0.f, 255.f, 1.f));
-	pGI->Add_DebugSphere(XMLoadFloat3(&m_vCurveP2), 0.1f, JPH::Color(255.f, 255.f, 255.f, 1.f));
+	if (!m_bValidCurve)
+		return;
 }
 #endif // _DEBUG
 
@@ -106,11 +146,8 @@ void CTraceurClimbExit::Move_AlongCurve(_float fTimeDelta)
 
 	m_fCurveT = min(m_fTrackPosition / m_pModelCom->Get_Duration(
 		m_Animations[m_iCurrentAnimIdx].AnimPlayDesc.strAnimationName), 1.f);
-	/*_float  fSmoothT = m_fCurveT * m_fCurveT * (3.0f - 2.0f * m_fCurveT);
-	_vector vPos = XMVectorSetW(QuadraticCurve(m_vCurveP0, m_vCurveP1, m_vCurveP2, fSmoothT), 1.f);*/
 	_vector vPos = XMVectorSetW(QuadraticCurve(m_vCurveP0, m_vCurveP1, m_vCurveP2, m_fCurveT), 1.f);
 	m_pTransformCom->Set_State(Engine::STATE::POSITION, vPos);
-	//m_pColliderCom->Set_Position(vPos); // 강제 이동.
 }
 
 void CTraceurClimbExit::Build_Curve()
@@ -119,8 +156,6 @@ void CTraceurClimbExit::Build_Curve()
 	const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
 	if (!Geo.isTopReachable)
 		return;
-
-	// 2. 
 
 	_float fColliderRadius = m_pColliderCom->Get_Radius();
 	_float fObstacleHeight = Geo.fObstacleHeight;
@@ -142,6 +177,18 @@ void CTraceurClimbExit::Build_Curve()
 	XMStoreFloat3(&m_vCurveP1, vP1);
 	m_vCurveP2 = vGroundPos;
 	m_bValidCurve = true;
+}
+
+void CTraceurClimbExit::End_Traversal()
+{
+	const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
+	_vector vStandPos = XMVectorSetW(XMLoadFloat3(&Geo.vTopStandPos), 1.f);
+	m_pColliderCom->Set_Position(vStandPos);
+	m_pTransformCom->Set_State(STATE::POSITION, vStandPos);
+	m_pTransformCom->Save_PreviousPosition();
+	m_pColliderCom->Set_Gravity(true);
+	m_isMantle = false;
+	m_isWarpBegun = false;
 }
 
 CTraceurClimbExit* CTraceurClimbExit::Create(CTraceur* pOwner)

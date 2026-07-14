@@ -5,6 +5,7 @@
 #include "Collider.h"
 #include "MovementComponent.h"
 #include "EnvironmentQueryComponent.h"
+#include "MotionWarpingComponent.h"
 #include "TraceurState_Enum.h"
 #include "GameSystem.h"
 #include "TransitionTable.h"
@@ -39,6 +40,10 @@ HRESULT CTraceurState::Initialize(CTraceur* pOwner)
 
 	m_pEnvQueryCom = dynamic_cast<CEnvironmentQueryComponent*>(m_pOwner->Get_Component(TEXT("Com_EnvQuery")));
 	if (nullptr == m_pEnvQueryCom)
+		return E_FAIL;
+
+	m_pMotionWarpCom = dynamic_cast<CMotionWarpingComponent*>(m_pOwner->Get_Component(TEXT("Com_MotionWarp")));
+	if (nullptr == m_pMotionWarpCom)
 		return E_FAIL;
 
 	m_pMoveCom = dynamic_cast<CMovementComponent*>(m_pOwner->Get_Component(TEXT("Com_Move")));

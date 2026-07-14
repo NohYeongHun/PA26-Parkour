@@ -32,16 +32,19 @@ private:
 
 private:
 	void Build_Curve();
-	
+	void End_Traversal();
 
 
-public:
+
+private:
 	ENV_QUERY_RESULT m_EnvQueryResult = {};
 	_float3 m_vCurveP0 = {};
 	_float3 m_vCurveP1 = {};
 	_float3 m_vCurveP2 = {};
 	_float  m_fCurveT = {};
 	_bool   m_bValidCurve = false;
+	_bool   m_isMantle = false;
+	_bool   m_isWarpBegun = false;       
 
 public:
 	static CTraceurClimbExit* Create(class CTraceur* pOwner);

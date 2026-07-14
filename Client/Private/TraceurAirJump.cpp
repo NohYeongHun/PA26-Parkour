@@ -47,7 +47,7 @@ void CTraceurAirJump::Check_State()
 	Set_Flag("Run",  Get_Flag("Move") && m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::LSHIFT)));
 
 #ifdef _DEBUG
-	Debug_PrintFlag();
+	//Debug_PrintFlag();
 #endif // _DEBUG
 }
 

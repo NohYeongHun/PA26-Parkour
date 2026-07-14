@@ -25,6 +25,12 @@ void CTraceurGroundStand::OnEnter(void* pArg)
 
 	Set_Flag("ClimbingStand", static_cast<ETraceurGroundStand>(m_iCurrentAnimIdx) == ETraceurGroundStand::ClimbingStand);
 	Set_Flag("StandingIdleToActionIdle", static_cast<ETraceurGroundStand>(m_iCurrentAnimIdx) == ETraceurGroundStand::StandingIdleToActionIdle);
+
+#ifdef _DEBUG
+	_float4 vVector = {};
+	XMStoreFloat4(&vVector, m_pTransformCom->Get_Velocity());
+	OutPutDebugFloat4(TEXT("Collider Stand 이동량 : "), vVector);
+#endif // _DEBUG
 }
 
 void CTraceurGroundStand::OnExit()

@@ -124,7 +124,8 @@ void CEnvironmentQueryComponent::Scan_Obstacle()
 	_vector vBottom     = vCenter - XMVectorSet(0.f, fTotalHeight * 0.5f, 0.f, 0.f);
 	_vector vKneeStart  = vBottom + XMVectorSet(0.f, fTotalHeight * FKNEE_RATIO,  0.f, 0.f);
 	_vector vChestStart = vBottom + XMVectorSet(0.f, fTotalHeight * FCHEST_RATIO, 0.f, 0.f);
-	_vector vHeadStart  = vBottom + XMVectorSet(0.f, fTotalHeight * FHEAD_RATIO,  0.f, 0.f);
+	//_vector vHeadStart  = vBottom + XMVectorSet(0.f, fTotalHeight * FHEAD_RATIO,  0.f, 0.f);
+	_vector vHeadStart  = vBottom + XMVectorSet(0.f, fTotalHeight * 1.3f,  0.f, 0.f);
 	_vector vLeftChestStart = vChestStart - (vRight * m_pOwnerColliderCom->Get_Radius());
 	_vector vRightChestStart = vChestStart + (vRight * m_pOwnerColliderCom->Get_Radius());
 
@@ -178,8 +179,10 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 	XMStoreFloat3(&Geo.vTraversalDir, vTraversal);
 
 	_float fInset = fRadius * 0.5f;
+	//_float fInset = fRadius * 2.f;
 	_vector vStartXZ = XMLoadFloat3(&TopHit.vHitPosition) + vTraversal * fInset;
 
+	//_float fStartY = XMVectorGetY(vBottom) + fTotalHeight * FMAX_REACH_RATIO;
 	_float fStartY = XMVectorGetY(vBottom) + fTotalHeight * FMAX_REACH_RATIO;
 	_vector vDownStart = XMVectorSetY(vStartXZ, fStartY);
 	_vector vDownEnd = XMVectorSetY(vStartXZ, XMVectorGetY(vBottom));
@@ -200,8 +203,6 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 	Geo.fObstacleHeight = TopDownRay.vHitPosition.y - XMVectorGetY(vBottom);
 
 	// 앞모서리 = (전면 히트의 XZ, 상단면 Y).
-	// 다운레이 시작점이 인셋(fRadius*0.5)만큼 안쪽이므로 히트 지점을 그대로 쓰면
-	// 모서리가 인셋만큼 밀린다 — 커브/모션워핑 타겟 오차의 원인이었다.
 	if (Geo.hasFront)
 	{
 		_vector vFrontXZ = XMLoadFloat3(&Geo.vFrontHitPos);
@@ -211,7 +212,6 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 		Geo.vTopEdgePos = TopDownRay.vHitPosition; // 전면 정보가 없으면 종전 방식 폴백
 
 	// 상단면 폭 — 다운레이 시작점의 좌/우(횡축) fRadius 지점 2개.
-	// 양쪽 다 히트하면 캐릭터 폭(2R)을 감당하는 상단면으로 본다.
 	_vector vSideAxis = XMVector3Normalize(XMVector3Cross(XMVectorSet(0.f, 1.f, 0.f, 0.f), vTraversal));
 	Geo.fTopWidth = 0.f;
 	{
@@ -272,6 +272,26 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 		Geo.fDepth   = fInset + (fLo + fHi) * 0.5f;
 		Geo.hasDepth = true;
 	}
+
+	if (Geo.isTopReachable && Geo.hasDepth)
+	{
+		const _float fStandMargin = 0.15f;
+		_float fStandInset = (Geo.fDepth >= 2.f * fRadius)
+			? std::clamp(fRadius + fStandMargin, fRadius, Geo.fDepth - fRadius)
+			: Geo.fDepth * 0.5f;
+
+		_vector vStandXZ = XMLoadFloat3(&Geo.vTopEdgePos) + vTraversal * fStandInset;
+
+		_vector vStandStart = XMVectorSetY(vStandXZ, fStartY);
+		_vector vStandEnd = XMVectorSetY(vStandXZ, XMVectorGetY(vBottom));
+		LINE_TRACE_HIT StandHit = Cast_Ray(vStandStart, vStandEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
+
+		if (StandHit.isHit)
+			Geo.vTopStandPos = StandHit.vHitPosition;
+		else
+			Geo.vTopStandPos = _float3(XMVectorGetX(vStandXZ), fTopSurfaceY, XMVectorGetZ(vStandXZ));
+	}
+
 
 	// 착지점 탐지 — 뒷모서리 너머 아래로 긴 레이 1개 + 평탄성 검증 레이 2개
 	_vector vLandXZ    = vStartXZ + vTraversal * (Geo.fDepth + fRadius);

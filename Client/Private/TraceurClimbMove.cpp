@@ -42,7 +42,7 @@ void CTraceurClimbMove::Check_State()
 {
 	m_EnvQueryResult = m_pEnvQueryCom->Get_QueryResult();
 #ifdef _DEBUG
-	m_pEnvQueryCom->Print_Debug();
+	//m_pEnvQueryCom->Print_Debug();
 #endif // _DEBUG
 
 	PARKOUR_ACTION eAction = m_EnvQueryResult.Decision.eBestAction;
@@ -52,7 +52,8 @@ void CTraceurClimbMove::Check_State()
 	Set_Flag("KneeHit", m_EnvQueryResult.Scan.KneeHit.isHit);
 	Set_Flag("Land", m_pColliderCom->IsLand());
 	Set_Flag("Fall", !Get_Flag("Land"));
-	Set_Flag("Mantle", !m_EnvQueryResult.Scan.HeadHit.isHit);
+	//Set_Flag("Mantle", !m_EnvQueryResult.Scan.HeadHit.isHit);
+	Set_Flag("Mantle", m_EnvQueryResult.Geometry.isTopReachable && !m_EnvQueryResult.Scan.HeadHit.isHit);
 	
 	
 }

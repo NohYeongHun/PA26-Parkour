@@ -107,6 +107,7 @@ namespace Client
 		_bool   isTopReachable = false;    // ↓ 상단 그룹
 		_float3 vTopEdgePos{};             // 앞모서리 (모션워핑/커브 타겟)
 		_float3 vTopNormal{};
+		_float3 vTopStandPos;
 		_float  fObstacleHeight = 0.f;     // 캐릭터 발 기준 상단면 높이
 
 		_bool   hasDepth = false;          // ↓ 두께·폭 그룹
@@ -124,38 +125,14 @@ namespace Client
 		PARKOUR_DECISION  Decision;
 	}ENV_QUERY_RESULT;
 
-	typedef struct tagVaultPlan
+	// 이름표 붙은 월드좌표 워프 타겟. CMotionWarpingComponent가 map<이름, WARP_TARGET>로 보유.
+	typedef struct tagWarpTarget
 	{
-		_float3 vFaceDir;        
-		_float3 vLandingPos;     
-		_float3 vTopEdgePos;     
-		_float  fRootMotionRate; 
-	}VAULT_PLAN;
-
-	typedef struct tagVaultTarget
-	{
-		_float3 vStartPos;    // 시작 위치
-		_float3 vEndPos;	  // 착지 위치
-		_float3 vObstacleTop; // 장애물 상단
-	}VAULT_TARGET;
-
-	typedef struct tagVaultMotion
-	{
-		_float3 Start;
-		_float3 Apex;
-		_float3 End;
-
-		_float Duration;
-		_float Elapsed;
-	}VAULT_MOTION;
-
-
-	typedef struct tagVaultCurve
-	{
-		_float3 P0;     // Start
-		_float3 P1;     // Control
-		_float3 P2;     // End
-	}VAULT_CURVE;
+		_float3 vPosition{};          // 월드 목표 좌표
+		_bool   hasRotation = false;  // 회전 워프 대상 여부 (이 슬라이스에선 미사용)
+		_float4 qRotation{};          // 선택적 목표 방향
+		_bool   isValid = false;
+	}WARP_TARGET;
 #pragma endregion
 
 #pragma region STATE_ENTER
