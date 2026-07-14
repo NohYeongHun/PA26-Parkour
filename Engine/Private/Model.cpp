@@ -1401,6 +1401,64 @@ vector<TrajectorySample> CModel::Get_RootMotionTrajectory(const _string& strAnim
 	return Samples;
 }
 
+ROOT_MOTION_DELTA CModel::Extract_RootMotion(const _string& strAnimName, _float fStartTrackPos, _float fEndTrackPos)
+{
+	const ROOT_MOTION_DELTA ZeroDelta{ _float3{ 0.f, 0.f, 0.f }, _float4{ 0.f, 0.f, 0.f, 1.f } };
+
+	CAnimation* pAnim = Get_AnimationOrNull(strAnimName);
+	if (nullptr == pAnim)
+		return ZeroDelta;
+
+	const _float fDuration = pAnim->Get_Duration(); // 틱 단위
+	if (fDuration <= 0.f)
+		return ZeroDelta;
+
+	// 루트 본 채널 탐색
+	CChannel* pRootChannel = nullptr;
+	for (CChannel* pChannel : pAnim->Get_Channels())
+	{
+		if (pChannel->Get_BoneIndex() == m_iRootBoneIndex)
+		{
+			pRootChannel = pChannel;
+			break;
+		}
+	}
+	if (nullptr == pRootChannel)
+		return ZeroDelta;
+
+	// 순방향 구간만 지원
+	const _float fStart = max(0.f, min(fStartTrackPos, fDuration));
+	const _float fEnd   = max(0.f, min(fEndTrackPos, fDuration));
+	if (fEnd <= fStart)
+		return ZeroDelta;
+
+	_matrix matConversion = XMLoadFloat4x4(&m_ConversionMatrix);
+	_vector qConversion   = XMQuaternionRotationMatrix(matConversion);
+
+	_vector vScaleS{}, vRotS{}, vTransS{};
+	pRootChannel->Sample_SRT(fStart, vScaleS, vRotS, vTransS);
+	_vector vScaleE{}, vRotE{}, vTransE{};
+	pRootChannel->Sample_SRT(fEnd, vScaleE, vRotE, vTransE);
+
+	_vector vConvTS = XMVector3Transform(vTransS, matConversion);
+	_vector vConvTE = XMVector3Transform(vTransE, matConversion);
+	_vector vRelPos = XMVectorScale(vConvTE - vConvTS, m_fPreScale);
+
+	_vector qConvRS = XMQuaternionMultiply(qConversion, vRotS);
+	_vector qConvRE = XMQuaternionMultiply(qConversion, vRotE);
+	_vector qRelRot = XMQuaternionMultiply(qConvRE, XMQuaternionInverse(qConvRS));
+
+	ROOT_MOTION_DELTA Delta{};
+	XMStoreFloat3(&Delta.vTranslate, vRelPos);
+	XMStoreFloat4(&Delta.qRotation, qRelRot);
+	return Delta;
+}
+
+ROOT_MOTION_DELTA CModel::Extract_RootMotion(_float fStartTrackPos, _float fEndTrackPos)
+{
+	return Extract_RootMotion(m_strCurPlayKey, fStartTrackPos, fEndTrackPos);
+}
+
 _float CModel::Get_AnimProgress(const _string& strAnimName)
 {
 	return m_Animations[strAnimName]->Get_AnimProgress();

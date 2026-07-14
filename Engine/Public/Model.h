@@ -120,6 +120,8 @@ public:
 	_float3 Get_RootMotionTotalDisplacement(const _string& strAnimationName);
 	// 루트모션 궤적을 초 단위로 샘플링해 애니 시작 기준 누적 위치·회전을 반환 (원본 전체 경로, 끝점 포함).
 	vector<TrajectorySample> Get_RootMotionTrajectory(const _string& strAnimName, _float fTimeStepSec);
+	ROOT_MOTION_DELTA Extract_RootMotion(const _string& strAnimName, _float fStartTrackPos, _float fEndTrackPos);
+	ROOT_MOTION_DELTA Extract_RootMotion(_float fStartTrackPos, _float fEndTrackPos);
 
 	_float Get_AnimProgress(const _string& strAnimName);
 #ifdef _DEBUG
@@ -213,8 +215,10 @@ private:
 
 
 	ROOT_MOTION_DELTA m_RootMotionDelta;
+	ROOT_MOTION_DELTA m_SectionRootMotionDelta;
 
 	MOTION_WARP_STATE m_WarpState{};
+	_float m_fCurRootMotionRate = 1.f; // Compute_RootAnimation이 매 프레임 갱신 — 워프 배율 계산에서 Extract_RootMotion(원본)과 m_RootMatrix(rate 적용)의 단위를 맞추는 용도
 
 	_bool									m_isChangeAnimation = { false };
 
