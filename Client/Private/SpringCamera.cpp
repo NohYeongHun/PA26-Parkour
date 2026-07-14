@@ -142,6 +142,8 @@ void CSpringCamera::Update(_float fTimeDelta)
 			__super::Mouse_Move_Up();
 	}
 
+	__super::Mouse_Move_Up();
+
 	// 1. Camera Position 계산
 	Compute_CamPos();
 	// 2. Ray Cast => 벽 충돌
