@@ -3,13 +3,13 @@
 
 CMotionWarpNotify::CMotionWarpNotify(_float fTrackPosition, const _string& strTargetName,
                                      _bool isStart, _float fWindowEndTrackPos,
-                                     _bool bWarpTranslation, _bool bWarpRotation)
+                                     _bool isWarpTranslation, _bool isWarpRotation)
 	: CAnimNotify(fTrackPosition)
 	, m_strTargetName(strTargetName)
 	, m_isStart(isStart)
 	, m_fWindowEndTrackPos(fWindowEndTrackPos)
-	, m_bWarpTranslation(bWarpTranslation)
-	, m_bWarpRotation(bWarpRotation)
+	, m_bWarpTranslation(isWarpTranslation)
+	, m_bWarpRotation(isWarpRotation)
 {
 	m_strNotifyTypeName = "MotionWarp";
 }

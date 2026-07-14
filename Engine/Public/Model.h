@@ -48,12 +48,13 @@ typedef struct tagMotionWarpState
 	_float3 vTargetPos{};
 	_bool   hasTargetRot = false;
 	_float4 qTargetRot{};
-	_float  fWindowEndTrackPos = 0.f; // 이 트랙pos에서 워프 종료 (오버슛 가드)
-	_float  fPrevTrackPos = 0.f;      // 이전 프레임 트랙pos (프레임 진행도 산출용)
-	_bool   bWarpTranslation = true;
-	_bool   bWarpRotation = false;
+	_float  fWindowEndTrackPos = 0.f; 
+	_float  fStartTrackPos = 0.f;
+	_float  fPrevTrackPos = 0.f;      
+	_bool   isWarpTranslation = true;
+	_bool   isWarpRotation = false;
 	_float3 vStartPos{};              // 워프 시작 시점 월드 위치 (디버그 구간 그리기용)
-	_bool   bStartCaptured = false;   // vStartPos 캡처 여부
+	_bool   isStartCaptured = false;   // vStartPos 캡처 여부
 }MOTION_WARP_STATE;
 
 
@@ -298,6 +299,7 @@ private:
 	void							Update_MorphAnimation(CAnimation* pAnimation, CComputeShader* pMorphComputeShaderCom, _float fTimeDelta, _bool isFacial);
 	_bool							Update_TrackPosition(CAnimation* pAnimation, _float* pTrackPosition,  _float fTimeDelta);
 
+	_matrix Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTimeDelta);
 	// 현재 본 로컬 포즈를 스냅샷해 전환 소스를 FROZEN으로 전환
 	void   Freeze_TransitionSource();
 	// 전환 감지 + 직전 재생물의 소스 승격. 모든 Play_*_CPU 진입부에서 호출.

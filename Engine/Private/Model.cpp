@@ -121,10 +121,12 @@ void CModel::Begin_MotionWarp(const _float3& vTargetPos, const _float4* pTargetR
 	m_WarpState.hasTargetRot       = (nullptr != pTargetRot);
 	m_WarpState.qTargetRot         = (nullptr != pTargetRot) ? *pTargetRot : _float4{ 0.f, 0.f, 0.f, 1.f };
 	m_WarpState.fWindowEndTrackPos = fWindowEndTrackPos;
-	m_WarpState.fPrevTrackPos      = m_fCurPlayTrackPos;   // 창 시작 시점 트랙pos
-	m_WarpState.bWarpTranslation   = bTrans;
-	m_WarpState.bWarpRotation      = bRot;
-	m_WarpState.bStartCaptured     = false;   // 시작 위치는 Sync_RootNode 첫 프레임에 캡처
+	m_WarpState.fStartTrackPos = m_fCurPlayTrackPos;
+	m_WarpState.vStartPos = _float3{};
+	m_WarpState.fPrevTrackPos      = m_fCurPlayTrackPos; 
+	m_WarpState.isWarpTranslation   = bTrans;
+	m_WarpState.isWarpRotation      = bRot;
+	m_WarpState.isStartCaptured     = false;
 }
 
 void CModel::End_MotionWarp()
@@ -135,56 +137,9 @@ void CModel::End_MotionWarp()
 void CModel::Sync_RootNode(CTransform* pOwnerTransform, _float fTimeDelta)
 {
 	_matrix matWorld     = pOwnerTransform->Get_WorldMatrix();
-	_matrix ResultMatrix = m_RootMatrix * matWorld;   // 루트모션 적용 결과 (기존 동작)
-
-	if (m_WarpState.isActive && m_WarpState.bWarpTranslation)
-	{
-		_vector vCurWorldPos   = matWorld.r[3];        // 워프 전 현재 월드 위치
-		_vector vBakedWorldPos = ResultMatrix.r[3];    // 이번 프레임 원래 갔을 위치
-		_vector vTarget        = XMVectorSetW(XMLoadFloat3(&m_WarpState.vTargetPos), 1.f);
-
-		if (!m_WarpState.bStartCaptured)
-		{
-			XMStoreFloat3(&m_WarpState.vStartPos, vCurWorldPos);
-			m_WarpState.bStartCaptured = true;
-		}
-
-		_vector vToTarget      = vTarget - vCurWorldPos;
-		_vector vBakedFrame    = vBakedWorldPos - vCurWorldPos;
-		_float  fBakedFrameLen = XMVectorGetX(XMVector3Length(vBakedFrame));
-
-		_float fRemainTrack = m_WarpState.fWindowEndTrackPos - m_WarpState.fPrevTrackPos;
-		_float fTrackDelta  = m_fCurPlayTrackPos - m_WarpState.fPrevTrackPos;
-		m_WarpState.fPrevTrackPos = m_fCurPlayTrackPos;
-
-		if (fRemainTrack <= MW_EPS)
-		{
-			// 마지막 프레임: 잔여분 스냅
-			ResultMatrix.r[3] = vTarget;
-		}
-		else
-		{
-			_float fFrac = fTrackDelta / fRemainTrack;
-			if (fFrac < 0.f) fFrac = 0.f;
-			if (fFrac > 1.f) fFrac = 1.f;
-
-			_vector vWarped    = vToTarget * fFrac;     // 남은 목표를 진행 비율대로 소비
-			_float  fWarpedLen = XMVectorGetX(XMVector3Length(vWarped));
-
-			_bool bAbortWarp = (fBakedFrameLen > MW_EPS)
-				? (fWarpedLen > fBakedFrameLen * MW_MAX_WARP_RATIO)
-				: (fWarpedLen > MW_MAX_ABS_STEP);
-			if (bAbortWarp)
-			{
-				End_MotionWarp();   // 베이크 폴백 (ResultMatrix는 이미 베이크 결과)
-			}
-			else
-			{
-				ResultMatrix.r[3] = XMVectorSetW(vCurWorldPos + vWarped, 1.f);
-			}
-		}
-	}
-
+	_matrix ResultMatrix = m_RootMatrix * matWorld;
+	if (m_WarpState.isActive)
+		ResultMatrix = Compute_MotionWarpMatrix(pOwnerTransform, fTimeDelta);
 	pOwnerTransform->Set_WorldMatrix(ResultMatrix);
 }
 
@@ -784,10 +739,9 @@ void CModel::Handle_PlaybackChange(ETransitionSourceType eNewType, const _string
 
 	// 새 재생물 준비
 	if (ETransitionSourceType::CLIP == eNewType)
-		Clear_Animation(strNewKey); // 트랙 초기화 + 루트모션 기준 리셋 (순간이동 방지 포함)
+		Clear_Animation(strNewKey);
 	else
 	{
-		// 블렌드스페이스 진입: 위상 초기화 + 루트모션 기준 리셋 (Clear_Animation의 루트 처리와 동일)
 		m_fBlendSpacePhase = 0.f;
 		m_isChangeAnimation = true;
 		m_vPreRootRotation = _float4(0.f, 0.f, 0.f, 1.f);
@@ -1466,6 +1420,8 @@ _float CModel::Get_AnimProgress(const _string& strAnimName)
 
 void CModel::Compute_RootAnimation(_float fRootMotionRate, _bool isRootMotionRotation, _bool isRootMotionTranslate, _bool IsRootMotionEnable)
 {
+	m_fCurRootMotionRate = fRootMotionRate;
+
 	// PreTransform의 스케일 추출
 	// 1. GPU 계산 로컬본 전체 가져오기.
 	_vector vScale{}, vRotation{}, vTranslation{};
@@ -1571,12 +1527,101 @@ void CModel::Update_MorphAnimation(CAnimation* pAnimation, CComputeShader* pMorp
 _bool CModel::Update_TrackPosition(CAnimation* pAnimation, _float* pTrackPosition, _float fTimeDelta)
 {
 	_float fTrackPosition = 0.f;
-
+	
 	_bool isAnimationEnd = pAnimation->Update_TrackPosition(fTimeDelta, &fTrackPosition);
 	*pTrackPosition = fTrackPosition;
 
 	return isAnimationEnd;
 }
+
+_matrix CModel::Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTimeDelta)
+{
+	const _float fArriveEpsilon = 0.01f;
+	const _float fAxisEpsilon = 1e-4f;
+
+	_matrix WorldMatrix = pOwnerTransform->Get_WorldMatrix();
+	_vector vCurrentPos = WorldMatrix.r[3];
+	_vector vTargetPos = XMVectorSetW(XMLoadFloat3(&m_WarpState.vTargetPos), 1.f);
+
+	// 1. 시작 위치.
+	if (!m_WarpState.isStartCaptured)
+	{
+		XMStoreFloat3(&m_WarpState.vStartPos, vCurrentPos);
+		m_WarpState.fStartTrackPos = m_fCurPlayTrackPos;   // MOTION_WARP_STATE에 멤버 추가 필요
+		m_WarpState.isStartCaptured = true;
+	}
+	_vector vScale, vDeltaRot, vDeltaTrans;
+	XMMatrixDecompose(&vScale, &vDeltaRot, &vDeltaTrans, m_RootMatrix);
+
+	_vector vWorldDelta = XMVector3TransformNormal(vDeltaTrans, WorldMatrix);
+
+	_vector vTargetRemain = vTargetPos - vCurrentPos;
+
+	// 2. 전체 구간 루트모션 상대변환 행렬
+	ROOT_MOTION_DELTA RemainAnim = Extract_RootMotion(
+		m_strCurPlayKey, m_WarpState.fPrevTrackPos, m_WarpState.fWindowEndTrackPos);
+
+	_vector vAnimRemainLocal = XMLoadFloat3(&RemainAnim.vTranslate) * m_fCurRootMotionRate;
+	_vector vAnimRemainWorld = XMVector3TransformNormal(vAnimRemainLocal, WorldMatrix);
+
+	m_WarpState.fPrevTrackPos = m_fCurPlayTrackPos;
+
+	_float fTargetRemainLength = XMVectorGetX(XMVector3Length(vTargetRemain));
+	_bool  isWindowEnd = (m_fCurPlayTrackPos >= m_WarpState.fWindowEndTrackPos);
+
+	if (fTargetRemainLength < fArriveEpsilon || isWindowEnd)
+	{
+		_matrix Snap = XMMatrixAffineTransformation(
+			XMVectorSet(1.f, 1.f, 1.f, 0.f),
+			XMVectorSet(0.f, 0.f, 0.f, 1.f),
+			vDeltaRot,
+			XMVectorZero()) * WorldMatrix;
+
+		Snap.r[3] = vTargetPos;   // 누적 오차 제거
+		End_MotionWarp();
+		return Snap;
+	}
+
+	_float3 fTargetR{}, fAnimR{}, fDelta{};
+	XMStoreFloat3(&fTargetR, vTargetRemain);
+	XMStoreFloat3(&fAnimR, vAnimRemainWorld);
+	XMStoreFloat3(&fDelta, vWorldDelta);
+
+	auto SafeRatio = [&](_float fTarget, _float fAnim)->_float
+	{
+		if (fabsf(fAnim) < fAxisEpsilon)
+			return 0.f; 
+		return std::clamp(fTarget / fAnim, -MW_MAX_WARP_RATIO, MW_MAX_WARP_RATIO);
+	};
+
+	_float3 fWarped{};
+	fWarped.x = fDelta.x * SafeRatio(fTargetR.x, fAnimR.x);
+	fWarped.z = fDelta.z * SafeRatio(fTargetR.z, fAnimR.z);
+	
+	_float fDenom = m_WarpState.fWindowEndTrackPos - m_WarpState.fStartTrackPos;
+	_float fAlpha = (fDenom > fAxisEpsilon)
+		? std::clamp((m_fCurPlayTrackPos - m_WarpState.fStartTrackPos) / fDenom, 0.f, 1.f)
+		: 1.f;
+
+	_float fDesiredY = m_WarpState.vStartPos.y
+		+ (m_WarpState.vTargetPos.y - m_WarpState.vStartPos.y) * fAlpha;
+
+	_float fCurrentY = XMVectorGetY(vCurrentPos);
+	fWarped.y = fDesiredY - fCurrentY; 
+
+	_vector vWarpedDelta = XMLoadFloat3(&fWarped);
+
+	_matrix Result = XMMatrixAffineTransformation(
+		XMVectorSet(1.f, 1.f, 1.f, 0.f),
+		XMVectorSet(0.f, 0.f, 0.f, 1.f),
+		vDeltaRot,
+		XMVectorZero()) * WorldMatrix;
+
+	Result.r[3] = XMVectorSetW(vCurrentPos + vWarpedDelta, 1.f);
+
+	return Result;
+}
+
 
 void CModel::Update_NonRibAnimConstantBuffer(const _string& strAnimationName, _float fTrackPosition)
 {

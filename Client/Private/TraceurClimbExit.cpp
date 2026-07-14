@@ -29,7 +29,8 @@ void CTraceurClimbExit::OnEnter(void* pArg)
 	m_EnvQueryResult = m_pEnvQueryCom->Get_QueryResult();
 
 	ETraceurClimbExit eType = static_cast<ETraceurClimbExit>(m_iCurrentAnimIdx);
-	Set_Flag("Mantle", eType == ETraceurClimbExit::ClimbingToTop || eType == ETraceurClimbExit::BracedHangToCrouch);
+	Set_Flag("Mantle", eType == ETraceurClimbExit::ClimbingToTop || eType == ETraceurClimbExit::Climbing
+		|| eType == ETraceurClimbExit::BracedHangToCrouch);
 	Set_Flag("WallDrop", eType == ETraceurClimbExit::BracedHangDrop);
 	
 	if (Get_Flag("Mantle"))
@@ -46,7 +47,7 @@ void CTraceurClimbExit::OnEnter(void* pArg)
 		if (Geo.isTopReachable)
 		{
 			vSkyPos.y = Geo.vTopStandPos.y;
-			//m_pMotionWarpCom->Set_WarpTarget("VaultFix", vSkyPos);
+			m_pMotionWarpCom->Set_WarpTarget("VaultFix", vSkyPos);
 			m_pMotionWarpCom->Set_WarpTarget("VaultTop", Geo.vTopStandPos);
 		}
 			
@@ -90,7 +91,8 @@ void CTraceurClimbExit::Check_State()
 	Set_Flag("Land", isLand);
 	Set_Flag("Fall", !isLand);
 	ETraceurClimbExit eType = static_cast<ETraceurClimbExit>(m_iCurrentAnimIdx);
-	Set_Flag("Mantle", eType == ETraceurClimbExit::Climbing || eType == ETraceurClimbExit::BracedHangToCrouch);
+	Set_Flag("Mantle", eType == ETraceurClimbExit::ClimbingToTop || eType == ETraceurClimbExit::Climbing
+		|| eType == ETraceurClimbExit::BracedHangToCrouch);
 	
 	if (Get_Flag("HangDropEnd"))
 	{
