@@ -142,6 +142,7 @@ void CSpringCamera::Update(_float fTimeDelta)
 			__super::Mouse_Move_Up();
 	}
 
+	Mouse_Scroll(fTimeDelta);
 	__super::Mouse_Move_Up();
 
 	// 1. Camera Position 계산
