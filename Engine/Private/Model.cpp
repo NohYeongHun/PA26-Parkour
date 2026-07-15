@@ -112,7 +112,6 @@ void CModel::Copy_BoneMatrices(_float4x4* pOutMatrices, _uint iMeshIndex)
 	m_Meshes[iMeshIndex]->Copy_BoneMatrices(pOutMatrices, iNumBones);
 }
 
-
 void CModel::Begin_MotionWarp(const _float3& vTargetPos, const _float4* pTargetRot,
                               _float fWindowEndTrackPos, _bool bTrans, _bool bRot, _bool isGravity)
 {
@@ -132,7 +131,7 @@ void CModel::Begin_MotionWarp(const _float3& vTargetPos, const _float4* pTargetR
 
 void CModel::End_MotionWarp()
 {
-	m_WarpState = MOTION_WARP_STATE{};   // 배율 1.0 복귀 (isActive=false)
+	m_WarpState = MOTION_WARP_STATE{};
 }
 
 void CModel::Sync_RootNode(CTransform* pOwnerTransform, _float fTimeDelta)
@@ -1165,6 +1164,9 @@ void CModel::Clear_Animation(const _string& strAnimationName, _float fTrackPosit
 	m_iCurStagingFlip = 0;
 	m_bIsStagingFilled = false;
 
+	// 바뀌면 MotionWarp도 종료
+	End_MotionWarp();
+
 }
 
 const _float4x4* CModel::Get_BoneMatrixPtr(_uint iBoneIndex)
@@ -1551,7 +1553,7 @@ _bool CModel::Update_TrackPosition(CAnimation* pAnimation, _float* pTrackPositio
 	return isAnimationEnd;
 }
 
-// Scale Warp
+// 축 분리 이동량 비례 워프 — 스펙: claude/specs/2026-07-15-axis-split-warp-correction-design.md
 _matrix CModel::Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTimeDelta)
 {
 	static constexpr _float WARP_SCALE_MAX = 3.f;
@@ -1582,7 +1584,7 @@ _matrix CModel::Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTi
 	// 2. 시작 시간과 끝 시간에 해당하는 루트 모션의 상대 변환 행렬을 계산합니다. => World Space로 변환합니다. 
 	// 전체 애니메이션의 루트모션 상대변환 행렬입니다. => Model Space
 	const ROOT_MOTION_DELTA& AnimRootDelta = Extract_RootMotion(fStartTrack, fEndTrack);  // ModelSpace
-	_vector vAnimLocalDelta = XMVectorSetW(XMLoadFloat3(&AnimRootDelta.vTranslate),1.f);
+	_vector vAnimLocalDelta = XMVectorSetW(XMLoadFloat3(&AnimRootDelta.vTranslate), 1.f);
 	_vector vAnimEndWorldDelta = XMVector3TransformNormal(XMLoadFloat3(&AnimRootDelta.vTranslate), matWorld); // 변화량임.
 	_vector vAnimEndWorldTrans = vWorldTrans + vAnimEndWorldDelta;
 
@@ -1590,7 +1592,7 @@ _matrix CModel::Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTi
 	_vector vAnimEndLocalRot = XMLoadFloat4(&AnimRootDelta.qRotation);
 	_vector vAnimEndWorldRot = XMQuaternionMultiply(vAnimEndLocalRot, vWorldQuat);
 
-	
+
 	// 4. 목표 위치와 시작 지점을 받습니다.
 	_vector vTarget = XMVectorSetW(XMLoadFloat3(&m_WarpState.vTargetPos), 1.f); // 목표 위치
 	_vector vStart = vWorldTrans;
@@ -1608,10 +1610,10 @@ _matrix CModel::Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTi
 	{
 		fScale = XMVectorGetX(XMVector3Length(vTarget - vStart)) / fAnimDist;
 	}
-	
+
 	// 0 ~ 3 사이를 벗어나지 않게 하기.
 	fScale = std::clamp(fScale, 0.f, WARP_SCALE_MAX);
-	
+
 
 	// 6. 현재 위치 추출 및 => 월드 변환
 	_vector vRootScale;
@@ -1633,7 +1635,7 @@ _matrix CModel::Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTi
 		vCorrection = vError * (fDeltaTrack / fRemainingTrack);
 
 	// 8. warped될 Position을 구합니다.
-	_vector vWarpedPos = vStart + (vRootWorldDelta) + vCorrection;
+	_vector vWarpedPos = vStart + (vRootWorldDelta)+vCorrection;
 
 #ifdef _DEBUG
 	cout << "Trk " << m_fCurPlayTrackPos
@@ -1651,13 +1653,21 @@ _matrix CModel::Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTi
 
 	}
 
-	
+
+	// 윈도우 끝 도달 → 자동 종료
+	if (m_fCurPlayTrackPos >= m_WarpState.fWindowEndTrackPos)
+	{
+		End_MotionWarp();
+	}
+
 	ResultMatrix = XMMatrixAffineTransformation(
 		XMVectorSet(1.f, 1.f, 1.f, 0.f),
 		XMVectorSet(0.f, 0.f, 0.f, 1.f),
 		vResultQuat,
 		vWarpedPos
 	);
+
+	
 
 	return ResultMatrix;
 }
