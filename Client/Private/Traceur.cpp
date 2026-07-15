@@ -45,6 +45,13 @@ HRESULT CTraceur::Initialize_Clone(void* pArg)
 	if (FAILED(Ready_Components(pDesc)))
 		return E_FAIL;
 
+	m_pMeshTransform = CTransform::Create(m_pDevice, m_pContext);
+	if (FAILED(m_pMeshTransform->Initialize_Clone(pDesc)))
+		return E_FAIL;
+
+	m_Components.emplace(TEXT("Com_MeshTransform"), m_pMeshTransform);
+	Safe_AddRef(m_pMeshTransform);
+
 	m_pModelCom->Register_AllNotifies(
 		pDesc->strNotfiyFolderPath,
 		nullptr,   
@@ -331,7 +338,10 @@ HRESULT CTraceur::Ready_Variables(const CHARACTER_DESC* pDesc)
 
 HRESULT CTraceur::Bind_Matrices()
 {
-	if (FAILED(m_pTransformCom->Bind_Matrix(m_pShaderCom, "g_WorldMatrix")))
+	_float4x4 worldMatrix{};
+	XMStoreFloat4x4(&worldMatrix, m_pTransformCom->Get_WorldMatrix());
+
+	if (FAILED(m_pShaderCom->Bind_Matrix("g_WorldMatrix", &worldMatrix)))
 		CRASH("Failed Bind Matrix");
 
 	if (FAILED(m_pShaderCom->Bind_Matrix("g_ViewMatrix", m_pGameInstance->Get_TransformState_Float4x4(D3DTS::VIEW))))
@@ -385,5 +395,6 @@ void CTraceur::Free()
 	Safe_Release(m_pColliderCom);
 	Safe_Release(m_pEnvQueryCom);
 	Safe_Release(m_pMotionWarpCom);
+	Safe_Release(m_pMeshTransform); // 기울이는 기준점은 벽 Normal로.
 
 }

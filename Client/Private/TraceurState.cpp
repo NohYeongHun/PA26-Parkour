@@ -26,6 +26,10 @@ HRESULT CTraceurState::Initialize(CTraceur* pOwner)
 	if (nullptr == m_pTransformCom)
 		return E_FAIL;
 
+	m_pMeshTransformCom = dynamic_cast<CTransform*>(m_pOwner->Get_Component(TEXT("Com_MeshTransform")));
+	if (nullptr == m_pMeshTransformCom)
+		return E_FAIL;
+
 	m_pColliderCom = dynamic_cast<CCollider*>(m_pOwner->Get_Component(TEXT("Com_Collider")));
 	if (nullptr == m_pColliderCom)
 		return E_FAIL;

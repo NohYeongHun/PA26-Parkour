@@ -72,8 +72,6 @@ void CTraceurClimbExit::OnEnter(void* pArg)
 		m_isMantle = true;
 		m_pColliderCom->Set_Gravity(false);
 	};
-
-	//m_Animations[m_iCurrentAnimIdx].RootMotionDesc.isEnable = true;
 }
 
 void CTraceurClimbExit::OnExit()

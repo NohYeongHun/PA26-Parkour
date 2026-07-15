@@ -11,14 +11,15 @@ namespace Client
 		CLIMBABLE	= 1 << 1, // 2
 		HANGABLE	= 1 << 2, // 4
 		MANTLEABLE	= 1 << 3, // 8
-		ALL = 0xF, // 15
+		WALLRUNNABLE = 1 << 4, // 16
+		ALL = 0x1F, // 31
 		END
 	};
 
 	// 이번 프레임에 실행 가능한 실제 파쿠르 액션.
 	// HIGH_VAULT: 가슴 높이(무릎+가슴 히트)의 얇은 장애물을 한 번에 넘는 동작
 	enum class PARKOUR_ACTION {
-		NONE, LOW_VAULT, HIGH_VAULT, MANTLE, CLIMB, HANG, END
+		NONE, LOW_VAULT, HIGH_VAULT, MANTLE, CLIMB, HANG, WALL_RUN, END
 	};
 
 	// 액션 판정 탈락 사유 — PARKOUR_DECISION::Verdicts가 기록, Print_Debug가 출력
@@ -32,6 +33,7 @@ namespace Client
 		TOO_NARROW,       // 상단 폭 부족 (Mantle)
 		TOO_HIGH,         // 도달 불가 높이 (Climb)
 		BAD_ANGLE,        // 접근 각도 미달
+		NOT_VERTICAL,     // 벽면이 수직이 아님 (WallRun)
 		NOT_IMPLEMENTED,  // 미구현 액션 (HANG)
 		END
 	};
@@ -39,6 +41,7 @@ namespace Client
 	enum class MOVEMENT_TYPE {
 		GROUND,
 		CLIMB,
+		CLIMB_RUN,
 		END
 	};
 

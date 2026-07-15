@@ -204,6 +204,9 @@
     <ClCompile Include="..\Private\TraceurClimbExit.cpp">
       <Filter>04. Component\State\Climb</Filter>
     </ClCompile>
+    <ClCompile Include="..\Private\TraceurClimbRun.cpp">
+      <Filter>04. Component\State\Climb</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h">
@@ -351,6 +354,9 @@
       <Filter>04. Component\State\Ground</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\TraceurClimbExit.h">
+      <Filter>04. Component\State\Climb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurClimbRun.h">
       <Filter>04. Component\State\Climb</Filter>
     </ClInclude>
   </ItemGroup>

@@ -79,6 +79,7 @@ protected:
 	class CTraceur*                    m_pOwner              = { nullptr };
 	class CModel*                      m_pModelCom           = { nullptr };
 	class CTransform*                  m_pTransformCom       = { nullptr };
+	class CTransform*                  m_pMeshTransformCom   = { nullptr };
 	class CCollider*                   m_pColliderCom        = { nullptr };
 	class CStateMachine*               m_pStateMachinCom     = { nullptr };
 	class CInputController*            m_pInputControllerCom = { nullptr };

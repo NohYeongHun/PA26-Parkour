@@ -73,6 +73,11 @@ public:
 public:
 	const ENV_QUERY_RESULT& Get_QueryResult() const { return m_EnvQueryResult; }
 
+	// 스캔 기준 방향 오버라이드 — 월런처럼 몸(LOOK)을 눕히는 상태에서 벽 감지를 유지한다.
+	// 설정 시 모든 레이/Shape캐스트가 LOOK 대신 이 방향(XZ 정규화) 기준. 상태 이탈 시 Clear 필수.
+	void Set_ScanDirOverride(_fvector vDir);
+	void Clear_ScanDirOverride() { m_hasScanDirOverride = false; }
+
 public:
 	void Execute();
 	_bool Find_Ground(const _fvector& vProbePos, _float fUpOffset, _float fMaxDrop, _float3& vOutGroundPos);
@@ -94,6 +99,7 @@ private:
 
 private:
 	LINE_TRACE_HIT Cast_Ray(const _fvector& vStart, const _fvector& vEnd, _uint iLayer, RAY_KIND eKind);
+	_vector Get_ScanDir() const; // 오버라이드 또는 Transform LOOK (정규화 보장)
 
 #ifdef _DEBUG
 private:
@@ -117,6 +123,8 @@ private:
 
 private:
 	ENV_QUERY_RESULT m_EnvQueryResult{};
+	_float3 m_vScanDirOverride = {};
+	_bool   m_hasScanDirOverride = false;
 
 public:
 	static	CEnvironmentQueryComponent* Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);

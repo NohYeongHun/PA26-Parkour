@@ -126,6 +126,9 @@ void CMovementComponent::Move(_fvector vWorldDir, _float fTimeDelta, _float fTar
 	case MOVEMENT_TYPE::CLIMB:
 		ClimbMove(vWorldDir, fTimeDelta, fTargetWeight);
 		break;
+	case MOVEMENT_TYPE::CLIMB_RUN:
+		ClimbRun(vWorldDir, fTimeDelta, fTargetWeight);
+		break;
 	}
 	
 }
@@ -170,6 +173,31 @@ void CMovementComponent::ClimbMove(_fvector vWorldDir, _float fTimeDelta, _float
 		XMStoreFloat3(&m_vLastClimbDir, vWorldDir);
 		m_pTransformCom->Go_Dir(vWorldDir * m_fMaxClimbSpeed, fTimeDelta);
 	}
+}
+
+void CMovementComponent::ClimbRun(_fvector vWorldDir, _float fTimeDelta, _float fTargetWeight)
+{
+	_bool bHasInput = !XMVector3Equal(vWorldDir, XMVectorZero());
+	_float fTarget = bHasInput ? fTargetWeight : 0.f;
+	_float fSmoothTime = (fTarget > m_fLocomotionWeight) ? m_fAccelTime : m_fDecelTime;
+	_float fRate = (fSmoothTime > 0.f) ? min(fTimeDelta / fSmoothTime, 1.f) : 1.f;
+	m_fLocomotionWeight += (fTarget - m_fLocomotionWeight) * fRate;
+
+	if (m_fLocomotionWeight < 0.01f)
+	{
+		m_fLocomotionWeight = 0.f;
+		return;
+	}
+
+	if (bHasInput)
+	{
+		XMStoreFloat3(&m_vLastMoveDir, vWorldDir);
+
+		//m_pTransformCom->LookLerp(vWorldDir, fTimeDelta, 3.f);
+	}
+
+	_fvector vMoveDir = bHasInput ? vWorldDir : XMLoadFloat3(&m_vLastMoveDir);
+	m_pTransformCom->Go_Dir(vMoveDir * (m_fLocomotionWeight * m_fMaxMoveSpeed), fTimeDelta);
 }
 
 void CMovementComponent::Update_ClimbBlendWeight(ACTORDIR eDir, _float fTimeDelta)

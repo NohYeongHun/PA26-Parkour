@@ -14,7 +14,7 @@ public:
 	virtual HRESULT		Initialize_Clone(void* pArg) override;
 
 public:
-	void Set_MovementType(MOVEMENT_TYPE eMovementType) { m_eMoventType = eMovementType; }
+	void Set_MovementType(MOVEMENT_TYPE eMovementType);
 
 public:
 	// 정적 유틸 함수.
@@ -23,13 +23,10 @@ public:
 	static _vector	Calc_ClimbDir(ACTORDIR eDir, _fvector vClimbNormal, _fvector vWorldUp);
 
 public:
-	// fTargetWeight: 0~1 정규화 목표 가중치 (0=정지, 0.5=걷기, 1=달리기).
 	void Move(_fvector vWorldDir, _float fTimeDelta, _float fTargetWeight);
 
-	// eDir 기준 목표 (X,Y)로 m_fLocomotionWeight2D를 가속/감속 스무딩하며 갱신 (2D BlendSpace 파라미터 소스)
 	void Update_ClimbBlendWeight(ACTORDIR eDir, _float fTimeDelta);
 
-	// BlendSpace 파라미터 소스 (0~1)
 	const _float* Get_LocomotionWeightPtr() const { return &m_fLocomotionWeight; }
 	_float        Get_LocomotionWeight()    const { return m_fLocomotionWeight; }
 
@@ -56,6 +53,7 @@ private:
 	// Type에 맞는 Movement 진행.
 	void GroundMove(_fvector vWorldDir, _float fTimeDelta, _float fTargetWeight);
 	void ClimbMove(_fvector vWorldDir, _float fTimeDelta, _float fTargetWeight);
+	void ClimbRun(_fvector vWorldDir, _float fTimeDelta, _float fTargetWeight);
 
 public:
 	static	CMovementComponent* Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);

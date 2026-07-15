@@ -52,6 +52,7 @@ private:
 	class CEnvironmentQueryComponent* m_pEnvQueryCom = { nullptr };
 	class CMotionWarpingComponent* m_pMotionWarpCom = { nullptr };
 
+	class CTransform* m_pMeshTransform = { nullptr };
 
 private:
 	// 임시 Variables

@@ -44,6 +44,22 @@ HRESULT CEnvironmentQueryComponent::Initialize_Clone(void* pArg)
 	return S_OK;
 }
 
+void CEnvironmentQueryComponent::Set_ScanDirOverride(_fvector vDir)
+{
+	_vector vXZ = XMVectorSetY(vDir, 0.f);
+	if (XMVectorGetX(XMVector3LengthSq(vXZ)) < 1e-6f)
+		return; // 무의미한 방향 — 기존 오버라이드/LOOK 유지
+	XMStoreFloat3(&m_vScanDirOverride, XMVector3Normalize(vXZ));
+	m_hasScanDirOverride = true;
+}
+
+_vector CEnvironmentQueryComponent::Get_ScanDir() const
+{
+	if (m_hasScanDirOverride)
+		return XMLoadFloat3(&m_vScanDirOverride);
+	return XMVector3Normalize(m_pOwnerTransformCom->Get_State(STATE::LOOK));
+}
+
 void CEnvironmentQueryComponent::Execute()
 {
 	m_EnvQueryResult = {};
@@ -64,9 +80,10 @@ void CEnvironmentQueryComponent::Execute()
 _bool CEnvironmentQueryComponent::Detect_Obstacle()
 {
 	SHAPE_CAST_HIT ShapeHit{};
-	_bool isHit = m_pGameInstance->Shape_Cast(m_pOwnerColliderCom->Get_Shape(), m_pOwnerTransformCom->Get_Quaternion(),
+	const _vector vCastQuat = m_hasScanDirOverride ? XMQuaternionIdentity() : m_pOwnerTransformCom->Get_Quaternion();
+	_bool isHit = m_pGameInstance->Shape_Cast(m_pOwnerColliderCom->Get_Shape(), vCastQuat,
 			m_pOwnerTransformCom->Get_State(STATE::POSITION) + m_pOwnerColliderCom->Get_Offset(),
-			m_pOwnerTransformCom->Get_State(STATE::LOOK), m_fShapeTraceDistance, ENUM_CLASS(m_eTargetLayer), ShapeHit);
+			Get_ScanDir(), m_fShapeTraceDistance, ENUM_CLASS(m_eTargetLayer), ShapeHit);
 
 	m_EnvQueryResult.Scan.isObstacleDetected = isHit;
 	if (isHit && (nullptr != ShapeHit.pDesc))
@@ -116,9 +133,9 @@ void CEnvironmentQueryComponent::Scan_Obstacle()
 {
 	OBSTACLE_SCAN& Scan = m_EnvQueryResult.Scan;
 
-	_vector vLook = XMVector3Normalize(m_pOwnerTransformCom->Get_State(STATE::LOOK));
+	_vector vLook = Get_ScanDir();
 	_vector vCenter = m_pOwnerTransformCom->Get_State(STATE::POSITION) + m_pOwnerColliderCom->Get_Offset();
-	_vector vRight = XMVector3Normalize(m_pOwnerTransformCom->Get_State(STATE::RIGHT));
+	_vector vRight = XMVector3Normalize(XMVector3Cross(XMVectorSet(0.f, 1.f, 0.f, 0.f), vLook));
 	_float fTotalHeight = m_pOwnerColliderCom->Get_Height() + 2.f * m_pOwnerColliderCom->Get_Radius();
 
 	_vector vBottom     = vCenter - XMVectorSet(0.f, fTotalHeight * 0.5f, 0.f, 0.f);
@@ -147,7 +164,7 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 	const OBSTACLE_SCAN& Scan = m_EnvQueryResult.Scan;
 	if (Scan.iHeightFlag == 0) return;
 
-	_vector vLook = XMVector3Normalize(m_pOwnerTransformCom->Get_State(STATE::LOOK));
+	_vector vLook = Get_ScanDir();
 	_vector vCenter = m_pOwnerTransformCom->Get_State(STATE::POSITION) + m_pOwnerColliderCom->Get_Offset();
 	_float fRadius = m_pOwnerColliderCom->Get_Radius();
 	_float fTotalHeight = m_pOwnerColliderCom->Get_Height() + 2.f * fRadius;
@@ -332,7 +349,7 @@ void CEnvironmentQueryComponent::Judge_Actions()
 
 	if (Geo.fObstacleHeight <= 0.f) return;
 
-	_vector vLook = m_pOwnerTransformCom->Get_State(STATE::LOOK);
+	_vector vLook = Get_ScanDir();
 	_vector vApproachDir = XMVector3Normalize(XMVectorSetY(vLook, 0.f));
 	Decision.fApproachDot = XMVectorGetX(XMVector3Dot(vApproachDir, XMLoadFloat3(&Geo.vTraversalDir)));
 

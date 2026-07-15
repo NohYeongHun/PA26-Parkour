@@ -17,6 +17,7 @@
 #include "TraceurClimbEnter.h"
 #include "TraceurClimbMove.h"
 #include "TraceurClimbExit.h"
+#include "TraceurClimbRun.h"
 
 // Air State
 #include "TraceurAirFall.h"
@@ -91,6 +92,7 @@ void CTraceurFactory::Register_States(CStateMachine* pStateMachineCom, CTraceur*
 	AddState(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Enter), CTraceurClimbEnter::Create(pCharacter));
 	AddState(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Move),  CTraceurClimbMove::Create(pCharacter));
 	AddState(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Exit),  CTraceurClimbExit::Create(pCharacter));
+	AddState(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Run),   CTraceurClimbRun::Create(pCharacter));
 
 	AddState(ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Fall), CTraceurAirFall::Create(pCharacter));
 	AddState(ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Jump), CTraceurAirJump::Create(pCharacter));

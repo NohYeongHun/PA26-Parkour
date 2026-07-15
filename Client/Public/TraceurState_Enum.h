@@ -120,7 +120,8 @@ enum class ETraceurClimbExit : _uint
 
 enum class ETraceurClimbRun : _uint
 {
-	WallRunUp = 0, // 달리기 루프 재활용 (전용 클립 없음)
+	Move = 0,
+	WallRunUp,
 	RunEnd
 };
 
