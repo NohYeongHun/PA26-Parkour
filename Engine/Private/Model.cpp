@@ -1534,92 +1534,85 @@ _bool CModel::Update_TrackPosition(CAnimation* pAnimation, _float* pTrackPositio
 	return isAnimationEnd;
 }
 
+// Scale Warp
 _matrix CModel::Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTimeDelta)
 {
-	const _float fArriveEpsilon = 0.01f;
-	const _float fAxisEpsilon = 1e-4f;
+	static constexpr _float WARP_SCALE_MAX = 3.f;
 
-	_matrix WorldMatrix = pOwnerTransform->Get_WorldMatrix();
-	_vector vCurrentPos = WorldMatrix.r[3];
-	_vector vTargetPos = XMVectorSetW(XMLoadFloat3(&m_WarpState.vTargetPos), 1.f);
+	_matrix ResultMatrix{};
 
-	// 1. 시작 위치.
+	_matrix matWorld = pOwnerTransform->Get_WorldMatrix();
+
+	_vector vWorldScale;
+	_vector vWorldQuat;
+	_vector vWorldTrans;
+	XMMatrixDecompose(&vWorldScale, &vWorldQuat, &vWorldTrans, matWorld);
+
+	// 시작에 앞서 지정할 값 지정. 한번만 
 	if (!m_WarpState.isStartCaptured)
 	{
-		XMStoreFloat3(&m_WarpState.vStartPos, vCurrentPos);
-		m_WarpState.fStartTrackPos = m_fCurPlayTrackPos;   // MOTION_WARP_STATE에 멤버 추가 필요
+		XMStoreFloat3(&m_WarpState.vStartPos, vWorldTrans); // 시작 지점 저장.
+		m_WarpState.fStartTrackPos = m_fCurPlayTrackPos;
 		m_WarpState.isStartCaptured = true;
 	}
-	_vector vScale, vDeltaRot, vDeltaTrans;
-	XMMatrixDecompose(&vScale, &vDeltaRot, &vDeltaTrans, m_RootMatrix);
 
-	_vector vWorldDelta = XMVector3TransformNormal(vDeltaTrans, WorldMatrix);
 
-	_vector vTargetRemain = vTargetPos - vCurrentPos;
 
-	// 2. 전체 구간 루트모션 상대변환 행렬
-	ROOT_MOTION_DELTA RemainAnim = Extract_RootMotion(
-		m_strCurPlayKey, m_WarpState.fPrevTrackPos, m_WarpState.fWindowEndTrackPos);
+	// 1. 시작 시간(현재 시간)과 끝 시간을 받습니다.
+	_float fStartTrack = m_fCurPlayTrackPos;
+	_float fEndTrack = m_WarpState.fWindowEndTrackPos;
 
-	_vector vAnimRemainLocal = XMLoadFloat3(&RemainAnim.vTranslate) * m_fCurRootMotionRate;
-	_vector vAnimRemainWorld = XMVector3TransformNormal(vAnimRemainLocal, WorldMatrix);
+	// 2. 시작 시간과 끝 시간에 해당하는 루트 모션의 상대 변환 행렬을 계산합니다. => World Space로 변환합니다. 
+	// 전체 애니메이션의 루트모션 상대변환 행렬입니다. => Model Space
+	const ROOT_MOTION_DELTA& AnimRootDelta = Extract_RootMotion(fStartTrack, fEndTrack);  // ModelSpace
+	_vector vAnimLocalDelta = XMVectorSetW(XMLoadFloat3(&AnimRootDelta.vTranslate),1.f);
+	_vector vAnimEndWorldDelta = XMVector3TransformNormal(XMLoadFloat3(&AnimRootDelta.vTranslate), matWorld); // 변화량임.
+	_vector vAnimEndWorldTrans = vWorldTrans + vAnimEndWorldDelta;
 
-	m_WarpState.fPrevTrackPos = m_fCurPlayTrackPos;
+	// -- Local Quat를 World Quat로 변환
+	_vector vAnimEndLocalRot = XMLoadFloat4(&AnimRootDelta.qRotation);
+	_vector vAnimEndWorldRot = XMQuaternionMultiply(vAnimEndLocalRot, vWorldQuat);
 
-	_float fTargetRemainLength = XMVectorGetX(XMVector3Length(vTargetRemain));
-	_bool  isWindowEnd = (m_fCurPlayTrackPos >= m_WarpState.fWindowEndTrackPos);
-
-	if (fTargetRemainLength < fArriveEpsilon || isWindowEnd)
-	{
-		_matrix Snap = XMMatrixAffineTransformation(
-			XMVectorSet(1.f, 1.f, 1.f, 0.f),
-			XMVectorSet(0.f, 0.f, 0.f, 1.f),
-			vDeltaRot,
-			XMVectorZero()) * WorldMatrix;
-
-		Snap.r[3] = vTargetPos;   // 누적 오차 제거
-		End_MotionWarp();
-		return Snap;
-	}
-
-	_float3 fTargetR{}, fAnimR{}, fDelta{};
-	XMStoreFloat3(&fTargetR, vTargetRemain);
-	XMStoreFloat3(&fAnimR, vAnimRemainWorld);
-	XMStoreFloat3(&fDelta, vWorldDelta);
-
-	auto SafeRatio = [&](_float fTarget, _float fAnim)->_float
-	{
-		if (fabsf(fAnim) < fAxisEpsilon)
-			return 0.f; 
-		return std::clamp(fTarget / fAnim, -MW_MAX_WARP_RATIO, MW_MAX_WARP_RATIO);
-	};
-
-	_float3 fWarped{};
-	fWarped.x = fDelta.x * SafeRatio(fTargetR.x, fAnimR.x);
-	fWarped.z = fDelta.z * SafeRatio(fTargetR.z, fAnimR.z);
 	
-	_float fDenom = m_WarpState.fWindowEndTrackPos - m_WarpState.fStartTrackPos;
-	_float fAlpha = (fDenom > fAxisEpsilon)
-		? std::clamp((m_fCurPlayTrackPos - m_WarpState.fStartTrackPos) / fDenom, 0.f, 1.f)
-		: 1.f;
+	// 4. 목표 위치와 시작 지점을 받습니다.
+	_vector vTarget = XMVectorSetW(XMLoadFloat3(&m_WarpState.vTargetPos), 1.f); // 목표 위치
+	_vector vStart = vWorldTrans;
 
-	_float fDesiredY = m_WarpState.vStartPos.y
-		+ (m_WarpState.vTargetPos.y - m_WarpState.vStartPos.y) * fAlpha;
+	// 5. Scale (p_Target - p_Start) / (p_Anim_End - p_Start)  p_Start는 계속해서 현재 위치. // warp Pos 보간.
+	_float fAnimDist = XMVectorGetX(XMVector3Length(vAnimEndWorldTrans - vStart));
+	_float fScale = 1.f;
 
-	_float fCurrentY = XMVectorGetY(vCurrentPos);
-	fWarped.y = fDesiredY - fCurrentY; 
+	if (fAnimDist > 0.0001f) // 이동량이 거의 없다면? 0나누기 방어
+	{
+		fScale = XMVectorGetX(XMVector3Length(vTarget - vStart)) / fAnimDist;
+	}
+	
+	// 0 ~ 3 사이를 벗어나지 않게 하기.
+	fScale = std::clamp(fScale, 0.f, WARP_SCALE_MAX);
+	
 
-	_vector vWarpedDelta = XMLoadFloat3(&fWarped);
+	// 6. 현재 위치 추출 및 => 월드 변환
+	_vector vRootScale;
+	_vector vRootQuat;
+	_vector vRootTrans;
+	XMMatrixDecompose(&vRootScale, &vRootQuat, &vRootTrans, m_RootMatrix);
 
-	_matrix Result = XMMatrixAffineTransformation(
+	_vector vRootWorldDelta = XMVector3TransformNormal(vRootTrans, matWorld);
+	_vector vRootWorldTrans = vWorldTrans + vRootWorldDelta;
+	_vector vRootWorldQuat = XMQuaternionMultiply(vRootQuat, vWorldQuat);
+
+	// 7. warped될 Position을 구합니다.
+	_vector vWarpedPos = vStart + (vRootWorldTrans - vStart) * fScale;
+
+	
+	ResultMatrix = XMMatrixAffineTransformation(
 		XMVectorSet(1.f, 1.f, 1.f, 0.f),
 		XMVectorSet(0.f, 0.f, 0.f, 1.f),
-		vDeltaRot,
-		XMVectorZero()) * WorldMatrix;
+		vRootWorldQuat,
+		vWarpedPos
+	);
 
-	Result.r[3] = XMVectorSetW(vCurrentPos + vWarpedDelta, 1.f);
-
-	return Result;
+	return ResultMatrix;
 }
 
 

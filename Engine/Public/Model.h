@@ -45,11 +45,11 @@ typedef struct TrajectorySample // 루트모션 전용.
 typedef struct tagMotionWarpState
 {
 	_bool   isActive = false;
-	_float3 vTargetPos{};
-	_bool   hasTargetRot = false;
+	_float3 vTargetPos{};			  // 모션 워핑의 목표 위치
+	_bool   hasTargetRot = false;		
 	_float4 qTargetRot{};
-	_float  fWindowEndTrackPos = 0.f; 
-	_float  fStartTrackPos = 0.f;
+	_float  fWindowEndTrackPos = 0.f; // 모션 워핑의 끝나는 TrackPosition; 
+	_float  fStartTrackPos = 0.f;	  // 모션 워핑의 시작 TrackPosition => 이건 Notify로 전달받더라도 TrackPosition 싱크가 틀릴 수 있으므로, 현재 TrackPosition으로 지정하는게 안전함.
 	_float  fPrevTrackPos = 0.f;      
 	_bool   isWarpTranslation = true;
 	_bool   isWarpRotation = false;
