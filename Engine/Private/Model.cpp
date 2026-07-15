@@ -114,7 +114,7 @@ void CModel::Copy_BoneMatrices(_float4x4* pOutMatrices, _uint iMeshIndex)
 
 
 void CModel::Begin_MotionWarp(const _float3& vTargetPos, const _float4* pTargetRot,
-                              _float fWindowEndTrackPos, _bool bTrans, _bool bRot)
+                              _float fWindowEndTrackPos, _bool bTrans, _bool bRot, _bool isGravity)
 {
 	m_WarpState.isActive           = true;
 	m_WarpState.vTargetPos         = vTargetPos;
@@ -127,6 +127,7 @@ void CModel::Begin_MotionWarp(const _float3& vTargetPos, const _float4* pTargetR
 	m_WarpState.isWarpTranslation   = bTrans;
 	m_WarpState.isWarpRotation      = bRot;
 	m_WarpState.isStartCaptured     = false;
+	m_WarpState.isGravity = isGravity;
 }
 
 void CModel::End_MotionWarp()
@@ -329,6 +330,22 @@ void CModel::Debug_RootMotionDraw(const _string& strAnimName, _fmatrix StartWorl
 
 		vPrevWorld = vWorldPos;
 		bHasPrev = true;
+	}
+}
+
+void CModel::Dump_RootMotionCurve(const _string& strAnimName)
+{
+	CAnimation* pAnim = Get_AnimationOrNull(strAnimName);
+	if (nullptr == pAnim)
+		return;
+
+	const _float fDur = pAnim->Get_Duration();
+	cout << "=== RootMotion: " << strAnimName << " (dur " << fDur << ") ===" << endl;
+	cout << "trk\tX\tY\tZ" << endl;
+	for (_float t = 1.f; t <= fDur; t += 1.f)
+	{
+		ROOT_MOTION_DELTA d = Extract_RootMotion(strAnimName, 0.f, t);  // 0→t 누적
+		cout << t << "\t" << d.vTranslate.x << "\t" << d.vTranslate.y << "\t" << d.vTranslate.z << endl;
 	}
 }
 
@@ -1582,6 +1599,11 @@ _matrix CModel::Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTi
 	_float fAnimDist = XMVectorGetX(XMVector3Length(vAnimEndWorldTrans - vStart));
 	_float fScale = 1.f;
 
+	// 보정하기.
+	_vector vPredictedEnd = vAnimEndWorldTrans; // 현재위치 + 남은 애니 루트모션
+	_vector vError = vTarget - vPredictedEnd;
+
+
 	if (fAnimDist > 0.0001f) // 이동량이 거의 없다면? 0나누기 방어
 	{
 		fScale = XMVectorGetX(XMVector3Length(vTarget - vStart)) / fAnimDist;
@@ -1601,14 +1623,39 @@ _matrix CModel::Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTi
 	_vector vRootWorldTrans = vWorldTrans + vRootWorldDelta;
 	_vector vRootWorldQuat = XMQuaternionMultiply(vRootQuat, vWorldQuat);
 
-	// 7. warped될 Position을 구합니다.
-	_vector vWarpedPos = vStart + (vRootWorldTrans - vStart) * fScale;
+	// 7. 오차를 남은 트랙 길이에 비례 분배
+	_float fDeltaTrack = m_fCurPlayTrackPos - m_WarpState.fPrevTrackPos;
+	_float fRemainingTrack = fEndTrack - m_WarpState.fPrevTrackPos;
+	m_WarpState.fPrevTrackPos = m_fCurPlayTrackPos;
+
+	_vector vCorrection = XMVectorZero();
+	if (fRemainingTrack > MW_EPS && fDeltaTrack > 0.f)
+		vCorrection = vError * (fDeltaTrack / fRemainingTrack);
+
+	// 8. warped될 Position을 구합니다.
+	_vector vWarpedPos = vStart + (vRootWorldDelta) + vCorrection;
+
+#ifdef _DEBUG
+	cout << "Trk " << m_fCurPlayTrackPos
+		<< " | remainTrk " << fRemainingTrack
+		<< " | errDist " << XMVectorGetX(XMVector3Length(vError))
+		<< " | corrStep " << XMVectorGetX(XMVector3Length(vCorrection))
+		<< " | animStep " << XMVectorGetX(XMVector3Length(vRootWorldDelta))
+		<< endl;
+#endif // _DEBUG
+
+	_vector vResultQuat = vRootWorldQuat;
+
+	if (m_WarpState.hasTargetRot)
+	{
+
+	}
 
 	
 	ResultMatrix = XMMatrixAffineTransformation(
 		XMVectorSet(1.f, 1.f, 1.f, 0.f),
 		XMVectorSet(0.f, 0.f, 0.f, 1.f),
-		vRootWorldQuat,
+		vResultQuat,
 		vWarpedPos
 	);
 

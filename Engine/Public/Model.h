@@ -55,6 +55,7 @@ typedef struct tagMotionWarpState
 	_bool   isWarpRotation = false;
 	_float3 vStartPos{};              // 워프 시작 시점 월드 위치 (디버그 구간 그리기용)
 	_bool   isStartCaptured = false;   // vStartPos 캡처 여부
+	_bool	isGravity = { false };
 }MOTION_WARP_STATE;
 
 
@@ -102,7 +103,7 @@ public:
 
 	const ROOT_MOTION_DELTA&			Get_RootMotionDelta();
 	void Begin_MotionWarp(const _float3& vTargetPos, const _float4* pTargetRot,
-	                      _float fWindowEndTrackPos, _bool bTrans, _bool bRot);
+	                      _float fWindowEndTrackPos, _bool bTrans, _bool bRot, _bool isGravity = false);
 	void End_MotionWarp();
 	_uint								Get_NumBones(_uint iMeshIndex);
 	void								Copy_BoneMatrices(_float4x4* pOutMatrices, _uint iMeshIndex);
@@ -141,6 +142,7 @@ public:
 	// 애니 시작 트랜스폼(StartWorldMatrix)을 앵커로 루트모션 궤적을 선/점으로 그린다.
 	// rootDesc.isEnable이면 rate/축 마스킹을 적용, 아니면 원본 경로 그대로 표시.
 	void Debug_RootMotionDraw(const _string& strAnimName, _fmatrix StartWorldMatrix, _float fTimeStepSec, const ROOTMOTION_DESC& rootDesc);
+	void Dump_RootMotionCurve(const _string& strAnimName);
 #endif
 
 public:
