@@ -202,12 +202,17 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 	_vector vDownStart = XMVectorSetY(vStartXZ, fStartY);
 	_vector vDownEnd = XMVectorSetY(vStartXZ, XMVectorGetY(vBottom));
 
-	// 상단면 Down Ray의 위치, 노멀, 높이 값 저장
 	LINE_TRACE_HIT TopDownRay = Cast_Ray(vDownStart, vDownEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
 
 	if (!TopDownRay.isHit)
 	{
-		// 상단이 최대 도달 높이보다 위 — 모서리 정보 없이 벽타기 시작 판정용 기하만 기록
+		Geo.isTopReachable  = false;
+		Geo.fObstacleHeight = fTotalHeight * FMAX_REACH_RATIO;
+		return;
+	}
+
+	if (TopDownRay.vHitPosition.y <= TopHit.vHitPosition.y)
+	{
 		Geo.isTopReachable  = false;
 		Geo.fObstacleHeight = fTotalHeight * FMAX_REACH_RATIO;
 		return;
@@ -502,6 +507,9 @@ ACTION_VERDICT CEnvironmentQueryComponent::Judge_WallRun(const OBSTACLE_SCAN& Sc
 
 	if (fApproachDot <= WALLRUN_TH.fMinApproachDot)
 		return { false, REJECT_REASON::BAD_ANGLE };
+
+	if (Scan.ChestHit.fCenterDistance > m_pOwnerColliderCom->Get_Radius() * WALLRUN_TH.fMaxStartDistMult)
+		return { false, REJECT_REASON::TOO_FAR };
 
 	return { true, REJECT_REASON::NONE };
 }
