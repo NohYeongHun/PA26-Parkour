@@ -11,6 +11,7 @@ private:
 	static constexpr _float FVAULT_WARP_MAX         = 1.3f;
 	static constexpr _float FVAULT_LANDING_MARGIN   = 0.3f;
 	static constexpr _float FVAULT_MAX_LANDING_DROP = 2.0f;
+	static constexpr _float FWALLRUN_COOLDOWN       = 0.3f; // 상태 진입 직후 WallRun 재진입 금지 시간
 
 public:
 	explicit CTraceurGroundMove() = default;
@@ -31,6 +32,7 @@ private:
 
 private:
 	_float m_fFallTime = {};
+	_float m_fWallRunCooldown = 0.f; // ClimbRun에서 착지 복귀 직후 즉시 재진입(armed 리셋 루프) 방지
 
 public:
 	static CTraceurGroundMove* Create(class CTraceur* pOwner);

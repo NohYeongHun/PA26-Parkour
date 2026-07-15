@@ -52,7 +52,6 @@ void CTraceurClimbMove::Check_State()
 	Set_Flag("KneeHit", m_EnvQueryResult.Scan.KneeHit.isHit);
 	Set_Flag("Land", m_pColliderCom->IsLand());
 	Set_Flag("Fall", !Get_Flag("Land"));
-	//Set_Flag("Mantle", !m_EnvQueryResult.Scan.HeadHit.isHit);
 	Set_Flag("Mantle", m_EnvQueryResult.Geometry.isTopReachable && !m_EnvQueryResult.Scan.HeadHit.isHit);
 	
 	

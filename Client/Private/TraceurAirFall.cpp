@@ -45,7 +45,10 @@ void CTraceurAirFall::Update_Animations(_float fTimeDelta)
 
 void CTraceurAirFall::Check_State()
 {
-	Set_Flag("Land", m_pColliderCom->IsLand());
+	_float3 vGroundN{};
+	_bool isSupported = m_pColliderCom->IsLand(&vGroundN);
+	_bool isLand = isSupported && vGroundN.y >= cosf(XMConvertToRadians(50.f));
+	Set_Flag("Land", isLand);
 }
 
 void CTraceurAirFall::SetUp_Animations()

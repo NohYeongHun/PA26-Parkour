@@ -35,6 +35,7 @@ void CTraceurGroundMove::OnEnter(void* pArg)
 	Clear_Flags();
 	m_pMoveCom->Set_MovementType(MOVEMENT_TYPE::GROUND);
 	m_fFallTime = 0.f;
+	m_fWallRunCooldown = FWALLRUN_COOLDOWN;
 }
 
 void CTraceurGroundMove::OnExit()
@@ -45,22 +46,26 @@ void CTraceurGroundMove::OnExit()
 
 void CTraceurGroundMove::Check_State()
 {
+	_float3 vGround;
+	_bool isSupported = m_pColliderCom->IsLand(&vGround);
+	_bool isLand = isSupported && vGround.y >= cosf(XMConvertToRadians(50.f));
 	Set_Flag("Move", m_pInputControllerCom->Check_AnyInput(m_iMoveKey));
 	Set_Flag("Run",  Get_Flag("Move") && m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::LSHIFT)));
-	Set_Flag("Land", m_pColliderCom->IsLand());
+	Set_Flag("Land", isLand);
 	Set_Flag("Jump", m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::SPACE)));
 	Set_Flag("Front", m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::W)));
 
 	const ENV_QUERY_RESULT& EnvResult = m_pEnvQueryCom->Get_QueryResult();
 	if (EnvResult.Decision.isValid)
 	{
-		if (EnvResult.Decision.eBestAction == PARKOUR_ACTION::LOW_VAULT && Get_Flag("Run"))
+		if (EnvResult.Decision.eBestAction == PARKOUR_ACTION::LOW_VAULT && Get_Flag("Run") && Get_Flag("Land"))
 		{
 			Set_Flag("Vault", true);
 			return;
 		}
 
-		if (EnvResult.Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::WALL_RUN)].isPossible && Get_Flag("Run"))
+		if (EnvResult.Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::WALL_RUN)].isPossible && Get_Flag("Run")
+			&& m_fWallRunCooldown <= 0.f)
 		{
 			Set_Flag("WallRun", true);
 			return;
@@ -76,6 +81,8 @@ void CTraceurGroundMove::Check_State()
 
 void CTraceurGroundMove::Update_Animations(_float fTimeDelta)
 {
+	m_fWallRunCooldown = max(m_fWallRunCooldown - fTimeDelta, 0.f);
+
 	CTraceurState::Play_Animation(fTimeDelta);
 
 	_float fTargetWeight = 0.f;

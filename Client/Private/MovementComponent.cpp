@@ -97,7 +97,7 @@ _vector CMovementComponent::Calc_ClimbDir(ACTORDIR eDir, _fvector vClimbNormal, 
 {
 	_vector vRight = XMVector3Normalize(XMVector3Cross(vWorldUp, -vClimbNormal));
 	//_vector vRight = XMVector3Normalize(XMVector3Cross(vClimbNormal, vWorldUp));
-	_vector vUp = -XMVector3Normalize(XMVector3Cross(vClimbNormal, vRight));
+	_vector vUp = XMVector3Normalize(XMVector3Cross(-vClimbNormal, vRight));
 
 
 	switch (eDir)
@@ -189,11 +189,13 @@ void CMovementComponent::ClimbRun(_fvector vWorldDir, _float fTimeDelta, _float 
 		return;
 	}
 
+	// Look 제한 걸어야함.
 	if (bHasInput)
 	{
 		XMStoreFloat3(&m_vLastMoveDir, vWorldDir);
-
-		//m_pTransformCom->LookLerp(vWorldDir, fTimeDelta, 3.f);
+		
+		//_vector vLookDir = XMVectorSetY(vWorldDir, 0.f);
+		//m_pTransformCom->LookLerp(vLookDir, fTimeDelta, 3.f);
 	}
 
 	_fvector vMoveDir = bHasInput ? vWorldDir : XMLoadFloat3(&m_vLastMoveDir);
