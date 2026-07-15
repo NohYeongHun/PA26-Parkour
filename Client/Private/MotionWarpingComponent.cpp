@@ -62,10 +62,13 @@ void CMotionWarpingComponent::Set_WarpTarget(const _string& strName, const _floa
 void CMotionWarpingComponent::Clear_WarpTargets()
 {
 	m_WarpTargets.clear();
-#ifdef _DEBUG
-	m_DebugTrail.clear();
-#endif // _DEBUG
+}
 
+void CMotionWarpingComponent::Abort_Warp()
+{
+	if (m_pOwnerModelCom)
+		m_pOwnerModelCom->End_MotionWarp();
+	Clear_WarpTargets();
 }
 
 void CMotionWarpingComponent::On_WarpNotify(const _string& strName, _bool isStart,
@@ -88,6 +91,8 @@ void CMotionWarpingComponent::On_WarpNotify(const _string& strName, _bool isStar
 	m_pOwnerModelCom->Begin_MotionWarp(
 		T.vPosition, T.hasRotation ? &T.qRotation : nullptr,
 		fWindowEndTrackPos, bTrans, bRot);
+
+	
 }
 
 #ifdef _DEBUG
@@ -96,7 +101,6 @@ void CMotionWarpingComponent::Update_DebugTrail()
 	if (nullptr == m_pOwnerModelCom || nullptr == m_pOwnerTransformCom)
 		return;
 
-	// (a) 워프 중이면 실제 월드 위치 샘플 (직전 점과 임계거리 이상일 때만 — 정지 프레임 중복 방지)
 	if (m_pOwnerModelCom->Is_MotionWarping())
 	{
 		_float3 vPos{};
@@ -114,7 +118,6 @@ void CMotionWarpingComponent::Update_DebugTrail()
 			m_DebugTrail.push_back(vPos);
 	}
 
-	// (b) 매 프레임 재방출 (즉시모드 → 워프 끝나도 유지, Clear_WarpTargets 전까지)
 	Draw_DebugTrail();
 }
 

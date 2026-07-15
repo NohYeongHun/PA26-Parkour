@@ -3,7 +3,7 @@
 #include "MovementComponent.h"
 #include "InputController.h"
 #include "SpringCamera.h"
-
+#include "Collider.h"
 
 CMovementComponent::CMovementComponent(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	: CComponent{ pDevice, pContext }
@@ -32,6 +32,24 @@ HRESULT CMovementComponent::Initialize_Clone(void* pArg)
 	m_eMoventType = MOVEMENT_TYPE::GROUND;
 
 	return S_OK;
+}
+
+void CMovementComponent::Set_MovementType(MOVEMENT_TYPE eMovementType)
+{
+	m_eMoventType = eMovementType;
+
+	CCollider* pCollider = dynamic_cast<CCollider*>(m_pOwner->Get_Component(TEXT("Com_Collider")));
+	if (nullptr == pCollider)
+		return;
+
+	if (m_eMoventType == MOVEMENT_TYPE::CLIMB)
+	{
+		pCollider->Set_Gravity(false);
+	}
+	else if (eMovementType == MOVEMENT_TYPE::GROUND)
+	{
+		pCollider->Set_Gravity(true);
+	}
 }
 
 ACTORDIR CMovementComponent::Calculate_Direction(const CInputController* pInputController)

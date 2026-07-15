@@ -31,6 +31,7 @@ enum class ETraceurClimbState : _uint
 	Move,	  // 등반 이동 => 5개 모션 섞을 예정 (L, U, R, D, Idle)
 	Mantle,   // 탈출 상태.
 	Exit,     // 벽에서 이탈
+	Run,      // 수직 월런 — 벽을 달려 올라감
 	ClimbEnd
 };
 #pragma endregion
@@ -115,6 +116,12 @@ enum class ETraceurClimbExit : _uint
 	BracedHangDrop,
 	ClimbingToTop,
 	ClimbExitEnd
+};
+
+enum class ETraceurClimbRun : _uint
+{
+	WallRunUp = 0, // 달리기 루프 재활용 (전용 클립 없음)
+	RunEnd
 };
 
 #pragma endregion

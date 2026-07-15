@@ -49,9 +49,14 @@ private:
 	struct CLIMB_THRESHOLDS {
 		_float fMaxHeightRatio = 1.5f; // 전고 배율 — 모서리 도달 가능 최대 높이
 	};
+	struct WALLRUN_THRESHOLDS {
+		_float fMinApproachDot = 0.85f; // 정면 접근 판정 (Vault 0.9보다 관대)
+		_float fMaxNormalY     = 0.1f;  // 벽면 수직성 — 전면 노멀 Y 성분 허용치
+	};
 	static constexpr VAULT_THRESHOLDS  VAULT_TH{};
 	static constexpr MANTLE_THRESHOLDS MANTLE_TH{};
 	static constexpr CLIMB_THRESHOLDS  CLIMB_TH{};
+	static constexpr WALLRUN_THRESHOLDS WALLRUN_TH{};
 
 	// 디버그 레이 색 분류 — Cast_Ray가 시각화에 사용
 	enum class RAY_KIND { SCAN, MEASURE, REFINE };
@@ -84,6 +89,7 @@ private:
 	ACTION_VERDICT Judge_Mantle(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const;
 	ACTION_VERDICT Judge_Climb(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo) const;
 	ACTION_VERDICT Judge_Hang(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo) const;
+	ACTION_VERDICT Judge_WallRun(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const;
 	_uint          Get_ObjectFlagMask(const OBSTACLE_SCAN& Scan) const; // END(태그 없음)는 ALL로 정규화
 
 private:

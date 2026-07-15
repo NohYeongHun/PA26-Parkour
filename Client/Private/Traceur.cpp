@@ -224,10 +224,13 @@ void CTraceur::Update_EnvQuery(_float fTimeDelta)
 	if (nullptr == m_pEnvQueryCom)
 		return;
 
-	// Vault 실행 중에는 재판정 금지 (재트리거 방지)
-	if (nullptr != m_pStateMachineCom
-		&& m_pStateMachineCom->Get_CurrentSubState() == ENUM_CLASS(ETraceurGroundState::Vault))
-		return;
+	if (nullptr != m_pStateMachineCom)
+	{
+		const auto& Key = m_pStateMachineCom->Get_CurrentStateKey();
+		if (Key.iCategory == ENUM_CLASS(EStateCategory::GROUND)
+			&& Key.iSubState == ENUM_CLASS(ETraceurGroundState::Vault))
+			return;
+	}
 
 	m_pEnvQueryCom->Execute();
 }

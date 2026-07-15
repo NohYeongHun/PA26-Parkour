@@ -35,20 +35,36 @@ void CTraceurClimbExit::OnEnter(void* pArg)
 	
 	if (Get_Flag("Mantle"))
 	{
+		_vector vLook = XMVector3Normalize(m_pTransformCom->Get_State(STATE::LOOK));
+
 		const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
 		m_pMotionWarpCom->Clear_WarpTargets();
-		
-		_vector vPos = m_pTransformCom->Get_State(STATE::POSITION) + 
-			XMVector3Normalize(m_pTransformCom->Get_State(STATE::LOOK)) * m_pColliderCom->Get_Radius();
-		// X, Z를 추출한다.
-		_float3 vSkyPos = {};
-		XMStoreFloat3(&vSkyPos, vPos);
+#ifdef _DEBUG
+		m_pMotionWarpCom->Reset_DebugTrail(); 
+#endif
 
 		if (Geo.isTopReachable)
 		{
-			vSkyPos.y = Geo.vTopStandPos.y;
-			m_pMotionWarpCom->Set_WarpTarget("VaultFix", vSkyPos);
-			m_pMotionWarpCom->Set_WarpTarget("VaultTop", Geo.vTopStandPos);
+			_vector vFacing = -XMVectorSetY(XMLoadFloat3(&Geo.vFrontNormal), 0.f);
+			if (XMVectorGetX(XMVector3LengthSq(vFacing)) < 1e-4f)
+				vFacing = vLook;
+
+			vFacing = XMVector3Normalize(vFacing);
+
+			_float fYaw = atan2f(XMVectorGetX(vFacing), XMVectorGetZ(vFacing));
+			_vector vQuat = XMQuaternionRotationRollPitchYaw(0.f, fYaw, 0.f);
+			_float4 qRot{};
+			XMStoreFloat4(&qRot, vQuat);
+
+
+			m_pMotionWarpCom->Set_WarpTarget("VaultLedge", Geo.vTopEdgePos, qRot);
+			m_pMotionWarpCom->Set_WarpTarget("VaultStand", Geo.vTopStandPos);
+			//m_pMotionWarpCom->Set_WarpTarget("VaultStand", Geo.vTopStandPos);
+
+#ifdef _DEBUG
+			cout << "현재 Edge, Stand Y: " << Geo.vTopEdgePos.y << ", " << Geo.vTopStandPos.y << endl;
+			m_pModelCom->Dump_RootMotionCurve(m_Animations[m_iCurrentAnimIdx].AnimPlayDesc.strAnimationName);
+#endif // _DEBUG
 		}
 			
 		if (Geo.hasLandingSpace)
@@ -56,25 +72,27 @@ void CTraceurClimbExit::OnEnter(void* pArg)
 		m_isMantle = true;
 		m_pColliderCom->Set_Gravity(false);
 	};
+
+	//m_Animations[m_iCurrentAnimIdx].RootMotionDesc.isEnable = true;
 }
 
 void CTraceurClimbExit::OnExit()
 {
 	__super::OnExit();
+	m_pMotionWarpCom->Abort_Warp();
 }
 
 void CTraceurClimbExit::Update_Animations(_float fTimeDelta)
 {
 	CTraceurState::Play_Animation(fTimeDelta);
-
+	m_pColliderCom->Set_Position(m_pTransformCom->Get_State(STATE::POSITION));
 
 }
 
 void CTraceurClimbExit::Late_Anim_Update(_float fTimeDelta)
 {
-	if (Get_Flag("Mantle"))
+	if (m_isMantle)
 	{
-		//Move_AlongCurve(fTimeDelta);
 #ifdef _DEBUG
 		Draw_DebugCurve();
 		
@@ -91,8 +109,7 @@ void CTraceurClimbExit::Check_State()
 	Set_Flag("Land", isLand);
 	Set_Flag("Fall", !isLand);
 	ETraceurClimbExit eType = static_cast<ETraceurClimbExit>(m_iCurrentAnimIdx);
-	Set_Flag("Mantle", eType == ETraceurClimbExit::ClimbingToTop || eType == ETraceurClimbExit::Climbing
-		|| eType == ETraceurClimbExit::BracedHangToCrouch);
+	Set_Flag("Mantle", m_isMantle);
 	
 	if (Get_Flag("HangDropEnd"))
 	{
@@ -102,6 +119,11 @@ void CTraceurClimbExit::Check_State()
 
 #ifdef _DEBUG
 	//Debug_PrintFlag();
+
+	if (Get_Flag("Land"))
+	{
+		cout << "Collider is Land" << endl;
+	}
 #endif // _DEBUG
 }
 
@@ -130,6 +152,7 @@ void CTraceurClimbExit::Draw_DebugCurve()
 	const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
 	CGameInstance* pGI = CGameInstance::GetInstance();
 
+	pGI->Add_DebugSphere(XMLoadFloat3(&Geo.vTopEdgePos), 0.3f, JPH::Color(255.f, 255.f, 255.f, 1.f));
 	pGI->Add_DebugSphere(XMLoadFloat3(&Geo.vTopStandPos), 0.3f, JPH::Color(0.f, 255.f, 255.f, 1.f));
 	//pGI->Add_DebugSphere(XMLoadFloat3(&Geo.vLandingPos), 0.3f, JPH::Color(255.f, 255.f, 255.f, 1.f));
 	return;

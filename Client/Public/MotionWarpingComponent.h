@@ -23,12 +23,13 @@ public:
 	void Set_WarpTarget(const _string& strName, const _float3& vPos);
 	void Set_WarpTarget(const _string& strName, const _float3& vPos, const _float4& qRot);
 	void Clear_WarpTargets();
+	void Abort_Warp();
 	void On_WarpNotify(const _string& strName, _bool isStart,
 	                   _float fWindowEndTrackPos, _bool bTrans, _bool bRot);
 
 #ifdef _DEBUG
-	void Update_DebugTrail();   // 매 프레임(Traceur::Late_Update)에서 호출
-	void Reset_DebugTrail();    // 새 Vault 진입 시 궤적 리셋 (Ready_Enter에서 호출)
+	void Update_DebugTrail();
+	void Reset_DebugTrail();
 #endif
 
 private:
@@ -36,9 +37,9 @@ private:
 	class CModel* m_pOwnerModelCom = { nullptr };
 
 #ifdef _DEBUG
-	void Draw_DebugTrail();                                  // 궤적 재방출 (내부)
-	class CTransform* m_pOwnerTransformCom = { nullptr };    // 오너 월드 위치 폴링용
-	vector<_float3>   m_DebugTrail;                          // 워프 중 실제 궤적점
+	void Draw_DebugTrail();                                  
+	class CTransform* m_pOwnerTransformCom = { nullptr };   
+	vector<_float3>   m_DebugTrail;                        
 #endif
 
 public:

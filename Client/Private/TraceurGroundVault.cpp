@@ -33,9 +33,7 @@ void CTraceurGroundVault::OnExit()
 {
 	__super::OnExit();
 	m_pColliderCom->Set_Gravity(true);
-	m_pMotionWarpCom->Clear_WarpTargets();
-	if (m_pModelCom)
-		m_pModelCom->End_MotionWarp();
+	m_pMotionWarpCom->Abort_Warp();
 }
 
 void CTraceurGroundVault::Update_Animations(_float fTimeDelta)
@@ -71,7 +69,6 @@ _bool CTraceurGroundVault::Ready_Enter()
 	if (!Select_Animation())
 		return false;
 
-	// EnvQuery 목표점을 워프 타겟으로 등록 애니 노티파이의 TargetName과 문자열 일치
 	const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
 	m_pMotionWarpCom->Clear_WarpTargets();
 	if (Geo.isTopReachable)
@@ -80,7 +77,7 @@ _bool CTraceurGroundVault::Ready_Enter()
 		m_pMotionWarpCom->Set_WarpTarget("VaultLand", Geo.vLandingPos);
 
 #ifdef _DEBUG
-	m_pMotionWarpCom->Reset_DebugTrail();   // 새 Vault 시작 → 이전 궤적 리셋 (freeze 종료)
+	m_pMotionWarpCom->Reset_DebugTrail();   // 새 Vault 시작 → 이전 궤적 리셋
 #endif
 
 	return true;

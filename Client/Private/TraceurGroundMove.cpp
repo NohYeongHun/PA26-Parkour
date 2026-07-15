@@ -19,6 +19,8 @@ HRESULT CTraceurGroundMove::Initialize(CTraceur* pOwner)
 	Register_Flag("Climb");
 	Register_Flag("Jump");
 	Register_Flag("Fall");
+	Register_Flag("Front");
+	Register_Flag("WallRun");
 
 	SetUp_Animations();
 	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurGroundMove::Move);
@@ -43,12 +45,33 @@ void CTraceurGroundMove::OnExit()
 
 void CTraceurGroundMove::Check_State()
 {
-	
-
 	Set_Flag("Move", m_pInputControllerCom->Check_AnyInput(m_iMoveKey));
 	Set_Flag("Run",  Get_Flag("Move") && m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::LSHIFT)));
 	Set_Flag("Land", m_pColliderCom->IsLand());
 	Set_Flag("Jump", m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::SPACE)));
+	Set_Flag("Front", m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::W)));
+
+	const ENV_QUERY_RESULT& EnvResult = m_pEnvQueryCom->Get_QueryResult();
+	if (EnvResult.Decision.isValid)
+	{
+		if (EnvResult.Decision.eBestAction == PARKOUR_ACTION::LOW_VAULT && Get_Flag("Run"))
+		{
+			Set_Flag("Vault", true);
+			return;
+		}
+
+		if (EnvResult.Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::WALL_RUN)].isPossible && Get_Flag("Run"))
+		{
+			Set_Flag("WallRun", true);
+			return;
+		}
+
+		if (EnvResult.Decision.eBestAction == PARKOUR_ACTION::CLIMB && Get_Flag("Front") && !Get_Flag("Run"))
+		{
+			Set_Flag("Climb", true);
+			return;
+		}
+	}
 }
 
 void CTraceurGroundMove::Update_Animations(_float fTimeDelta)
@@ -83,24 +106,7 @@ void CTraceurGroundMove::Check_Physics(_float fTimeDelta)
 			Set_Flag("Fall", true);
 	}
 
-	const ENV_QUERY_RESULT& EnvResult = m_pEnvQueryCom->Get_QueryResult();
-	if (!Get_Flag("Move") || !Get_Flag("Run"))
-		return;
-
-	if (EnvResult.Decision.isValid)
-	{
-		if (EnvResult.Decision.eBestAction == PARKOUR_ACTION::LOW_VAULT)
-		{
-			Set_Flag("Vault", true);
-			return;
-		}
-
-		if (EnvResult.Decision.eBestAction == PARKOUR_ACTION::CLIMB)
-		{
-			Set_Flag("Climb", true);
-			return;
-		}
-	}
+	
 }
 
 void CTraceurGroundMove::SetUp_Animations()

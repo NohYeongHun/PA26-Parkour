@@ -890,6 +890,7 @@ void CEdit_MapObject::About_Parkour()
 	ImGui::CheckboxFlags("Climbable", pFlag, ENUM_CLASS(PARKOUR_FLAG::CLIMBABLE));
 	ImGui::CheckboxFlags("Hangable", pFlag, ENUM_CLASS(PARKOUR_FLAG::HANGABLE));
 	ImGui::CheckboxFlags("Mantleable", pFlag, ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE));
+	ImGui::CheckboxFlags("Wallrunnable", pFlag, ENUM_CLASS(PARKOUR_FLAG::WALLRUNNABLE));
 }
 
 void CEdit_MapObject::About_Texture()
