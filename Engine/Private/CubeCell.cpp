@@ -225,8 +225,8 @@ void CCubeCell::Free()
 
 	Safe_Delete(m_pBoundingBox);
 	
-	for (auto& Object : m_Objects)
-		Safe_Release(Object);
+	/*for (auto& Object : m_Objects)
+		Safe_Release(Object);*/
 	m_Objects.clear();
 
 	for (auto& Child : m_ChildCells)

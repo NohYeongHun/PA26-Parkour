@@ -206,8 +206,10 @@ void CParser::Read_Map_Dat(LEVEL eLevel, const _string pFilePath)
 				break;
 
 			default: // OBJECTTYPE::DEFAULT
-				m_pGameInstance->Clone_Prototype(pDesc.iLevel, TEXT("Prototype_GameObject_MapObject")
-					, PROTOTYPE::GAMEOBJECT, &pDesc);
+				if (FAILED(m_pGameInstance->Add_GameObject_ToLayer(ENUM_CLASS(eLevel), TEXT("Prototype_GameObject_MapObject"),
+					ENUM_CLASS(eLevel), TEXT("Layer_Default"), &pDesc)))
+					CRASH("Failed Ready Parkour Object");
+			
 				break;
 
 			}
