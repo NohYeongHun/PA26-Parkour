@@ -33,8 +33,11 @@ public:
 	const _float2* Get_LocomotionWeight2DPtr() const { return &m_fLocomotionWeight2D; }
 	_float2        Get_LocomotionWeight2D()    const { return m_fLocomotionWeight2D; }
 
+	void Set_ClimbNormal(_fvector vNormal) { XMStoreFloat3(&m_vClimbNormal, vNormal); }
+
 private:
 	class CTransform* m_pTransformCom = { nullptr }; // 약한 참조.
+	class CMeshAlignComponent* m_pMeshAlignCom = { nullptr };
 
 	_float  m_fLocomotionWeight = 0.f;   
 	_float2 m_fLocomotionWeight2D = {};
@@ -42,8 +45,11 @@ private:
 	_float3 m_vLastClimbDir = {};
 	_float  m_fAccelTime        = 0.25f;
 	_float  m_fDecelTime        = 0.15f;
-	_float  m_fMaxMoveSpeed     = 0.5f;  // 가중치 1.0일 때의 월드 이동 속도
-	_float  m_fMaxClimbSpeed    = 0.2f;  // 가중치 1.0일 때의 월드 이동 속도
+	_float  m_fMaxMoveSpeed     = 0.5f;  
+	_float  m_fMaxClimbSpeed    = 0.2f;  
+	_float  m_fSteerMaxDeg      = 30.f;  
+
+	_float3 m_vClimbNormal = {};
 
 
 private:

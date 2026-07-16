@@ -22,6 +22,17 @@ private:
 	virtual void SetUp_Animations() override;
 	_bool Ready_WallRun();
 
+#ifdef _DEBUG
+private:
+	void Draw_DebugSteer();
+
+private:
+	_float3 m_vDebugWallNormal = {}; // 월드 공간 벽 노멀
+	_float3 m_vDebugAxisWorld  = {}; // 월드 공간 틸트축
+	_float3 m_vDebugAxisLocal  = {}; // 로컬 공간 틸트축 (진입 시점 값 고정)
+	_bool   m_hasDebugSteer    = false;
+#endif
+
 private:
 	static constexpr _float FTILT_ANGLE_DEG = 65.f;
 	static constexpr _float FWALL_SNAP_DIST = 0.2f;

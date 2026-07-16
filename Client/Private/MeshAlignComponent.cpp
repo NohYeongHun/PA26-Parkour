@@ -42,11 +42,15 @@ void CMeshAlignComponent::Request_Pose(_fvector qRot, const _float3& vLocalOffse
 
 void CMeshAlignComponent::Clear_Pose(_float fBlendTime)
 {
+	m_fSteerYawTarget = 0.f;
 	Request_Pose(XMQuaternionIdentity(), _float3(0.f, 0.f, 0.f), fBlendTime);
 }
 
 void CMeshAlignComponent::Update(_float fTimeDelta)
 {
+	const _float fSteerRate = min(fTimeDelta / STEER_SMOOTH_TIME, 1.f);
+	m_fSteerYawCurrent += (m_fSteerYawTarget - m_fSteerYawCurrent) * fSteerRate;
+
 	if (!IsBlending())
 		return;
 
@@ -61,7 +65,8 @@ void CMeshAlignComponent::Update(_float fTimeDelta)
 
 _matrix CMeshAlignComponent::Get_LocalMatrix() const
 {
-	return XMMatrixRotationQuaternion(XMLoadFloat4(&m_qCurrentRot))
+	return XMMatrixRotationY(XMConvertToRadians(m_fSteerYawCurrent))
+		* XMMatrixRotationQuaternion(XMLoadFloat4(&m_qCurrentRot))
 		* XMMatrixTranslation(m_vCurrentOffset.x, m_vCurrentOffset.y, m_vCurrentOffset.z);
 }
 

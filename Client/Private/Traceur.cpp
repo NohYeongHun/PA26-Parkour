@@ -43,14 +43,16 @@ HRESULT CTraceur::Initialize_Clone(void* pArg)
 	if (FAILED(__super::Initialize_Clone(pDesc)))
 		return E_FAIL;
 
-	if (FAILED(Ready_Components(pDesc)))
-		return E_FAIL;
-
 	CMeshAlignComponent::COMPONENT_DESC MeshAlignDesc{};
 	MeshAlignDesc.pOwner = this;
 	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_MeshAlign"),
 		TEXT("Com_MeshAlign"), reinterpret_cast<CComponent**>(&m_pMeshAlignCom), &MeshAlignDesc)))
 		return E_FAIL;
+
+	if (FAILED(Ready_Components(pDesc)))
+		return E_FAIL;
+
+	
 
 	m_pModelCom->Register_AllNotifies(
 		pDesc->strNotfiyFolderPath,

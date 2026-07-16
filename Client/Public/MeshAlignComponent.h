@@ -21,6 +21,8 @@ public:
 	_matrix Get_LocalMatrix() const;
 	_bool   IsBlending() const { return m_fBlendElapsed < m_fBlendDuration; }
 
+	void Set_SteerYaw(_float fTargetDeg) { m_fSteerYawTarget = fTargetDeg; }
+
 private:
 	_float4 m_qStartRot   = { 0.f, 0.f, 0.f, 1.f };
 	_float4 m_qTargetRot  = { 0.f, 0.f, 0.f, 1.f };
@@ -32,6 +34,11 @@ private:
 
 	_float m_fBlendDuration = 0.f;
 	_float m_fBlendElapsed  = 0.f;
+
+	static constexpr _float STEER_SMOOTH_TIME = 0.15f;
+
+	_float m_fSteerYawTarget  = 0.f;
+	_float m_fSteerYawCurrent = 0.f;
 
 public:
 	static	CMeshAlignComponent* Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);

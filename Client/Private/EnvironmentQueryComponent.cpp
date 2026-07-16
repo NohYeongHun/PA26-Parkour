@@ -142,7 +142,7 @@ void CEnvironmentQueryComponent::Scan_Obstacle()
 	_vector vKneeStart  = vBottom + XMVectorSet(0.f, fTotalHeight * FKNEE_RATIO,  0.f, 0.f);
 	_vector vChestStart = vBottom + XMVectorSet(0.f, fTotalHeight * FCHEST_RATIO, 0.f, 0.f);
 	//_vector vHeadStart  = vBottom + XMVectorSet(0.f, fTotalHeight * FHEAD_RATIO,  0.f, 0.f);
-	_vector vHeadStart  = vBottom + XMVectorSet(0.f, fTotalHeight * 1.3f,  0.f, 0.f);
+	_vector vHeadStart  = vBottom + XMVectorSet(0.f, fTotalHeight * FHEAD_RATIO,  0.f, 0.f);
 	_vector vLeftChestStart = vChestStart - (vRight * m_pOwnerColliderCom->Get_Radius());
 	_vector vRightChestStart = vChestStart + (vRight * m_pOwnerColliderCom->Get_Radius());
 

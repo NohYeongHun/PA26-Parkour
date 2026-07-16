@@ -4,6 +4,7 @@
 #include "InputController.h"
 #include "SpringCamera.h"
 #include "Collider.h"
+#include "MeshAlignComponent.h"
 
 CMovementComponent::CMovementComponent(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	: CComponent{ pDevice, pContext }
@@ -28,6 +29,9 @@ HRESULT CMovementComponent::Initialize_Clone(void* pArg)
 	ASSERT_CRASH(m_pOwner);
 	m_pTransformCom = dynamic_cast<CTransform*>(m_pOwner->Get_Component(TEXT("Com_Transform")));
 	ASSERT_CRASH(m_pTransformCom);
+
+	m_pMeshAlignCom = dynamic_cast<CMeshAlignComponent*>(m_pOwner->Get_Component(TEXT("Com_MeshAlign")));
+	ASSERT_CRASH(m_pMeshAlignCom);
 
 	m_eMoventType = MOVEMENT_TYPE::GROUND;
 
@@ -178,6 +182,21 @@ void CMovementComponent::ClimbMove(_fvector vWorldDir, _float fTimeDelta, _float
 void CMovementComponent::ClimbRun(_fvector vWorldDir, _float fTimeDelta, _float fTargetWeight)
 {
 	_bool bHasInput = !XMVector3Equal(vWorldDir, XMVectorZero());
+
+	_float fSteerDeg = 0.f;
+	if (bHasInput)
+	{
+		_vector vRight = XMVector3Normalize(m_pTransformCom->Get_State(STATE::RIGHT));
+		_vector vN = XMVectorSetY(XMLoadFloat3(&m_vClimbNormal), 0.f);
+		if (XMVectorGetX(XMVector3LengthSq(vN)) > 1e-6f)
+		{
+			_vector vRight = XMVector3Normalize(XMVector3Cross(
+				XMVectorSet(0.f, 1.f, 0.f, 0.f), -XMVector3Normalize(vN)));
+			fSteerDeg = XMVectorGetX(XMVector3Dot(vWorldDir, vRight)) * m_fSteerMaxDeg;
+		}
+	}
+	m_pMeshAlignCom->Set_SteerYaw(fSteerDeg);
+
 	_float fTarget = bHasInput ? fTargetWeight : 0.f;
 	_float fSmoothTime = (fTarget > m_fLocomotionWeight) ? m_fAccelTime : m_fDecelTime;
 	_float fRate = (fSmoothTime > 0.f) ? min(fTimeDelta / fSmoothTime, 1.f) : 1.f;
@@ -189,13 +208,9 @@ void CMovementComponent::ClimbRun(_fvector vWorldDir, _float fTimeDelta, _float 
 		return;
 	}
 
-	// Look 제한 걸어야함.
 	if (bHasInput)
 	{
 		XMStoreFloat3(&m_vLastMoveDir, vWorldDir);
-		
-		//_vector vLookDir = XMVectorSetY(vWorldDir, 0.f);
-		//m_pTransformCom->LookLerp(vLookDir, fTimeDelta, 3.f);
 	}
 
 	_fvector vMoveDir = bHasInput ? vWorldDir : XMLoadFloat3(&m_vLastMoveDir);

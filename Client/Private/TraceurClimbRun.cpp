@@ -45,22 +45,26 @@ void CTraceurClimbRun::OnEnter(void* pArg)
 
 	// 2. 회전용 축을 구합니다.
 	_vector vAxisWorld = XMVector3Normalize(XMVector3Cross(-vN, XMVectorSet(0.f, 1.f, 0.f, 0.f)));
-
-	// 3. MeshSpace로 좌표계를 변환합니다.
 	_matrix WorldInv = XMMatrixInverse(nullptr, m_pTransformCom->Get_WorldMatrix());
 	_vector vAxisLocal = XMVector3Normalize(XMVector3TransformNormal(vAxisWorld, WorldInv));
 
-
-	// 4. MeshSpace의 축으로 캐릭터를 회전시킬 Quaternion을 구합니다.
+	// 3. MeshSpace의 축으로 캐릭터를 회전시킬 Quaternion을 구합니다.
 	_vector qTilt = XMQuaternionRotationAxis(vAxisLocal, XMConvertToRadians(FTILT_ANGLE_DEG)); // 부호는 플레이 검증으로 확정된 값
 
-	// 5. Offset을 지정합니다. (발 위치를 보정하기 위해)
+	// 4. Offset을 지정합니다. (발 위치를 보정하기 위해)
 	_float3 vOffsetLocal{};
 	XMStoreFloat3(&vOffsetLocal,
 		XMVector3Normalize(XMVector3TransformNormal(XMVectorNegate(vN), WorldInv)) * m_pColliderCom->Get_Radius());
 
 	m_pMeshAlignCom->Request_Pose(qTilt, vOffsetLocal, FBLEND_IN_TIME);
+	m_pMoveCom->Set_ClimbNormal(vN);
 
+#ifdef _DEBUG
+	XMStoreFloat3(&m_vDebugWallNormal, vN);
+	XMStoreFloat3(&m_vDebugAxisWorld, vAxisWorld);
+	XMStoreFloat3(&m_vDebugAxisLocal, vAxisLocal);
+	m_hasDebugSteer = true;
+#endif
 }
 
 void CTraceurClimbRun::OnExit()
@@ -90,16 +94,46 @@ void CTraceurClimbRun::Check_State()
 	if (!isLand)
 		m_hasLeftGround = true; 
 
+	if (m_EnvQueryResult.Geometry.isTopReachable)
+	{
+		m_vTopStandCache = m_EnvQueryResult.Geometry.vTopEdgePos;
+		m_hasTopStandCache = true;
+	}
+
+
+	_vector vPos = m_pTransformCom->Get_State(STATE::POSITION);
+	_float  fPosY = XMVectorGetY(vPos);
+	_vector vToCacheXZ = XMVectorSetY(XMLoadFloat3(&m_vTopStandCache) - vPos, 0.f);
+	_float  fXZDistSq = XMVectorGetX(XMVector3LengthSq(vToCacheXZ));
+	const _float fRadius = m_pColliderCom->Get_Radius();
+	_bool inTopBand = m_hasTopStandCache
+		&& fPosY >= m_vTopStandCache.y - fRadius
+		&& fXZDistSq <= (fRadius * 1.5f) * (fRadius * 1.5f);
+	_bool isToppingOut = inTopBand && (!isSupported || fPosY >= m_vTopStandCache.y);
+
+
+#ifdef _DEBUG
+	cout << "[ClimbRun] sup=" << isSupported
+		<< " gN.y=" << vGroundN.y
+		<< " topReach=" << m_EnvQueryResult.Geometry.isTopReachable
+		<< " hasCache=" << m_hasTopStandCache
+		<< " posY=" << fPosY
+		<< " cacheY=" << m_vTopStandCache.y
+		<< " topOut=" << isToppingOut << endl;
+#endif
+
+	if (m_hasLeftGround && isToppingOut)
+	{
+		Set_Flag("Arrive", true);
+		return;
+	}
+
 	Set_Flag("Jump", m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::SPACE)));
-	Set_Flag("Fall", m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::S)));
+	Set_Flag("Fall", (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::S)) || !isSupported)  && (!inTopBand));
 	Set_Flag("Land", m_hasLeftGround && isLand);
 	Set_Flag("Mantle", m_EnvQueryResult.Geometry.isTopReachable && !m_EnvQueryResult.Scan.HeadHit.isHit);
 
-	if (m_EnvQueryResult.Geometry.isTopReachable)
-	{
-		m_vTopStandCache = m_EnvQueryResult.Geometry.vTopStandPos;
-		m_hasTopStandCache = true;
-	}
+	
 	
 
 
@@ -109,12 +143,7 @@ void CTraceurClimbRun::Check_State()
 void CTraceurClimbRun::Update_Animations(_float fTimeDelta)
 {
 	// 이미 벽 위이고, 상단 레이가 착지점을 찾았고, 현재 y값이 착지점y값보다 크거나 같다면?
-	if (m_hasLeftGround && m_hasTopStandCache
-		&& XMVectorGetY(m_pTransformCom->Get_State(STATE::POSITION)) >= m_vTopStandCache.y)
-	{
-		Set_Flag("Arrive", true);
-		return;
-	}
+	
 
 	CTraceurState::Play_Animation(fTimeDelta);
 
@@ -126,7 +155,34 @@ void CTraceurClimbRun::Update_Animations(_float fTimeDelta)
 	_vector vClimbDir = CMovementComponent::Calc_ClimbDir(
 		eDir, vNormal, XMVectorSet(0.f, 1.f, 0.f, 0.f));
 	m_pMoveCom->Move(vClimbDir, fTimeDelta, 2.f);
+
+#ifdef _DEBUG
+	Draw_DebugSteer();
+#endif
 }
+
+#ifdef _DEBUG
+void CTraceurClimbRun::Draw_DebugSteer()
+{
+	if (!m_hasDebugSteer)
+		return;
+
+	CGameInstance* pGI = CGameInstance::GetInstance();
+	_vector vPos = XMVectorSetW(
+		m_pTransformCom->Get_State(STATE::POSITION) + XMVectorSet(0.f, 1.f, 0.f, 0.f), 1.f);
+
+	// 자홍: 월드 공간 벽 노멀 (조향 계산에 쓰이는 값)
+	pGI->Add_DebugLine(vPos, vPos + XMLoadFloat3(&m_vDebugWallNormal), JPH::Color(255.f, 0.f, 255.f, 1.f));
+
+	// 노랑: 월드 공간 틸트축
+	pGI->Add_DebugLine(vPos, vPos + XMLoadFloat3(&m_vDebugAxisWorld), JPH::Color(255.f, 255.f, 0.f, 1.f));
+
+	// 시안: 로컬 틸트축을 현재 월드 행렬로 되돌린 것 — 진입각도에 따라 노랑과 벌어지면
+	_vector vAxisLocalInWorld = XMVector3Normalize(XMVector3TransformNormal(
+		XMLoadFloat3(&m_vDebugAxisLocal), m_pTransformCom->Get_WorldMatrix()));
+	//pGI->Add_DebugLine(vPos, vPos + vAxisLocalInWorld, JPH::Color(0.f, 255.f, 255.f, 1.f));
+}
+#endif
 
 void CTraceurClimbRun::SetUp_Animations()
 {
