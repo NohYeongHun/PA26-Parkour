@@ -156,6 +156,9 @@
     <ClCompile Include="..\Private\MovementComponent.cpp">
       <Filter>04. Component\Move</Filter>
     </ClCompile>
+    <ClCompile Include="..\Private\MeshAlignComponent.cpp">
+      <Filter>04. Component\Move</Filter>
+    </ClCompile>
     <ClCompile Include="..\Private\TraceurState.cpp">
       <Filter>04. Component\State</Filter>
     </ClCompile>
@@ -297,6 +300,9 @@
       <Filter>04. Component\Environment</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\MovementComponent.h">
+      <Filter>04. Component\Move</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\MeshAlignComponent.h">
       <Filter>04. Component\Move</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\StateCategory_Enum.h">

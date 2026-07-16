@@ -38,10 +38,10 @@ void CTraceurAirJump::OnExit()
 void CTraceurAirJump::Check_State()
 {
 	_float3 vGroundN{};
-	_bool bSupported = m_pColliderCom->IsLand(&vGroundN);
-	_bool bLand = bSupported && vGroundN.y >= cosf(XMConvertToRadians(50.f));
-	Set_Flag("Land", bLand);
-	Set_Flag("Fall", !bLand);
+	_bool isSupported = m_pColliderCom->IsLand(&vGroundN);
+	_bool isLand = isSupported && vGroundN.y >= cosf(XMConvertToRadians(50.f));
+	Set_Flag("Land", isLand);
+	Set_Flag("Fall", !isLand);
 	//Set_Flag("ExitOpen", Get_Flag("Land") && m_fTrackPosition > 40.f);
 	Set_Flag("Move", m_pInputControllerCom->Check_AnyInput(m_iMoveKey));
 	Set_Flag("Run",  Get_Flag("Move") && m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::LSHIFT)));

@@ -33,7 +33,9 @@ namespace Client
 		TOO_NARROW,       // 상단 폭 부족 (Mantle)
 		TOO_HIGH,         // 도달 불가 높이 (Climb)
 		BAD_ANGLE,        // 접근 각도 미달
+		NOT_ENOUGH_DISTANCE, // 충분한 거리 부족
 		NOT_VERTICAL,     // 벽면이 수직이 아님 (WallRun)
+		TOO_FAR,          // 벽까지 거리 초과 — 붙기 전 (WallRun)
 		NOT_IMPLEMENTED,  // 미구현 액션 (HANG)
 		END
 	};

@@ -7,6 +7,7 @@
 #include "Rigidbody.h"
 #include "Collider.h"
 #include "MovementComponent.h"
+#include "MeshAlignComponent.h"
 #include "EnvironmentQueryComponent.h"
 #include "MotionWarpingComponent.h"
 #include "TraceurFactory.h"
@@ -45,12 +46,11 @@ HRESULT CTraceur::Initialize_Clone(void* pArg)
 	if (FAILED(Ready_Components(pDesc)))
 		return E_FAIL;
 
-	m_pMeshTransform = CTransform::Create(m_pDevice, m_pContext);
-	if (FAILED(m_pMeshTransform->Initialize_Clone(pDesc)))
+	CMeshAlignComponent::COMPONENT_DESC MeshAlignDesc{};
+	MeshAlignDesc.pOwner = this;
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_MeshAlign"),
+		TEXT("Com_MeshAlign"), reinterpret_cast<CComponent**>(&m_pMeshAlignCom), &MeshAlignDesc)))
 		return E_FAIL;
-
-	m_Components.emplace(TEXT("Com_MeshTransform"), m_pMeshTransform);
-	Safe_AddRef(m_pMeshTransform);
 
 	m_pModelCom->Register_AllNotifies(
 		pDesc->strNotfiyFolderPath,
@@ -93,6 +93,9 @@ void CTraceur::Update(_float fTimeDelta)
 	// 1. StateMachine => 이동량, 회전량 생성
 	m_pStateMachineCom->Update(fTimeDelta);
 
+	// 1.5. 메시 로컬 포즈 보간 — 상태가 요청한 목표 포즈로 수렴 (상태 종료 후에도 지속)
+	m_pMeshAlignCom->Update(fTimeDelta);
+
 	// 2. Physics => 바뀐 이동량에 따른 물리 확인.
 	Update_Physics(fTimeDelta);
 
@@ -111,7 +114,7 @@ void CTraceur::Late_Update(_float fTimeDelta)
 	Ready_Render();
 
 #ifdef _DEBUG
-	m_pGameInstance->Add_DebugSphere(m_pTransformCom->Get_State(STATE::POSITION), 0.2f, JPH::Color(0.F, 0.F, 0.F));
+	m_pGameInstance->Add_DebugSphere(m_pTransformCom->Get_State(STATE::POSITION), 0.1f, JPH::Color(0.F, 0.F, 0.F));
 	if (m_pMotionWarpCom)
 		m_pMotionWarpCom->Update_DebugTrail();
 #endif // _DEBUG
@@ -339,7 +342,7 @@ HRESULT CTraceur::Ready_Variables(const CHARACTER_DESC* pDesc)
 HRESULT CTraceur::Bind_Matrices()
 {
 	_float4x4 worldMatrix{};
-	XMStoreFloat4x4(&worldMatrix, m_pTransformCom->Get_WorldMatrix());
+	XMStoreFloat4x4(&worldMatrix, m_pMeshAlignCom->Get_LocalMatrix() * m_pTransformCom->Get_WorldMatrix());
 
 	if (FAILED(m_pShaderCom->Bind_Matrix("g_WorldMatrix", &worldMatrix)))
 		CRASH("Failed Bind Matrix");
@@ -395,6 +398,6 @@ void CTraceur::Free()
 	Safe_Release(m_pColliderCom);
 	Safe_Release(m_pEnvQueryCom);
 	Safe_Release(m_pMotionWarpCom);
-	Safe_Release(m_pMeshTransform); // 기울이는 기준점은 벽 Normal로.
+	Safe_Release(m_pMeshAlignCom);
 
 }

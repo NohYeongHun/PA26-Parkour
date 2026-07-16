@@ -1553,7 +1553,6 @@ _bool CModel::Update_TrackPosition(CAnimation* pAnimation, _float* pTrackPositio
 	return isAnimationEnd;
 }
 
-// 축 분리 이동량 비례 워프 — 스펙: claude/specs/2026-07-15-axis-split-warp-correction-design.md
 _matrix CModel::Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTimeDelta)
 {
 	static constexpr _float WARP_SCALE_MAX = 3.f;
@@ -1636,15 +1635,6 @@ _matrix CModel::Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTi
 
 	// 8. warped될 Position을 구합니다.
 	_vector vWarpedPos = vStart + (vRootWorldDelta)+vCorrection;
-
-#ifdef _DEBUG
-	cout << "Trk " << m_fCurPlayTrackPos
-		<< " | remainTrk " << fRemainingTrack
-		<< " | errDist " << XMVectorGetX(XMVector3Length(vError))
-		<< " | corrStep " << XMVectorGetX(XMVector3Length(vCorrection))
-		<< " | animStep " << XMVectorGetX(XMVector3Length(vRootWorldDelta))
-		<< endl;
-#endif // _DEBUG
 
 	_vector vResultQuat = vRootWorldQuat;
 

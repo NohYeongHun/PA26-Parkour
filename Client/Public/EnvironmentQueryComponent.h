@@ -50,8 +50,9 @@ private:
 		_float fMaxHeightRatio = 1.5f; // 전고 배율 — 모서리 도달 가능 최대 높이
 	};
 	struct WALLRUN_THRESHOLDS {
-		_float fMinApproachDot = 0.85f; // 정면 접근 판정 (Vault 0.9보다 관대)
-		_float fMaxNormalY     = 0.1f;  // 벽면 수직성 — 전면 노멀 Y 성분 허용치
+		_float fMinApproachDot   = 0.85f; // 정면 접근 판정 (Vault 0.9보다 관대)
+		_float fMaxNormalY       = 0.1f;  // 벽면 수직성 — 전면 노멀 Y 성분 허용치
+		_float fMaxStartDistMult = 1.1f;  // 반지름 배율 — 벽 부착 판정 거리 (이내여야 시작)
 	};
 	static constexpr VAULT_THRESHOLDS  VAULT_TH{};
 	static constexpr MANTLE_THRESHOLDS MANTLE_TH{};

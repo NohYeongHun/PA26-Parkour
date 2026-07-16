@@ -63,7 +63,7 @@ void CTraceurClimbExit::OnEnter(void* pArg)
 
 #ifdef _DEBUG
 			cout << "현재 Edge, Stand Y: " << Geo.vTopEdgePos.y << ", " << Geo.vTopStandPos.y << endl;
-			m_pModelCom->Dump_RootMotionCurve(m_Animations[m_iCurrentAnimIdx].AnimPlayDesc.strAnimationName);
+			//m_pModelCom->Dump_RootMotionCurve(m_Animations[m_iCurrentAnimIdx].AnimPlayDesc.strAnimationName);
 #endif // _DEBUG
 		}
 			
@@ -117,11 +117,6 @@ void CTraceurClimbExit::Check_State()
 
 #ifdef _DEBUG
 	//Debug_PrintFlag();
-
-	if (Get_Flag("Land"))
-	{
-		cout << "Collider is Land" << endl;
-	}
 #endif // _DEBUG
 }
 
