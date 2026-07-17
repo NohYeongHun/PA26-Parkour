@@ -15,12 +15,8 @@ public:
 	virtual void OnExit() override;
 
 private:
-	void Check_State() override;
 	void Update_Animations(_float fTimeDelta) override;
 	void Check_Physics(_float fTimeDelta) override;
-
-private:
-	virtual void SetUp_Animations() override;
 
 public:
 	static CTraceurAirJump* Create(class CTraceur* pOwner);

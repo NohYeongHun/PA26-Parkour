@@ -11,9 +11,6 @@ HRESULT CTraceurGroundVault::Initialize(CTraceur* pOwner)
 	if (FAILED(__super::Initialize(pOwner)))
 		return E_FAIL;
 
-	SetUp_Animations();
-	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurGroundVault::LowerVault);
-
 	return S_OK;
 }
 
@@ -51,25 +48,15 @@ void CTraceurGroundVault::Late_Anim_Update(_float fTimeDelta)
 	
 }
 
-void CTraceurGroundVault::SetUp_Animations()
-{
-	CState::Add_ParkourAnimations(ENUM_CLASS(ETraceurGroundVault::LowerVault),
-		{ &m_fTrackPosition, "LowVault", 1.2f, 0.05f, 0.2f, 0.f, false },
-		{ 1.f, true, false, true },   // isEnable=true, isRotate=false, isTranslate=true (커브 폐기 → 루트모션 이동)
-		{});
-}
-
-
 _bool CTraceurGroundVault::Ready_Enter()
 {
-	m_EnvQueryResult = m_pEnvQueryCom->Get_QueryResult();
-	if (!m_EnvQueryResult.Decision.isValid)
+	if (!m_Decision.isValid)
 		return false;
 
 	if (!Select_Animation())
 		return false;
 
-	const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
+	const OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
 	m_pMotionWarpCom->Clear_WarpTargets();
 	if (Geo.isTopReachable)
 		m_pMotionWarpCom->Set_WarpTarget("VaultTop", Geo.vTopEdgePos);
@@ -85,14 +72,14 @@ _bool CTraceurGroundVault::Ready_Enter()
 
 _bool CTraceurGroundVault::Select_Animation()
 {
-	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurGroundVault::LowerVault);
+	Request_Anim(ENUM_CLASS(ETraceurGroundVault::LowerVault));
 	return true;
 }
 
 #ifdef _DEBUG
 void CTraceurGroundVault::Draw_Debug()
 {
-	const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
+	const OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
 	CGameInstance* pGI = CGameInstance::GetInstance();
 
 	pGI->Add_DebugSphere(XMLoadFloat3(&Geo.vTopEdgePos), 0.3f, JPH::Color(0.f, 255.f, 255.f, 1.f));

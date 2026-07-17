@@ -41,6 +41,10 @@ HRESULT CEnvironmentQueryComponent::Initialize_Clone(void* pArg)
 	m_fLineTraceDistance = pDesc->fLineTraceDistance;
 	m_eTargetLayer = pDesc->eTargetLayer;
 
+	if (nullptr == pDesc->pBodyProfile)
+		return E_FAIL;
+	m_pBodyProfile = pDesc->pBodyProfile;
+
 	return S_OK;
 }
 
@@ -62,14 +66,13 @@ _vector CEnvironmentQueryComponent::Get_ScanDir() const
 
 void CEnvironmentQueryComponent::Execute()
 {
-	m_EnvQueryResult = {};
+	m_Perception = {};
 
 	if (!Detect_Obstacle())
 		return;
 
 	Scan_Obstacle();
 	Measure_Geometry();
-	Judge_Actions();
 
 #ifdef _DEBUG
 	Draw_DebugMarkers();
@@ -85,11 +88,11 @@ _bool CEnvironmentQueryComponent::Detect_Obstacle()
 			m_pOwnerTransformCom->Get_State(STATE::POSITION) + m_pOwnerColliderCom->Get_Offset(),
 			Get_ScanDir(), m_fShapeTraceDistance, ENUM_CLASS(m_eTargetLayer), ShapeHit);
 
-	m_EnvQueryResult.Scan.isObstacleDetected = isHit;
+	m_Perception.Scan.isObstacleDetected = isHit;
 	if (isHit && (nullptr != ShapeHit.pDesc))
 	{
 		CALLBACK_CLIENT* pDesc = static_cast<CALLBACK_CLIENT*>(ShapeHit.pDesc);
-		m_EnvQueryResult.Scan.eObjectFlag = pDesc->eObjectParkourFlag;
+		m_Perception.Scan.eObjectFlag = pDesc->eObjectParkourFlag;
 	}
 
 	return isHit;
@@ -131,20 +134,19 @@ LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray(const _fvector& vStart, cons
 // [2단계] 수평 레이 5개의 히트 정보와 높이 패턴 비트마스크를 기록합니다.
 void CEnvironmentQueryComponent::Scan_Obstacle()
 {
-	OBSTACLE_SCAN& Scan = m_EnvQueryResult.Scan;
+	OBSTACLE_SCAN& Scan = m_Perception.Scan;
 
 	_vector vLook = Get_ScanDir();
+	XMStoreFloat3(&Scan.vScanDir, vLook);
 	_vector vCenter = m_pOwnerTransformCom->Get_State(STATE::POSITION) + m_pOwnerColliderCom->Get_Offset();
 	_vector vRight = XMVector3Normalize(XMVector3Cross(XMVectorSet(0.f, 1.f, 0.f, 0.f), vLook));
-	_float fTotalHeight = m_pOwnerColliderCom->Get_Height() + 2.f * m_pOwnerColliderCom->Get_Radius();
 
-	_vector vBottom     = vCenter - XMVectorSet(0.f, fTotalHeight * 0.5f, 0.f, 0.f);
-	_vector vKneeStart  = vBottom + XMVectorSet(0.f, fTotalHeight * FKNEE_RATIO,  0.f, 0.f);
-	_vector vChestStart = vBottom + XMVectorSet(0.f, fTotalHeight * FCHEST_RATIO, 0.f, 0.f);
-	//_vector vHeadStart  = vBottom + XMVectorSet(0.f, fTotalHeight * FHEAD_RATIO,  0.f, 0.f);
-	_vector vHeadStart  = vBottom + XMVectorSet(0.f, fTotalHeight * FHEAD_RATIO,  0.f, 0.f);
-	_vector vLeftChestStart = vChestStart - (vRight * m_pOwnerColliderCom->Get_Radius());
-	_vector vRightChestStart = vChestStart + (vRight * m_pOwnerColliderCom->Get_Radius());
+	_vector vBottom     = vCenter - XMVectorSet(0.f, m_pBodyProfile->fHeight * 0.5f, 0.f, 0.f);
+	_vector vKneeStart  = vBottom + XMVectorSet(0.f, m_pBodyProfile->fKneeHeight,  0.f, 0.f);
+	_vector vChestStart = vBottom + XMVectorSet(0.f, m_pBodyProfile->fChestHeight, 0.f, 0.f);
+	_vector vHeadStart  = vBottom + XMVectorSet(0.f, m_pBodyProfile->fHeadHeight,  0.f, 0.f);
+	_vector vLeftChestStart  = vChestStart - (vRight * m_pBodyProfile->fRadius);
+	_vector vRightChestStart = vChestStart + (vRight * m_pBodyProfile->fRadius);
 
 	Scan.KneeHit  = Cast_Ray(vKneeStart,  vKneeStart  + vLook * m_fLineTraceDistance, ENUM_CLASS(m_eTargetLayer), RAY_KIND::SCAN);
 	Scan.ChestHit = Cast_Ray(vChestStart, vChestStart + vLook * m_fLineTraceDistance, ENUM_CLASS(m_eTargetLayer), RAY_KIND::SCAN);
@@ -161,16 +163,16 @@ void CEnvironmentQueryComponent::Scan_Obstacle()
 // 수직 레이로 장애물의 상단면·두께·착지 공간을 추출합니다.
 void CEnvironmentQueryComponent::Measure_Geometry()
 {
-	const OBSTACLE_SCAN& Scan = m_EnvQueryResult.Scan;
+	const OBSTACLE_SCAN& Scan = m_Perception.Scan;
 	if (Scan.iHeightFlag == 0) return;
 
 	_vector vLook = Get_ScanDir();
 	_vector vCenter = m_pOwnerTransformCom->Get_State(STATE::POSITION) + m_pOwnerColliderCom->Get_Offset();
-	_float fRadius = m_pOwnerColliderCom->Get_Radius();
-	_float fTotalHeight = m_pOwnerColliderCom->Get_Height() + 2.f * fRadius;
+	_float fRadius = m_pBodyProfile->fRadius;
+	_float fTotalHeight = m_pBodyProfile->fHeight;
 	_vector vBottom = vCenter - XMVectorSet(0.f, fTotalHeight * 0.5f, 0.f, 0.f);
 
-	OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
+	OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
 
 	// 가장 높이 히트한 수평 레이의 지점에서 안쪽으로 밀어 Down Ray 시작점 결정
 	const LINE_TRACE_HIT& TopHit = Scan.HeadHit.isHit ? Scan.HeadHit
@@ -198,7 +200,7 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 	_float fInset = fRadius * 0.5f;
 	_vector vStartXZ = XMLoadFloat3(&TopHit.vHitPosition) + vTraversal * fInset;
 
-	_float fStartY = XMVectorGetY(vBottom) + fTotalHeight * FMAX_REACH_RATIO;
+	_float fStartY = XMVectorGetY(vBottom) + m_pBodyProfile->fMaxReach;
 	_vector vDownStart = XMVectorSetY(vStartXZ, fStartY);
 	_vector vDownEnd = XMVectorSetY(vStartXZ, XMVectorGetY(vBottom));
 
@@ -207,14 +209,14 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 	if (!TopDownRay.isHit)
 	{
 		Geo.isTopReachable  = false;
-		Geo.fObstacleHeight = fTotalHeight * FMAX_REACH_RATIO;
+		Geo.fObstacleHeight = m_pBodyProfile->fMaxReach;
 		return;
 	}
 
 	if (TopDownRay.vHitPosition.y <= TopHit.vHitPosition.y)
 	{
 		Geo.isTopReachable  = false;
-		Geo.fObstacleHeight = fTotalHeight * FMAX_REACH_RATIO;
+		Geo.fObstacleHeight = m_pBodyProfile->fMaxReach;
 		return;
 	}
 
@@ -345,174 +347,6 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 	}
 }
 
-// 판정기를 전부 실행해 액션별 가능/탈락 사유를 기록
-void CEnvironmentQueryComponent::Judge_Actions()
-{
-	const OBSTACLE_SCAN& Scan = m_EnvQueryResult.Scan;
-	const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
-	PARKOUR_DECISION& Decision = m_EnvQueryResult.Decision;
-
-	if (Geo.fObstacleHeight <= 0.f) return;
-
-	_vector vLook = Get_ScanDir();
-	_vector vApproachDir = XMVector3Normalize(XMVectorSetY(vLook, 0.f));
-	Decision.fApproachDot = XMVectorGetX(XMVector3Dot(vApproachDir, XMLoadFloat3(&Geo.vTraversalDir)));
-
-	const ACTION_VERDICT VaultVerdict = Judge_Vault(Scan, Geo, Decision.fApproachDot);
-
-	_float fTotalHeight = m_pOwnerColliderCom->Get_Height() + 2.f * m_pOwnerColliderCom->Get_Radius();
-	const _bool isHighVault = Geo.fObstacleHeight >= fTotalHeight * VAULT_TH.fHighVaultHeightRatio;
-	const ACTION_VERDICT NoMatch{ false, REJECT_REASON::NO_HEIGHT_MATCH };
-	Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::LOW_VAULT)]  = isHighVault ? NoMatch : VaultVerdict;
-	Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::HIGH_VAULT)] = isHighVault ? VaultVerdict : NoMatch;
-	Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::MANTLE)] = Judge_Mantle(Scan, Geo, Decision.fApproachDot);
-	Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::CLIMB)]  = Judge_Climb(Scan, Geo);
-	Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::HANG)]   = Judge_Hang(Scan, Geo);
-	Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::WALL_RUN)] = Judge_WallRun(Scan, Geo, Decision.fApproachDot);
-
-	Decision.iCandidateFlag = 0;
-	if (VaultVerdict.isPossible)
-		Decision.iCandidateFlag |= ENUM_CLASS(PARKOUR_FLAG::VAULTABLE);
-	if (Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::MANTLE)].isPossible)
-		Decision.iCandidateFlag |= ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE);
-	if (Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::CLIMB)].isPossible)
-		Decision.iCandidateFlag |= ENUM_CLASS(PARKOUR_FLAG::CLIMBABLE);
-
-	if (Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::CLIMB)].isPossible)
-	{
-		Decision.eBestAction = PARKOUR_ACTION::CLIMB;
-		Decision.isValid = true;
-	}
-	else if (VaultVerdict.isPossible)
-	{
-		Decision.eBestAction = isHighVault ? PARKOUR_ACTION::HIGH_VAULT : PARKOUR_ACTION::LOW_VAULT;
-		Decision.isValid = true;
-	}
-	else if (Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::MANTLE)].isPossible)
-	{
-		Decision.eBestAction = PARKOUR_ACTION::MANTLE;
-		Decision.isValid = true;
-	}
-
-	if (Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::WALL_RUN)].isPossible)
-	{
-		Decision.iCandidateFlag |= ENUM_CLASS(PARKOUR_FLAG::WALLRUNNABLE);
-		Decision.isValid = true;
-	}
-}
-
-void CEnvironmentQueryComponent::Judge_TopReaced(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo)
-{
-	m_EnvQueryResult.Decision.isTopReached;
-}
-
-// 디자이너 태그 정규화 — END(태그 없음)는 ALL로 취급
-_uint CEnvironmentQueryComponent::Get_ObjectFlagMask(const OBSTACLE_SCAN& Scan) const
-{
-	_uint iMask = ENUM_CLASS(Scan.eObjectFlag);
-	if (iMask >= ENUM_CLASS(PARKOUR_FLAG::END))
-		iMask = ENUM_CLASS(PARKOUR_FLAG::ALL);
-	else if (iMask == 0xF)
-		iMask = ENUM_CLASS(PARKOUR_FLAG::ALL);
-	return iMask;
-}
-
-ACTION_VERDICT CEnvironmentQueryComponent::Judge_Vault(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const
-{
-	const _bool bKnee = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE)) != 0;
-	const _bool bHead = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD)) != 0;
-	if (!bKnee || bHead)
-		return { false, REJECT_REASON::NO_HEIGHT_MATCH };
-
-	if (!(Get_ObjectFlagMask(Scan) & ENUM_CLASS(PARKOUR_FLAG::VAULTABLE)))
-		return { false, REJECT_REASON::FLAG_DENIED };
-
-	if (!Geo.isTopReachable)
-		return { false, REJECT_REASON::TOP_UNREACHABLE };
-
-	if (!Geo.hasLandingSpace)
-		return { false, REJECT_REASON::NO_LANDING };
-
-	if (fApproachDot <= VAULT_TH.fMinApproachDot)
-		return { false, REJECT_REASON::BAD_ANGLE };
-
-	return { true, REJECT_REASON::NONE };
-}
-
-ACTION_VERDICT CEnvironmentQueryComponent::Judge_Mantle(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const
-{
-	const _bool bKnee = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE)) != 0;
-	const _bool bHead = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD)) != 0;
-	if (!bKnee || bHead)
-		return { false, REJECT_REASON::NO_HEIGHT_MATCH };
-
-	if (!(Get_ObjectFlagMask(Scan) & ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE)))
-		return { false, REJECT_REASON::FLAG_DENIED };
-
-	if (!Geo.isTopReachable)
-		return { false, REJECT_REASON::TOP_UNREACHABLE };
-
-	_float fRadius = m_pOwnerColliderCom->Get_Radius();
-	if (Geo.fDepth < fRadius * MANTLE_TH.fMinDepthMult)
-		return { false, REJECT_REASON::TOO_THIN };
-
-	if (Geo.fTopWidth < fRadius * MANTLE_TH.fMinWidthMult)
-		return { false, REJECT_REASON::TOO_NARROW };
-
-	if (fApproachDot <= MANTLE_TH.fMinApproachDot)
-		return { false, REJECT_REASON::BAD_ANGLE };
-
-	return { true, REJECT_REASON::NONE };
-}
-
-// Climb: 무릎+가슴+머리 전부 히트하는 키 이상 벽. 상단이 측정됐다면 도달 가능 높이여야 한다.
-ACTION_VERDICT CEnvironmentQueryComponent::Judge_Climb(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo) const
-{
-	const _bool bKnee  = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE))  != 0;
-	const _bool bChest = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::CHEST)) != 0;
-	const _bool bHead  = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD))  != 0;
-	if (!(bKnee && bChest && bHead))
-		return { false, REJECT_REASON::NO_HEIGHT_MATCH };
-
-	if (!(Get_ObjectFlagMask(Scan) & ENUM_CLASS(PARKOUR_FLAG::CLIMBABLE)))
-		return { false, REJECT_REASON::FLAG_DENIED };
-
-	// 상단 미도달 벽은 벽타기로 무제한 허용 (기존 동작 유지)
-	_float fTotalHeight = m_pOwnerColliderCom->Get_Height() + 2.f * m_pOwnerColliderCom->Get_Radius();
-	if (Geo.isTopReachable && Geo.fObstacleHeight > fTotalHeight * CLIMB_TH.fMaxHeightRatio)
-		return { false, REJECT_REASON::TOO_HIGH };
-
-	return { true, REJECT_REASON::NONE };
-}
-
-ACTION_VERDICT CEnvironmentQueryComponent::Judge_Hang(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo) const
-{
-	(void)Scan; (void)Geo;
-	return { false, REJECT_REASON::NOT_IMPLEMENTED };
-}
-
-ACTION_VERDICT CEnvironmentQueryComponent::Judge_WallRun(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const
-{
-	const _bool bKnee  = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE))  != 0;
-	const _bool bChest = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::CHEST)) != 0;
-	const _bool bHead  = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD))  != 0;
-	if (!(bKnee && bChest && bHead))
-		return { false, REJECT_REASON::NO_HEIGHT_MATCH };
-
-	if (!(Get_ObjectFlagMask(Scan) & ENUM_CLASS(PARKOUR_FLAG::WALLRUNNABLE)))
-		return { false, REJECT_REASON::FLAG_DENIED };
-
-	if (!Geo.hasFront || fabsf(Geo.vFrontNormal.y) > WALLRUN_TH.fMaxNormalY)
-		return { false, REJECT_REASON::NOT_VERTICAL };
-
-	if (fApproachDot <= WALLRUN_TH.fMinApproachDot)
-		return { false, REJECT_REASON::BAD_ANGLE };
-
-	if (Scan.ChestHit.fCenterDistance > m_pOwnerColliderCom->Get_Radius() * WALLRUN_TH.fMaxStartDistMult)
-		return { false, REJECT_REASON::TOO_FAR };
-
-	return { true, REJECT_REASON::NONE };
-}
 
 #ifdef _DEBUG
 void CEnvironmentQueryComponent::Draw_DebugMarkers()
@@ -520,7 +354,7 @@ void CEnvironmentQueryComponent::Draw_DebugMarkers()
 	if (!m_pGameInstance->IsParkourDebug())
 		return;
 
-	const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
+	const OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
 	if (Geo.isTopReachable)
 		m_pGameInstance->Add_DebugSphere(XMLoadFloat3(&Geo.vTopEdgePos), 0.07f, JPH::Color(255.f, 0.f, 0.f, 1.f));
 	if (Geo.hasLandingSpace)
@@ -531,13 +365,8 @@ void CEnvironmentQueryComponent::Draw_DebugMarkers()
 #ifdef _DEBUG
 void CEnvironmentQueryComponent::Print_Debug()
 {
-	const OBSTACLE_SCAN&     Scan     = m_EnvQueryResult.Scan;
-	const OBSTACLE_GEOMETRY& Geo      = m_EnvQueryResult.Geometry;
-	const PARKOUR_DECISION&  Decision = m_EnvQueryResult.Decision;
-
-	static const char* s_ActionNames[] = { "NONE", "LOW_VAULT", "HIGH_VAULT", "MANTLE", "CLIMB", "HANG", "WALL_RUN" };
-	static const char* s_RejectNames[] = { "OK", "NO_HEIGHT_MATCH", "FLAG_DENIED", "TOP_UNREACHABLE",
-		"NO_LANDING", "TOO_THIN", "TOO_NARROW", "TOO_HIGH", "BAD_ANGLE", "NOT_VERTICAL", "NOT_IMPLEMENTED" };
+	const OBSTACLE_SCAN&     Scan = m_Perception.Scan;
+	const OBSTACLE_GEOMETRY& Geo  = m_Perception.Geometry;
 
 	cout << "[Scan]     Knee " << (Scan.KneeHit.isHit ? "O" : "X")
 	     << "  Chest " << (Scan.ChestHit.isHit ? "O" : "X")
@@ -551,22 +380,7 @@ void CEnvironmentQueryComponent::Print_Debug()
 	     << " W=" << Geo.fTopWidth
 	     << " Front=" << Geo.fFrontDistance
 	     << " Top=" << (Geo.isTopReachable ? "O" : "X")
-	     << " Landing=" << (Geo.hasLandingSpace ? "O" : "X")
-	     << " Dot=" << Decision.fApproachDot << endl;
-
-	cout << "[Judge]    ";
-	for (_uint i = ENUM_CLASS(PARKOUR_ACTION::LOW_VAULT); i < ENUM_CLASS(PARKOUR_ACTION::END); ++i)
-	{
-		const ACTION_VERDICT& Verdict = Decision.Verdicts[i];
-		cout << s_ActionNames[i] << ":" << (Verdict.isPossible ? "OK"
-			: Verdict.eReject == REJECT_REASON::NONE ? "SKIP"
-			: s_RejectNames[ENUM_CLASS(Verdict.eReject)]);
-		if (i + 1 < ENUM_CLASS(PARKOUR_ACTION::END))
-			cout << " | ";
-	}
-	cout << endl;
-
-	cout << "[Best]     " << s_ActionNames[ENUM_CLASS(Decision.eBestAction)] << endl << endl;
+	     << " Landing=" << (Geo.hasLandingSpace ? "O" : "X") << endl;
 }
 #endif // _DEBUG
 

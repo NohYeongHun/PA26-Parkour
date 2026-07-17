@@ -19,20 +19,8 @@ private:
 	void Late_Anim_Update(_float fTimeDelta) override;
 
 private:
-	virtual void SetUp_Animations() override;
-
-private:
 	_bool  Ready_Enter();
 	_bool  Select_Animation();
-	void   Build_Curve();
-
-#ifdef _DEBUG
-private:
-	void Draw_DebugCurve();
-#endif
-
-private:
-	void Move_AlongCurve(_float fTimeDelta);
 
 #ifdef _DEBUG
 private:
@@ -40,16 +28,6 @@ private:
 	_float3 m_vDebugWallHitPos = {};
 	_float3 m_vDebugWallEndPos = {};
 #endif
-
-private:
-	ENV_QUERY_RESULT m_EnvQueryResult = {};
-	_float3 m_vCurveP0    = {};
-	_float3 m_vCurveP1    = {};
-	_float3 m_vCurveP2    = {};
-	_float3 m_vLookTarget = {};
-	_float3 m_vLookStart  = {};
-	_float  m_fCurveT     = {};
-	_bool   m_isValidCurve = {};
 
 public:
 	static CTraceurClimbEnter* Create(class CTraceur* pOwner);

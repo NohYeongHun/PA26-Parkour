@@ -129,6 +129,7 @@
     <ClInclude Include="..\Public\MotionWarpNotify.h" />
     <ClInclude Include="..\public\SSAO.h" />
     <ClInclude Include="..\Public\State.h" />
+    <ClInclude Include="..\Public\AnimationController.h" />
     <ClInclude Include="..\Public\StateMachine.h" />
     <ClInclude Include="..\Public\StaticObject.h" />
     <ClInclude Include="..\Public\Model.h" />
@@ -273,6 +274,7 @@
     <ClCompile Include="..\Private\MotionWarpNotify.cpp" />
     <ClCompile Include="..\private\SSAO.cpp" />
     <ClCompile Include="..\Private\State.cpp" />
+    <ClCompile Include="..\Private\AnimationController.cpp" />
     <ClCompile Include="..\Private\StateMachine.cpp" />
     <ClCompile Include="..\Private\StaticObject.cpp" />
     <ClCompile Include="..\Private\Model.cpp" />

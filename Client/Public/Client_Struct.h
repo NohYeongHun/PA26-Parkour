@@ -61,6 +61,18 @@ namespace Client
 
 
 #pragma region ENVIRONMENT
+	// 캐릭터 체형 프로필 — 초기화 시 콜라이더에서 1회 추출, 감지/결정이 읽기 전용 공유.
+	// 값은 기존 EnvQuery 비율 상수(0.35/0.8/1.1/1.5 × 전고)와 동일해야 한다 (동작 보존).
+	typedef struct tagBodyProfile
+	{
+		_float fHeight = 0.f;      // 전고 = Collider Height + 2 × Radius
+		_float fRadius = 0.f;      // 캡슐 반지름
+		_float fKneeHeight = 0.f;  // fHeight × 0.35
+		_float fChestHeight = 0.f; // fHeight × 0.8
+		_float fHeadHeight = 0.f;  // fHeight × 1.1
+		_float fMaxReach = 0.f;    // fHeight × 1.5
+	}BODY_PROFILE;
+
 	typedef struct tagLineTraceHit
 	{
 		_bool		isHit = { false };
@@ -68,6 +80,8 @@ namespace Client
 		_float3     vHitPosition{};
 		_float3     vHitNormal{};
 	}LINE_TRACE_HIT;
+
+	enum class HEIGHT_HIT_FLAG : _uint { KNEE = 1 << 0, CHEST = 1 << 1, HEAD = 1 << 2 };
 
 	// [EnvQuery 1단계 출력] 원시 스캔 — 측정 없음, 레이가 뭘 맞았는지만
 	typedef struct tagObstacleScan {
@@ -79,6 +93,7 @@ namespace Client
 		LINE_TRACE_HIT LeftChestHit;
 		LINE_TRACE_HIT RightChestHit;
 		_uint          iHeightFlag = 0;                         // HEIGHT_HIT_FLAG 비트마스크
+		_float3        vScanDir{};                              // EnvQuery가 사용한 스캔 방향 (Decider가 재계산 없이 소비)
 	}OBSTACLE_SCAN;
 
 	// [EnvQuery 3단계 출력] 액션별 판정 결과 — 탈락 시 첫 번째로 걸린 사유 기록
@@ -88,15 +103,23 @@ namespace Client
 	}ACTION_VERDICT;
 
 	typedef struct tagParkourDecision {
-		ACTION_VERDICT Verdicts[ENUM_CLASS(PARKOUR_ACTION::END)]; 
-		_uint          iCandidateFlag = 0;                      
+		ACTION_VERDICT Verdicts[ENUM_CLASS(PARKOUR_ACTION::END)];
+		_uint          iCandidateFlag = 0;
 		_float         fApproachDot = 0.f;
-		PARKOUR_ACTION eBestAction = PARKOUR_ACTION::NONE;
+		PARKOUR_ACTION eBestEnvAction = PARKOUR_ACTION::NONE; // 舊 eBestAction — 환경상 최선 (입력 무관)
 		_bool          isValid = false;
-		_bool		   isTopReached = false;
+		_bool          isTopReached = false;
+		PARKOUR_ACTION eCommand = PARKOUR_ACTION::NONE;
+		_bool isGrounded  = false;
+		_bool isSupported = false;
+		_bool isFalling   = false;
+		_bool hasMoveInput  = false;
+		_bool wantsRun      = false;
+		_bool wantsJump     = false;
+		_bool wantsForward  = false;
+		_bool wantsDown     = false;
 	}PARKOUR_DECISION;
 
-	// [EnvQuery 2단계 출력] 파생 기하 — 그룹별 유효성 플래그가 앞장섬 (false면 그룹 값 무효)
 	typedef struct tagObstacleGeometry {
 		_bool   hasFront = false;          // ↓ 전면 그룹
 		_float3 vFrontHitPos{};
@@ -118,12 +141,11 @@ namespace Client
 		_float3 vLandingPos{};
 	}OBSTACLE_GEOMETRY;
 
-	// EnvQuery 최종 결과 = 세 단계의 합성. 매 프레임 Execute 에 전체 리셋된다.
-	typedef struct tagEnvQueryResult {
+	// EnvQuery 출력 = 순수 관측 (Scan + Geometry). 판정은 CParkourDeciderComponent::PARKOUR_DECISION으로 분리됨.
+	typedef struct tagEnvPerception {
 		OBSTACLE_SCAN     Scan;
 		OBSTACLE_GEOMETRY Geometry;
-		PARKOUR_DECISION  Decision;
-	}ENV_QUERY_RESULT;
+	}ENV_PERCEPTION;
 
 	// 이름표 붙은 월드좌표 워프 타겟. CMotionWarpingComponent가 map<이름, WARP_TARGET>로 보유.
 	typedef struct tagWarpTarget
@@ -133,12 +155,26 @@ namespace Client
 		_float4 qRotation{};          // 선택적 목표 방향
 		_bool   isValid = false;
 	}WARP_TARGET;
+
+	typedef struct tagClimbEval
+	{
+		_bool   isSupported  = false;
+		_bool   isLanded     = false;
+		_bool   shouldFall   = false;
+		_bool   isArrived    = false;
+		_bool   canMantle    = false;
+		_bool   kneeHit      = false;
+		_float3 vClimbNormal = {};
+	}CLIMB_EVAL;
 #pragma endregion
 
 #pragma region STATE_ENTER
 	struct STATE_ENTER_DESC
 	{
 		_uint iAnimIndex = UINT_MAX;
+		_bool            hasEnvSnapshot = false;
+		ENV_PERCEPTION   Perception{};
+		PARKOUR_DECISION Decision{};
 	};
 
 	struct VAULT_ENTER_DESC : STATE_ENTER_DESC

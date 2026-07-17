@@ -37,6 +37,8 @@
     <ClCompile Include="..\Private\TraceurState.cpp" />
     <ClCompile Include="..\Private\TraceurStateNames.cpp" />
     <ClCompile Include="..\Private\TransitionTable.cpp" />
+    <ClCompile Include="..\Private\ParkourTuningTable.cpp" />
+    <ClCompile Include="..\Private\ParkourDeciderComponent.cpp" />
     <ClCompile Include="..\Private\GameSystem.cpp" />
     <ClCompile Include="..\Private\Level_Loading.cpp" />
     <ClCompile Include="..\Private\Level_Test.cpp" />
@@ -55,6 +57,9 @@
     <ClCompile Include="..\Private\Traceur.cpp" />
     <ClCompile Include="..\Private\EnvironmentQueryComponent.cpp" />
     <ClCompile Include="..\Private\MotionWarpingComponent.cpp" />
+    <ClCompile Include="..\Private\StateBlackboard.cpp" />
+    <ClCompile Include="..\Private\TransitionEvaluator.cpp" />
+    <ClCompile Include="..\Private\ClimbEvaluator.cpp" />
     <ClCompile Include="..\Private\TraceurFactory.cpp" />
     <ClCompile Include="..\Private\Trigger_Box.cpp" />
     <ClCompile Include="Client.cpp" />
@@ -83,6 +88,8 @@
     <ClInclude Include="..\Public\TraceurState.h" />
     <ClInclude Include="..\Public\TraceurStateNames.h" />
     <ClInclude Include="..\Public\TransitionTable.h" />
+    <ClInclude Include="..\Public\ParkourTuningTable.h" />
+    <ClInclude Include="..\Public\ParkourDeciderComponent.h" />
     <ClInclude Include="..\Public\Client_CharacterEnum.h" />
     <ClInclude Include="..\Public\Client_Define.h" />
     <ClInclude Include="..\Public\Client_Enum.h" />
@@ -107,6 +114,10 @@
     <ClInclude Include="..\Public\Traceur.h" />
     <ClInclude Include="..\Public\EnvironmentQueryComponent.h" />
     <ClInclude Include="..\Public\MotionWarpingComponent.h" />
+    <ClInclude Include="..\Public\StateBlackboard.h" />
+    <ClInclude Include="..\Public\TransitionEvaluator.h" />
+    <ClInclude Include="..\Public\ClimbEvaluator.h" />
+    <ClInclude Include="..\Public\ParkourMath.h" />
     <ClInclude Include="..\Public\TraceurFactory.h" />
     <ClInclude Include="..\Public\TraceurState_Enum.h" />
     <ClInclude Include="..\Public\Trigger_Box.h" />

@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "Character.h"
 
+namespace Engine { class CAnimationController; }
+
 NS_BEGIN(Client)
 class CTraceur final : public CCharacter
 {
@@ -21,6 +23,7 @@ public:
 public:
 	_vector Get_CamForward() const;
 	_vector Get_CamRight()   const;
+	const BODY_PROFILE* Get_BodyProfile() const { return &m_BodyProfile; }
 
 public:
 	// StateFlag 애님 노티파이 콜백 진입점 — 현재 상태의 래치로 포워딩
@@ -50,9 +53,17 @@ private:
 	class CCollider*	 m_pColliderCom = { nullptr };
 	class CStateMachine* m_pStateMachineCom = { nullptr };
 	class CEnvironmentQueryComponent* m_pEnvQueryCom = { nullptr };
+	class CParkourDeciderComponent* m_pParkourDeciderCom = { nullptr };
 	class CMotionWarpingComponent* m_pMotionWarpCom = { nullptr };
+	
 
-	class CMeshAlignComponent* m_pMeshAlignCom = { nullptr };
+	class CMeshAlignComponent*  m_pMeshAlignCom = { nullptr };
+	class CStateBlackboard*     m_pStateBlackboardCom = { nullptr };
+	class CTransitionEvaluator* m_pTransitionEvalCom = { nullptr };
+	class CClimbEvaluator*      m_pClimbEvalCom = { nullptr };
+
+private:
+	BODY_PROFILE m_BodyProfile{};
 
 private:
 	// 임시 Variables
@@ -77,6 +88,7 @@ private:
 	void Update_Physics(_float fTimeDelta);
 	void Update_EnvQuery(_float fTimeDelta);
 	void Sync_Camera(_float fTimeDelta);
+	void Collect_StateFlags();
 
 private:
 	// Late Update

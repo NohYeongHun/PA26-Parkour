@@ -15,15 +15,7 @@ public:
 	virtual void OnExit() override;
 
 private:
-	void Check_State() override;
 	void Update_Animations(_float fTimeDelta) override;
-
-private:
-	virtual void SetUp_Animations() override;
-
-
-private:
-	ENV_QUERY_RESULT m_EnvQueryResult = {};
 
 public:
 	static CTraceurClimbMove* Create(class CTraceur* pOwner);

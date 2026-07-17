@@ -19,14 +19,10 @@ private:
 	void Late_Anim_Update(_float fTimeDelta) override;
 
 private:
-	virtual void SetUp_Animations() override;
-
-private:
 	_bool  Ready_Enter();
 	_bool Select_Animation();
 
 private:
-	ENV_QUERY_RESULT m_EnvQueryResult = {};
 #ifdef _DEBUG
 	_float3 m_vCurveP0 = {};
 	_float3 m_vCurveP1 = {};

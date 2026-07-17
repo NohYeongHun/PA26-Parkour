@@ -27,6 +27,12 @@ public:
 	void On_WarpNotify(const _string& strName, _bool isStart,
 	                   _float fWindowEndTrackPos, _bool bTrans, _bool bRot);
 
+	void Begin_CurveWarp(_fvector vStart, _fvector vEnd, _float fApexOffsetY,
+	                     _fvector vLookStart, _fvector vLookTarget);
+	void Update_CurveWarp(_float fCurveT);
+	void End_CurveWarp() { m_isCurveWarping = false; }
+	_bool Is_CurveWarping() const { return m_isCurveWarping; }
+
 #ifdef _DEBUG
 	void Update_DebugTrail();
 	void Reset_DebugTrail();
@@ -34,12 +40,18 @@ public:
 
 private:
 	map<_string, WARP_TARGET> m_WarpTargets;
-	class CModel* m_pOwnerModelCom = { nullptr };
+	class CModel*     m_pOwnerModelCom     = { nullptr };
+	class CTransform* m_pOwnerTransformCom = { nullptr };
+	class CCollider*  m_pOwnerColliderCom  = { nullptr };
+
+	_float3 m_vCurveP0 = {}, m_vCurveP1 = {}, m_vCurveP2 = {};
+	_float3 m_vLookStart = {}, m_vLookTarget = {};
+	_bool   m_isCurveWarping = false;
 
 #ifdef _DEBUG
-	void Draw_DebugTrail();                                  
-	class CTransform* m_pOwnerTransformCom = { nullptr };   
-	vector<_float3>   m_DebugTrail;                        
+	void Draw_DebugTrail();
+	void Draw_DebugCurveWarp();
+	vector<_float3>   m_DebugTrail;
 #endif
 
 public:

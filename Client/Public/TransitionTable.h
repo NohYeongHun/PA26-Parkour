@@ -29,6 +29,7 @@ public:
 	_uint   Get_Version() const { return m_iVersion; }
 	// 반환 포인터는 다음 Reload() 성공 시까지만 유효 - Get_Version() 변경 감지 시 재취득할 것
 	const vector<TRANSITION_RULE_DATA>* Get_Rules(const Engine::StateKey& Key) const;
+	const map<Engine::StateKey, vector<TRANSITION_RULE_DATA>>& Get_All() const { return m_Table; }
 
 private:
 	HRESULT Parse(const _string& strFilePath,

@@ -25,7 +25,7 @@ protected:
     virtual ~CState() = default;
 
 public:
-	_uint Get_CurrentAnimIndex() { return m_iCurrentAnimIdx; }
+	virtual _uint Get_CurrentAnimIndex() { return UINT_MAX; }
 
 public:
     virtual HRESULT Initialize(class CGameObject* pOwner);
@@ -35,26 +35,9 @@ public:
 
     // HSM: 계층적 State 전환 (Category + SubState)
     virtual void Change_State(class CStateMachine* pStateMachine, _uint iCategory, _uint iSubState);
-    
-    
-
-
-protected:
-    _float m_fTrackPosition = {};
-    _bool m_IsAnimationEnd = { false };
-    _uint m_iCurrentAnimIdx = {};
-	
-    // 현재 재생 중인 애니메이션
-    map<_uint, ANIM_DATA> m_Animations;  // 이 State가 사용하는 애니메이션들
 
 protected:
     virtual void Check_State() {};
-    _bool Is_EscapePossible();
-
-	void Add_Animations(_uint iType, const ANIMATION_PLAY_DESC& AnimPlayDesc, const ROOTMOTION_DESC& RootMotionDesc);
-	void Add_ParkourAnimations(_uint iType, const ANIMATION_PLAY_DESC& AnimPlayDesc, const ROOTMOTION_DESC& RootMotionDesc, const PARKOUR_ANIM_DESC& ParkourAnimDesc);
-	void Add_BlendSpace(_uint iType, const BLENDSPACE_1D_DESC& BlendSpaceDesc, const ROOTMOTION_DESC& RootMotionDesc);
-	void Add_BlendSpace(_uint iType, const BLENDSPACE_2D_DESC& BlendSpaceDesc, const ROOTMOTION_DESC& RootMotionDesc);
 
 public:
     virtual void Free() override;

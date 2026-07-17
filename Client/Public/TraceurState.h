@@ -3,18 +3,9 @@
 #include "StateMachine.h"
 #include "Client_Struct.h"
 
-NS_BEGIN(Client)
+namespace Engine { class CAnimationController; }
 
-struct BOUND_TRANSITION
-{
-	vector<_uint>    WhenSlots;
-	vector<_uint>    WhenNotSlots;
-	_uint            iAnimGuard = UINT_MAX;
-	Engine::StateKey Next{ 0, 0 };
-	_uint            iNextAnim  = UINT_MAX;
-	_float           fBlendOverride = -1.f;
-	_bool            isDisabled = false;
-};
+NS_BEGIN(Client)
 
 class CTraceurState abstract : public Engine::CState
 {
@@ -34,7 +25,11 @@ public:
 public:
 	_bool IsVault() const;
 	virtual _bool Play_Animation(_float fTimeDelta);
-	void Latch_NotifyFlag(const _string& strName, _bool isOn) { m_NotifyLatch[strName] = isOn; }
+
+protected:
+	void  Request_Anim(_uint iAnimId);
+	_uint Get_CurrentAnim() const;
+	virtual _uint Get_CurrentAnimIndex() override;
 
 protected:
 	void  Register_Flag(const _string& strName);
@@ -47,19 +42,10 @@ protected:
 	virtual void Update_Animations(_float fTimeDelta) {}
 	virtual void Check_Physics(_float fTimeDelta) {}
 	virtual void Late_Anim_Update(_float fTimeDelta) {}
-	virtual void SetUp_Animations() = 0;
-
-private:
-	void Bind_Rules(const class CTransitionTable* pTable);
-	void Evaluate_Transitions();
+	virtual void SetUp_Animations() {}
 
 protected:
-	map<_string, _uint>      m_FlagSlots;
-	vector<_bool>            m_FlagValues;
-	vector<BOUND_TRANSITION> m_BoundRules;
-	Engine::StateKey         m_SelfKey{ 0, 0 };
-	_uint                    m_iBoundVersion = 0;
-	map<_string, _bool>      m_NotifyLatch;
+	Engine::StateKey m_SelfKey{ 0, 0 };
 
 #ifdef _DEBUG
 	_float4x4 m_StartMatrix = {};
@@ -84,8 +70,20 @@ protected:
 	class CStateMachine*               m_pStateMachinCom     = { nullptr };
 	class CInputController*            m_pInputControllerCom = { nullptr };
 	class CEnvironmentQueryComponent*  m_pEnvQueryCom        = { nullptr };
+	class CParkourDeciderComponent*    m_pDeciderCom         = { nullptr };
 	class CMotionWarpingComponent*     m_pMotionWarpCom      = { nullptr };
 	class CMovementComponent*          m_pMoveCom            = { nullptr };
+	Engine::CAnimationController*      m_pAnimCtrlCom        = { nullptr };
+	class CStateBlackboard*            m_pBlackboardCom      = { nullptr };
+	class CClimbEvaluator*             m_pClimbEvalCom       = { nullptr };
+
+protected:
+	ENV_PERCEPTION   m_Perception{};
+	PARKOUR_DECISION m_Decision{};
+	void Snapshot_Env();
+
+	const ENV_PERCEPTION&   Enter_Perception(void* pArg) const;
+	const PARKOUR_DECISION& Enter_Decision(void* pArg) const;
 
 protected:
 	_uint m_iMoveKey = {};

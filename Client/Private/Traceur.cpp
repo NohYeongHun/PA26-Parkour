@@ -9,10 +9,16 @@
 #include "MovementComponent.h"
 #include "MeshAlignComponent.h"
 #include "EnvironmentQueryComponent.h"
+#include "ParkourDeciderComponent.h"
 #include "MotionWarpingComponent.h"
 #include "TraceurFactory.h"
 #include "TraceurState_Enum.h"
 #include "TraceurState.h"
+#include "TraceurStateNames.h"
+#include "AnimationController.h"
+#include "StateBlackboard.h"
+#include "TransitionEvaluator.h"
+#include "ClimbEvaluator.h"
 
 
 CTraceur::CTraceur(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
@@ -72,6 +78,13 @@ HRESULT CTraceur::Initialize_Clone(void* pArg)
 	if (FAILED(Ready_Variables(pDesc)))
 		return E_FAIL;
 
+	m_pAnimControllerCom->Bind_Parameter("Locomotion1D",   m_pMoveCom->Get_LocomotionWeightPtr());
+	m_pAnimControllerCom->Bind_Parameter2D("Locomotion2D", m_pMoveCom->Get_LocomotionWeight2DPtr());
+	if (FAILED(m_pAnimControllerCom->Load("../../Client/Bin/Data/TraceurAnimations.json",
+		[](const _string& strPath, Engine::StateKey& OutKey)
+		{ return CTraceurStateNames::Resolve_StateKey(strPath, OutKey); })))
+		return E_FAIL;
+
 	CTraceurFactory::Register_Camera(LEVEL::STATIC, m_eCurLevel, this, m_pGameInstance, &m_pSpringCamera);
 	CTraceurFactory::Register_KeyInputs(m_pInputControllerCom, this);
 	CTraceurFactory::Register_States(m_pStateMachineCom, this);
@@ -91,21 +104,55 @@ void CTraceur::Update(_float fTimeDelta)
 {
 	__super::Update(fTimeDelta);
 
+	// 0. 수집 — 지난 프레임 Decider 결정을 Blackboard 플래그로 (舊 각 State의 Apply_DecisionFlags와 동일 시점/데이터)
+	Collect_StateFlags();
 
-	// 1. StateMachine => 이동량, 회전량 생성
+	// 1. StateMachine => 이동량, 회전량 생성 (State는 플래그를 쓰기만 하고 전환하지 않음)
 	m_pStateMachineCom->Update(fTimeDelta);
 
-	// 1.5. 메시 로컬 포즈 보간 — 상태가 요청한 목표 포즈로 수렴 (상태 종료 후에도 지속)
+	if (!m_pTransitionEvalCom->Evaluate())
+		m_pStateBlackboardCom->Clear_Bools();
+
 	m_pMeshAlignCom->Update(fTimeDelta);
 
-	// 2. Physics => 바뀐 이동량에 따른 물리 확인.
 	Update_Physics(fTimeDelta);
 
-	// 3. 환경 탐지.
 	Update_EnvQuery(fTimeDelta);
-	 
-	// 4. 해당 위치를 이용한 카메라 이동.
+
 	Sync_Camera(fTimeDelta);
+}
+
+void CTraceur::Collect_StateFlags()
+{
+	const PARKOUR_DECISION& D = m_pParkourDeciderCom->Get_Decision();
+	CStateBlackboard* pBB = m_pStateBlackboardCom;
+	pBB->Set("Grounded",      D.isGrounded);
+	pBB->Set("Supported",     D.isSupported);
+	pBB->Set("Unsupported",   !D.isSupported);
+	pBB->Set("Falling",       D.isFalling);
+	pBB->Set("Airborne",      !D.isGrounded);
+	pBB->Set("MoveInput",     D.hasMoveInput);
+	pBB->Set("Run",           D.wantsRun);
+	pBB->Set("Jump",          D.wantsJump);
+	pBB->Set("Forward",       D.wantsForward);
+	pBB->Set("Down",          D.wantsDown);
+	pBB->Set("Cmd.LowVault",  D.eCommand == PARKOUR_ACTION::LOW_VAULT);
+	pBB->Set("Cmd.HighVault", D.eCommand == PARKOUR_ACTION::HIGH_VAULT);
+	pBB->Set("Cmd.Mantle",    D.eCommand == PARKOUR_ACTION::MANTLE);
+	pBB->Set("Cmd.Climb",     D.eCommand == PARKOUR_ACTION::CLIMB);
+	pBB->Set("Cmd.Hang",      D.eCommand == PARKOUR_ACTION::HANG);
+	pBB->Set("Cmd.WallRun",   D.eCommand == PARKOUR_ACTION::WALL_RUN);
+
+	// Climb 도메인 플래그 — CLIMB 카테고리에서만 유효
+	if (m_pStateMachineCom->Get_CurrentCategory() == ENUM_CLASS(EStateCategory::CLIMB))
+	{
+		const CLIMB_EVAL& E = m_pClimbEvalCom->Get_Eval();
+		pBB->Set("Fall",    E.shouldFall);
+		pBB->Set("Land",    E.isLanded);
+		pBB->Set("Arrive",  E.isArrived);
+		pBB->Set("Mantle",  E.canMantle);
+		pBB->Set("KneeHit", E.kneeHit);
+	}
 }
 
 void CTraceur::Late_Update(_float fTimeDelta)
@@ -159,15 +206,10 @@ _vector CTraceur::Get_CamRight() const
 	return m_pSpringCamera->Get_RightVector_NoPitch();
 }
 
-// 현재 상태에 Notify 등록시 설정한 Flag를 SetFlag 
 void CTraceur::Notify_StateFlag(const _string& strFlag, _bool isOn)
 {
-	if (nullptr == m_pStateMachineCom)
-		return;
-
-	CTraceurState* pState = dynamic_cast<CTraceurState*>(m_pStateMachineCom->Get_CurrentState());
-	if (pState)
-		pState->Latch_NotifyFlag(strFlag, isOn);
+	if (m_pStateBlackboardCom)
+		m_pStateBlackboardCom->Set_Notify(strFlag, isOn);
 }
 
 // 객체 생성시에 pDesc에 등록된 정보를 가져올 수 있습니다.
@@ -211,7 +253,11 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 	}
 
 	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D3), KEYSTATE::UP))
+	{
 		CGameSystem::GetInstance()->Reload_TransitionTable();
+		CGameSystem::GetInstance()->Reload_ParkourTuning();
+		m_pAnimControllerCom->Reload();
+	}
 
 	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D4), KEYSTATE::UP))
 		m_IsShowTrajectory = !m_IsShowTrajectory;
@@ -245,6 +291,12 @@ void CTraceur::Update_EnvQuery(_float fTimeDelta)
 	}
 
 	m_pEnvQueryCom->Execute();
+
+	m_pParkourDeciderCom->Decide(m_pEnvQueryCom->Get_Perception(), fTimeDelta);
+
+	if (m_pStateMachineCom->Get_CurrentCategory() == ENUM_CLASS(EStateCategory::CLIMB))
+		m_pClimbEvalCom->Evaluate(m_pEnvQueryCom->Get_Perception(),
+			m_pParkourDeciderCom->Get_Decision(), fTimeDelta);
 }
 
 void CTraceur::Sync_Camera(_float fTimeDelta)
@@ -286,6 +338,7 @@ HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 		CRASH("StateMachine");
 
 
+
 	m_vColliderOffSet = { 0.f, 0.8f, 0.f };
 	m_fColliderRadius = 0.4f;
 	m_fColliderHeight = 0.8f;
@@ -302,6 +355,17 @@ HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 		TEXT("Com_Collider"), reinterpret_cast<CComponent**>(&m_pColliderCom), &ColliderDesc)))
 		CRASH("Collider");
 
+	{
+		const _float fRadius = m_pColliderCom->Get_Radius();
+		const _float fTotal  = m_pColliderCom->Get_Height() + 2.f * fRadius;
+		m_BodyProfile.fHeight      = fTotal;
+		m_BodyProfile.fRadius      = fRadius;
+		m_BodyProfile.fKneeHeight  = fTotal * 0.35f;
+		m_BodyProfile.fChestHeight = fTotal * 0.8f;
+		m_BodyProfile.fHeadHeight  = fTotal * 1.1f;
+		m_BodyProfile.fMaxReach    = fTotal * 1.5f;
+	}
+
 	if (FAILED(Ready_EnvQueryComponents(pDesc)))
 		return E_FAIL;
 
@@ -315,14 +379,38 @@ HRESULT CTraceur::Ready_EnvQueryComponents(const CHARACTER_DESC* pDesc)
 	EnvCompDesc.fShapeTraceDistance = 2.f;
 	EnvCompDesc.fLineTraceDistance = 2.f;
 	EnvCompDesc.eTargetLayer = COLLISIONLAYER::PARKOUR;
+	EnvCompDesc.pBodyProfile = &m_BodyProfile;
 	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_EnvQuery"),
 		TEXT("Com_EnvQuery"), reinterpret_cast<CComponent**>(&m_pEnvQueryCom), &EnvCompDesc)))
+		return E_FAIL;
+
+	CParkourDeciderComponent::PARKOUR_DECIDER_DESC DeciderDesc{};
+	DeciderDesc.pOwner = this;
+	DeciderDesc.pBodyProfile = &m_BodyProfile;
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_ParkourDecider"),
+		TEXT("Com_ParkourDecider"), reinterpret_cast<CComponent**>(&m_pParkourDeciderCom), &DeciderDesc)))
 		return E_FAIL;
 
 	CMotionWarpingComponent::MOTION_WARP_DESC WarpDesc{};
 	WarpDesc.pOwner = this;
 	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_MotionWarp"),
 		TEXT("Com_MotionWarp"), reinterpret_cast<CComponent**>(&m_pMotionWarpCom), &WarpDesc)))
+		return E_FAIL;
+
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_StateBlackboard"),
+		TEXT("Com_StateBlackboard"), reinterpret_cast<CComponent**>(&m_pStateBlackboardCom), nullptr)))
+		return E_FAIL;
+
+	CTransitionEvaluator::TRANSITION_EVALUATOR_DESC TransEvalDesc{};
+	TransEvalDesc.pOwner = this;
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_TransitionEvaluator"),
+		TEXT("Com_TransitionEvaluator"), reinterpret_cast<CComponent**>(&m_pTransitionEvalCom), &TransEvalDesc)))
+		return E_FAIL;
+
+	CClimbEvaluator::CLIMB_EVALUATOR_DESC ClimbEvalDesc{};
+	ClimbEvalDesc.pOwner = this;
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_ClimbEvaluator"),
+		TEXT("Com_ClimbEvaluator"), reinterpret_cast<CComponent**>(&m_pClimbEvalCom), &ClimbEvalDesc)))
 		return E_FAIL;
 
 	return S_OK;
@@ -399,7 +487,11 @@ void CTraceur::Free()
 	Safe_Release(m_pRigidbodyCom);
 	Safe_Release(m_pColliderCom);
 	Safe_Release(m_pEnvQueryCom);
+	Safe_Release(m_pParkourDeciderCom);
 	Safe_Release(m_pMotionWarpCom);
+	Safe_Release(m_pAnimControllerCom);
 	Safe_Release(m_pMeshAlignCom);
-
+	Safe_Release(m_pStateBlackboardCom);
+	Safe_Release(m_pTransitionEvalCom);
+	Safe_Release(m_pClimbEvalCom);
 }
