@@ -53,56 +53,117 @@ HRESULT CTransitionEvaluator::Initialize_Clone(void* pArg)
 	return S_OK;
 }
 
+void CTransitionEvaluator::Bind_One(const _string& strKeyName, const TRANSITION_RULE_DATA& Data,
+	vector<BOUND_TRANSITION>& OutBounds, _string& strWarnings)
+{
+	BOUND_TRANSITION Bound{};
+	Bound.iAnimGuard     = Data.iAnimGuard;
+	Bound.Next           = Data.Next;
+	Bound.iNextAnim      = Data.iNextAnim;
+	Bound.fBlendOverride = Data.fBlendOverride;
+
+	auto ResolveGroups = [this, &Bound, &strKeyName, &strWarnings](const vector<_string>& Names, vector<vector<_uint>>& OutGroups)
+	{
+		for (const _string& strName : Names)
+		{
+			vector<_uint> Group = m_pBlackboardCom->Collect_Slots(strName);
+			if (Group.empty())
+			{
+				strWarnings += strKeyName + ": 등록되지 않은 태그 \"" + strName + "\" — 해당 규칙 비활성화\n";
+				Bound.isDisabled = true;
+				return;
+			}
+			OutGroups.push_back(move(Group));
+		}
+	};
+
+	ResolveGroups(Data.WhenFlags, Bound.WhenGroups);
+	if (!Bound.isDisabled)
+		ResolveGroups(Data.WhenNotFlags, Bound.WhenNotGroups);
+
+	if (!Bound.isDisabled)
+		OutBounds.push_back(move(Bound));
+}
+
 void CTransitionEvaluator::Bind_Rules(const CTransitionTable* pTable)
 {
 	m_BoundRules.clear();
+	m_BoundCategoryRules.clear();
 	m_iBoundVersion = pTable->Get_Version();
 
 	_string strWarnings;
 
 	for (const auto& StatePair : pTable->Get_All())
 	{
-		const Engine::StateKey& Key = StatePair.first;
 		vector<BOUND_TRANSITION> Bounds;
-
 		for (const TRANSITION_RULE_DATA& Data : StatePair.second)
-		{
-			BOUND_TRANSITION Bound{};
-			Bound.iAnimGuard     = Data.iAnimGuard;
-			Bound.Next           = Data.Next;
-			Bound.iNextAnim      = Data.iNextAnim;
-			Bound.fBlendOverride = Data.fBlendOverride;
-
-			auto ResolveSlots = [this, &Bound, &Key, &strWarnings](const vector<_string>& Names, vector<_uint>& OutSlots)
-			{
-				for (const _string& strName : Names)
-				{
-					const _uint iSlot = m_pBlackboardCom->Find_Slot(strName);
-					if (iSlot == UINT_MAX)
-					{
-						strWarnings += CTraceurStateNames::To_String(Key)
-							+ ": 등록되지 않은 플래그 \"" + strName + "\" — 해당 규칙 비활성화\n";
-						Bound.isDisabled = true;
-						return;
-					}
-					OutSlots.push_back(iSlot);
-				}
-			};
-
-			ResolveSlots(Data.WhenFlags, Bound.WhenSlots);
-			if (!Bound.isDisabled)
-				ResolveSlots(Data.WhenNotFlags, Bound.WhenNotSlots);
-
-			if (!Bound.isDisabled)
-				Bounds.push_back(move(Bound));
-		}
-
+			Bind_One(CTraceurStateNames::To_String(StatePair.first), Data, Bounds, strWarnings);
 		if (!Bounds.empty())
-			m_BoundRules.emplace(Key, move(Bounds));
+			m_BoundRules.emplace(StatePair.first, move(Bounds));
+	}
+
+	for (const auto& CategoryPair : pTable->Get_AllCategories())
+	{
+		// 경고 표기용 카테고리 이름: To_String은 "CLIMB/Enter" 형식이므로 '/' 앞부분만 사용
+		const _string strFull = CTraceurStateNames::To_String(Engine::StateKey(CategoryPair.first, 0));
+		const _string strCategoryName = strFull.substr(0, strFull.find('/'));
+
+		vector<BOUND_TRANSITION> Bounds;
+		for (const TRANSITION_RULE_DATA& Data : CategoryPair.second)
+			Bind_One(strCategoryName, Data, Bounds, strWarnings);
+		if (!Bounds.empty())
+			m_BoundCategoryRules.emplace(CategoryPair.first, move(Bounds));
 	}
 
 	if (!strWarnings.empty())
 		MessageBoxA(nullptr, ("전환 규칙 바인딩 경고:\n" + strWarnings).c_str(), "TransitionTable Bind", MB_OK);
+}
+
+_bool CTransitionEvaluator::Try_Fire(const BOUND_TRANSITION& Rule, _uint iCurrentAnim, const Engine::StateKey& CurKey)
+{
+	if (Rule.isDisabled)
+		return false;
+	if (Rule.iAnimGuard != UINT_MAX && iCurrentAnim != Rule.iAnimGuard)
+		return false;
+
+	_bool isMatch = true;
+	for (const auto& Group : Rule.WhenGroups)
+	{
+		_bool isAnyOn = false;
+		for (_uint iSlot : Group)
+			if (m_pBlackboardCom->Get(iSlot)) { isAnyOn = true; break; }
+		if (!isAnyOn) { isMatch = false; break; }
+	}
+	if (isMatch)
+	{
+		for (const auto& Group : Rule.WhenNotGroups)
+		{
+			for (_uint iSlot : Group)
+				if (m_pBlackboardCom->Get(iSlot)) { isMatch = false; break; }
+			if (!isMatch) break;
+		}
+	}
+	if (!isMatch)
+		return false;
+
+	if (Rule.fBlendOverride >= 0.f)
+		m_pModelCom->Set_NextBlendOverride(Rule.fBlendOverride);
+
+#ifdef _DEBUG
+	{
+		const _string strFrom = CTraceurStateNames::To_String(CurKey);
+		const _string strTo   = CTraceurStateNames::To_String(Rule.Next);
+		cout << "[Transition] " << strFrom << " -> " << strTo << "\n";
+	}
+#endif
+
+	STATE_ENTER_DESC Desc{};
+	Desc.iAnimIndex     = Rule.iNextAnim;
+	Desc.hasEnvSnapshot = true;
+	Desc.Perception     = m_pEnvQueryCom->Get_Perception();
+	Desc.Decision       = m_pDeciderCom->Get_Decision();
+	m_pStateMachineCom->Change_State(Rule.Next.iCategory, Rule.Next.iSubState, &Desc);
+	return true;
 }
 
 _bool CTransitionEvaluator::Evaluate()
@@ -115,47 +176,22 @@ _bool CTransitionEvaluator::Evaluate()
 		Bind_Rules(pTable);
 
 	const Engine::StateKey CurKey = m_pStateMachineCom->Get_CurrentStateKey();
-	const auto itRules = m_BoundRules.find(CurKey);
-	if (itRules == m_BoundRules.end())
-		return false;
-
 	const _uint iCurrentAnim = m_pAnimCtrlCom->Get_CurrentAnimId();
 
-	for (const BOUND_TRANSITION& Rule : itRules->second)
-	{
-		if (Rule.isDisabled)
-			continue;
-		if (Rule.iAnimGuard != UINT_MAX && iCurrentAnim != Rule.iAnimGuard)
-			continue;
+	// 1. 상태 규칙 (구체적 — 우선)
+	const auto itRules = m_BoundRules.find(CurKey);
+	if (itRules != m_BoundRules.end())
+		for (const BOUND_TRANSITION& Rule : itRules->second)
+			if (Try_Fire(Rule, iCurrentAnim, CurKey))
+				return true;
 
-		_bool isMatch = true;
-		for (_uint iSlot : Rule.WhenSlots)
-			if (!m_pBlackboardCom->Get(iSlot)) { isMatch = false; break; }
-		if (isMatch)
-			for (_uint iSlot : Rule.WhenNotSlots)
-				if (m_pBlackboardCom->Get(iSlot)) { isMatch = false; break; }
-		if (!isMatch)
-			continue;
+	// 2. 카테고리 공통 규칙 (폴백)
+	const auto itCategory = m_BoundCategoryRules.find(CurKey.iCategory);
+	if (itCategory != m_BoundCategoryRules.end())
+		for (const BOUND_TRANSITION& Rule : itCategory->second)
+			if (Try_Fire(Rule, iCurrentAnim, CurKey))
+				return true;
 
-		if (Rule.fBlendOverride >= 0.f)
-			m_pModelCom->Set_NextBlendOverride(Rule.fBlendOverride);
-
-#ifdef _DEBUG
-		{
-			const _string strFrom = CTraceurStateNames::To_String(CurKey);
-			const _string strTo   = CTraceurStateNames::To_String(Rule.Next);
-			cout << "[Transition] " << strFrom << " -> " << strTo << "\n";
-		}
-#endif
-
-		STATE_ENTER_DESC Desc{};
-		Desc.iAnimIndex     = Rule.iNextAnim;
-		Desc.hasEnvSnapshot = true;
-		Desc.Perception     = m_pEnvQueryCom->Get_Perception();
-		Desc.Decision       = m_pDeciderCom->Get_Decision();
-		m_pStateMachineCom->Change_State(Rule.Next.iCategory, Rule.Next.iSubState, &Desc);
-		return true;
-	}
 	return false;
 }
 

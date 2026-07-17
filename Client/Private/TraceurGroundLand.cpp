@@ -10,8 +10,6 @@ HRESULT CTraceurGroundLand::Initialize(CTraceur* pOwner)
 	if (FAILED(__super::Initialize(pOwner)))
 		return E_FAIL;
 
-	Register_Flag("ExitOpen");
-
 	return S_OK;
 }
 

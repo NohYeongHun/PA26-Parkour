@@ -12,10 +12,6 @@ HRESULT CTraceurClimbExit::Initialize(CTraceur* pOwner)
 	if (FAILED(__super::Initialize(pOwner)))
 		return E_FAIL;
 
-	Register_Flag("Mantle");
-	Register_Flag("WallDrop");
-	Register_Flag("HangDropEnd");
-
 	return S_OK;
 }
 
@@ -24,10 +20,9 @@ void CTraceurClimbExit::OnEnter(void* pArg)
 	__super::OnEnter(pArg);
 	m_pColliderCom->Set_Gravity(true);
 
-	Set_Flag("Mantle", Is_MantleAnim());
-	Set_Flag("WallDrop", static_cast<ETraceurClimbExit>(Get_CurrentAnim()) == ETraceurClimbExit::BracedHangDrop);
+	const _bool isMantle = Is_MantleAnim();
 
-	if (Get_Flag("Mantle"))
+	if (isMantle)
 	{
 		_vector vLook = XMVector3Normalize(m_pTransformCom->Get_State(STATE::LOOK));
 
@@ -86,9 +81,7 @@ void CTraceurClimbExit::Late_Anim_Update(_float fTimeDelta)
 
 void CTraceurClimbExit::Check_State()
 {
-	Set_Flag("Mantle", Is_MantleAnim());
-
-	if (Get_Flag("HangDropEnd"))
+	if (Get_Flag("Notify.HangDropEnd"))
 	{
 		m_pColliderCom->Set_Gravity(true);
 	}

@@ -12,12 +12,6 @@ HRESULT CTraceurClimbRun::Initialize(CTraceur* pOwner)
 	if (FAILED(__super::Initialize(pOwner)))
 		return E_FAIL;
 
-	Register_Flag("Jump");
-	Register_Flag("Fall");
-	Register_Flag("Land");
-	Register_Flag("Mantle");
-	Register_Flag("Arrive");
-
 	return S_OK;
 }
 

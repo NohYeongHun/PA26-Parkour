@@ -80,24 +80,6 @@ HRESULT CTraceurState::Initialize(CTraceur* pOwner)
 	m_iMoveKey |= static_cast<_uint>(KEYINPUT::S);
 	m_iMoveKey |= static_cast<_uint>(KEYINPUT::D);
 
-	Register_Flag("AnimEnd");
-	Register_Flag("Grounded");
-	Register_Flag("Supported");
-	Register_Flag("Unsupported");
-	Register_Flag("Falling");
-	Register_Flag("Airborne");
-	Register_Flag("MoveInput");
-	Register_Flag("Run");
-	Register_Flag("Jump");
-	Register_Flag("Forward");
-	Register_Flag("Down");
-	Register_Flag("Cmd.LowVault");
-	Register_Flag("Cmd.HighVault");
-	Register_Flag("Cmd.Mantle");
-	Register_Flag("Cmd.Climb");
-	Register_Flag("Cmd.Hang");
-	Register_Flag("Cmd.WallRun");
-
 	return S_OK;
 }
 
@@ -143,7 +125,7 @@ void CTraceurState::OnUpdate(_float fTimeDelta)
 	Update_Animations(fTimeDelta);
 	Late_Anim_Update(fTimeDelta);
 	Check_Physics(fTimeDelta);
-	Set_Flag("AnimEnd", m_pAnimCtrlCom->IsAnimEnd());
+	Set_Flag("Anim.End", m_pAnimCtrlCom->IsAnimEnd());
 }
 
 void CTraceurState::OnExit()
@@ -162,11 +144,6 @@ _bool CTraceurState::Play_Animation(_float fTimeDelta)
 {
 	m_pAnimCtrlCom->Tick(fTimeDelta);
 	return true;
-}
-
-void CTraceurState::Register_Flag(const _string& strName)
-{
-	m_pBlackboardCom->Register_Bool(strName);
 }
 
 void CTraceurState::Set_Flag(const _string& strName, _bool isOn)

@@ -26,7 +26,6 @@ public:
 	const BODY_PROFILE* Get_BodyProfile() const { return &m_BodyProfile; }
 
 public:
-	// StateFlag 애님 노티파이 콜백 진입점 — 현재 상태의 래치로 포워딩
 	void Notify_StateFlag(const _string& strFlag, _bool isOn);
 
 public:
@@ -89,6 +88,20 @@ private:
 	void Update_EnvQuery(_float fTimeDelta);
 	void Sync_Camera(_float fTimeDelta);
 	void Collect_StateFlags();
+	void Bind_CollectSlots();
+
+	// Collect_StateFlags가 매 프레임 쓰는 슬롯 (map lookup 제거)
+	struct COLLECT_SLOTS
+	{
+		_uint Grounded = UINT_MAX, Supported = UINT_MAX, Unsupported = UINT_MAX,
+		      Falling = UINT_MAX, Airborne = UINT_MAX;
+		_uint Move = UINT_MAX, Run = UINT_MAX, Jump = UINT_MAX,
+		      Forward = UINT_MAX, Down = UINT_MAX;
+		_uint CmdLowVault = UINT_MAX, CmdHighVault = UINT_MAX, CmdMantle = UINT_MAX,
+		      CmdClimb = UINT_MAX, CmdHang = UINT_MAX, CmdWallRun = UINT_MAX;
+		_uint EvalFall = UINT_MAX, EvalLand = UINT_MAX, EvalArrive = UINT_MAX,
+		      EvalMantle = UINT_MAX, EvalKneeHit = UINT_MAX;
+	} m_CollectSlots;
 
 private:
 	// Late Update

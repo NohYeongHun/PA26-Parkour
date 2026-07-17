@@ -58,6 +58,7 @@
     <ClCompile Include="..\Private\EnvironmentQueryComponent.cpp" />
     <ClCompile Include="..\Private\MotionWarpingComponent.cpp" />
     <ClCompile Include="..\Private\StateBlackboard.cpp" />
+    <ClCompile Include="..\Private\TagRegistry.cpp" />
     <ClCompile Include="..\Private\TransitionEvaluator.cpp" />
     <ClCompile Include="..\Private\ClimbEvaluator.cpp" />
     <ClCompile Include="..\Private\TraceurFactory.cpp" />
@@ -115,6 +116,7 @@
     <ClInclude Include="..\Public\EnvironmentQueryComponent.h" />
     <ClInclude Include="..\Public\MotionWarpingComponent.h" />
     <ClInclude Include="..\Public\StateBlackboard.h" />
+    <ClInclude Include="..\Public\TagRegistry.h" />
     <ClInclude Include="..\Public\TransitionEvaluator.h" />
     <ClInclude Include="..\Public\ClimbEvaluator.h" />
     <ClInclude Include="..\Public\ParkourMath.h" />

@@ -216,16 +216,18 @@ TrajectorySample TrajectorySample::TrajectoryLerp(const TrajectorySample& Other,
 	return Result;
 }
 
+_float CModel::Get_Duration(const _string& strAnimName)
+{
+	return m_Animations.at(strAnimName)->Get_Duration();
+}
+
 #ifdef _DEBUG
 _float* CModel::Get_TrackPositionPtr(const _string& strAnimName)
 {
 	return m_Animations.at(strAnimName)->Get_TrackPositionPtr();
 }
 
-_float CModel::Get_Duration(const _string& strAnimName)
-{
-	return m_Animations.at(strAnimName)->Get_Duration();
-}
+
 
 HRESULT CModel::Bind_Bone_to_GUI(_int& iBoneIndex, _fmatrix TransformMatrix)
 {

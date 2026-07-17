@@ -10,9 +10,6 @@ HRESULT CTraceurGroundStand::Initialize(CTraceur* pOwner)
 	if (FAILED(__super::Initialize(pOwner)))
 		return E_FAIL;
 
-	Register_Flag("ClimbingStand");
-	Register_Flag("StandingIdleToActionIdle");
-
 	return S_OK;
 }
 
@@ -20,9 +17,6 @@ void CTraceurGroundStand::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
 	m_pColliderCom->Set_Gravity(true);
-
-	Set_Flag("ClimbingStand", static_cast<ETraceurGroundStand>(Get_CurrentAnim()) == ETraceurGroundStand::ClimbingStand);
-	Set_Flag("StandingIdleToActionIdle", static_cast<ETraceurGroundStand>(Get_CurrentAnim()) == ETraceurGroundStand::StandingIdleToActionIdle);
 
 #ifdef _DEBUG
 	_float4 vVector = {};

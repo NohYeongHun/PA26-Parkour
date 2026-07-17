@@ -33,9 +33,9 @@ void CTraceurGroundMove::Update_Animations(_float fTimeDelta)
 	CTraceurState::Play_Animation(fTimeDelta);
 
 	_float fTargetWeight = 0.f;
-	if (Get_Flag("Run"))
+	if (Get_Flag("Intent.Run"))
 		fTargetWeight = 1.5f;
-	else if (Get_Flag("MoveInput"))
+	else if (Get_Flag("Intent.Move"))
 		fTargetWeight = 1.f;
 
 	_vector vWorldDir = CMovementComponent::Calc_GroundDir(

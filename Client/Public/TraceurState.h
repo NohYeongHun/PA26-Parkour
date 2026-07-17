@@ -32,7 +32,6 @@ protected:
 	virtual _uint Get_CurrentAnimIndex() override;
 
 protected:
-	void  Register_Flag(const _string& strName);
 	void  Set_Flag(const _string& strName, _bool isOn);
 	_bool Get_Flag(const _string& strName) const;
 	void  Clear_Flags();

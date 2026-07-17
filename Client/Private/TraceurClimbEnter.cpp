@@ -1,4 +1,4 @@
-#include "ClientPch.h"
+﻿#include "ClientPch.h"
 #include "TraceurClimbEnter.h"
 #include "AnimationController.h"
 #include "Traceur.h"
@@ -40,6 +40,7 @@ void CTraceurClimbEnter::Update_Animations(_float fTimeDelta)
 
 void CTraceurClimbEnter::Late_Anim_Update(_float fTimeDelta)
 {
+
 	_float fCurveT = min(m_pAnimCtrlCom->Get_TrackPosition() / m_pModelCom->Get_Duration(
 		m_pAnimCtrlCom->Get_CurrentAnimData()->AnimPlayDesc.strAnimationName), 1.f);
 	m_pMotionWarpCom->Update_CurveWarp(fCurveT);

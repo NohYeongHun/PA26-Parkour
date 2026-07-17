@@ -168,6 +168,9 @@
     <ClCompile Include="..\Private\TransitionTable.cpp">
       <Filter>04. Component\State</Filter>
     </ClCompile>
+    <ClCompile Include="..\Private\TagRegistry.cpp">
+      <Filter>04. Component\State</Filter>
+    </ClCompile>
     <ClCompile Include="..\Private\GroundState.cpp">
       <Filter>04. Component\State\Ground</Filter>
     </ClCompile>
@@ -318,6 +321,9 @@
       <Filter>04. Component\State</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\TransitionTable.h">
+      <Filter>04. Component\State</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TagRegistry.h">
       <Filter>04. Component\State</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\GroundState.h">

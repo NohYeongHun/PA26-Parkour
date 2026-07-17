@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Component.h"
 #include "StateMachine.h"
 
@@ -8,8 +8,8 @@ NS_BEGIN(Client)
 
 struct BOUND_TRANSITION
 {
-	vector<_uint>    WhenSlots;
-	vector<_uint>    WhenNotSlots;
+	vector<vector<_uint>> WhenGroups;
+	vector<vector<_uint>> WhenNotGroups;
 	_uint            iAnimGuard = UINT_MAX;
 	Engine::StateKey Next{ 0, 0 };
 	_uint            iNextAnim  = UINT_MAX;
@@ -37,7 +37,10 @@ public:
 	_bool Evaluate();
 
 private:
-	void Bind_Rules(const class CTransitionTable* pTable);
+	void  Bind_Rules(const class CTransitionTable* pTable);
+	void  Bind_One(const _string& strKeyName, const struct TRANSITION_RULE_DATA& Data,
+	               vector<BOUND_TRANSITION>& OutBounds, _string& strWarnings);
+	_bool Try_Fire(const BOUND_TRANSITION& Rule, _uint iCurrentAnim, const Engine::StateKey& CurKey);
 
 private:
 	class CStateBlackboard*           m_pBlackboardCom   = { nullptr };
@@ -48,6 +51,7 @@ private:
 	Engine::CAnimationController*     m_pAnimCtrlCom     = { nullptr };
 
 	map<Engine::StateKey, vector<BOUND_TRANSITION>> m_BoundRules;
+	map<_uint, vector<BOUND_TRANSITION>>            m_BoundCategoryRules;
 	_uint m_iBoundVersion = 0;
 
 public:

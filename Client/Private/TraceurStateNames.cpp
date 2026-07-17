@@ -120,6 +120,17 @@ _bool CTraceurStateNames::Resolve_StateKey(const _string& strPath, StateKey& Out
 	return true;
 }
 
+_bool CTraceurStateNames::Resolve_Category(const _string& strName, _uint& iOutCategory)
+{
+	const auto& Categories = Category_Table();
+	const auto it = Categories.find(strName);
+	if (it == Categories.end())
+		return false;
+
+	iOutCategory = it->second;
+	return true;
+}
+
 _bool CTraceurStateNames::Resolve_AnimIndex(const StateKey& Key, const _string& strAnim, _uint& iOutIndex)
 {
 	const auto& Anims = Anim_Table();

@@ -10,8 +10,6 @@ HRESULT CTraceurAirJump::Initialize(CTraceur* pOwner)
 	if (FAILED(__super::Initialize(pOwner)))
 		return E_FAIL;
 
-	Register_Flag("ExitOpen");
-
 	return S_OK;
 }
 
@@ -33,9 +31,9 @@ void CTraceurAirJump::Update_Animations(_float fTimeDelta)
 	__super::Play_Animation(fTimeDelta);
 
 	_float fTargetWeight = 0.f;
-	if (Get_Flag("Run"))
+	if (Get_Flag("Intent.Run"))
 		fTargetWeight = 0.5f;
-	else if (Get_Flag("MoveInput"))
+	else if (Get_Flag("Intent.Move"))
 		fTargetWeight = 0.2f;
 
 	_vector vWorldDir = CMovementComponent::Calc_GroundDir(

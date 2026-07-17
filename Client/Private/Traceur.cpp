@@ -17,6 +17,7 @@
 #include "TraceurStateNames.h"
 #include "AnimationController.h"
 #include "StateBlackboard.h"
+#include "TagRegistry.h"
 #include "TransitionEvaluator.h"
 #include "ClimbEvaluator.h"
 
@@ -58,7 +59,9 @@ HRESULT CTraceur::Initialize_Clone(void* pArg)
 	if (FAILED(Ready_Components(pDesc)))
 		return E_FAIL;
 
-	
+	if (FAILED(CTagRegistry::Load("../../Client/Bin/Data/TraceurTags.json", m_pStateBlackboardCom)))
+		return E_FAIL;
+	Bind_CollectSlots();
 
 	m_pModelCom->Register_AllNotifies(
 		pDesc->strNotfiyFolderPath,
@@ -122,36 +125,69 @@ void CTraceur::Update(_float fTimeDelta)
 	Sync_Camera(fTimeDelta);
 }
 
+void CTraceur::Bind_CollectSlots()
+{
+	CStateBlackboard* pBB = m_pStateBlackboardCom;
+	auto Bind = [pBB](const _string& strName)
+	{
+		const _uint iSlot = pBB->Find_Slot(strName);
+		ASSERT_CRASH(iSlot != UINT_MAX);   // TraceurTags.json 누락 검출
+		return iSlot;
+	};
+
+	m_CollectSlots.Grounded     = Bind("Phys.Grounded");
+	m_CollectSlots.Supported    = Bind("Phys.Supported");
+	m_CollectSlots.Unsupported  = Bind("Phys.Unsupported");
+	m_CollectSlots.Falling      = Bind("Phys.Falling");
+	m_CollectSlots.Airborne     = Bind("Phys.Airborne");
+	m_CollectSlots.Move         = Bind("Intent.Move");
+	m_CollectSlots.Run          = Bind("Intent.Run");
+	m_CollectSlots.Jump         = Bind("Intent.Jump");
+	m_CollectSlots.Forward      = Bind("Intent.Forward");
+	m_CollectSlots.Down         = Bind("Intent.Down");
+	m_CollectSlots.CmdLowVault  = Bind("Cmd.LowVault");
+	m_CollectSlots.CmdHighVault = Bind("Cmd.HighVault");
+	m_CollectSlots.CmdMantle    = Bind("Cmd.Mantle");
+	m_CollectSlots.CmdClimb     = Bind("Cmd.Climb");
+	m_CollectSlots.CmdHang      = Bind("Cmd.Hang");
+	m_CollectSlots.CmdWallRun   = Bind("Cmd.WallRun");
+	m_CollectSlots.EvalFall     = Bind("Eval.Climb.Fall");
+	m_CollectSlots.EvalLand     = Bind("Eval.Climb.Land");
+	m_CollectSlots.EvalArrive   = Bind("Eval.Climb.Arrive");
+	m_CollectSlots.EvalMantle   = Bind("Eval.Climb.Mantle");
+	m_CollectSlots.EvalKneeHit  = Bind("Eval.Climb.KneeHit");
+}
+
 void CTraceur::Collect_StateFlags()
 {
 	const PARKOUR_DECISION& D = m_pParkourDeciderCom->Get_Decision();
 	CStateBlackboard* pBB = m_pStateBlackboardCom;
-	pBB->Set("Grounded",      D.isGrounded);
-	pBB->Set("Supported",     D.isSupported);
-	pBB->Set("Unsupported",   !D.isSupported);
-	pBB->Set("Falling",       D.isFalling);
-	pBB->Set("Airborne",      !D.isGrounded);
-	pBB->Set("MoveInput",     D.hasMoveInput);
-	pBB->Set("Run",           D.wantsRun);
-	pBB->Set("Jump",          D.wantsJump);
-	pBB->Set("Forward",       D.wantsForward);
-	pBB->Set("Down",          D.wantsDown);
-	pBB->Set("Cmd.LowVault",  D.eCommand == PARKOUR_ACTION::LOW_VAULT);
-	pBB->Set("Cmd.HighVault", D.eCommand == PARKOUR_ACTION::HIGH_VAULT);
-	pBB->Set("Cmd.Mantle",    D.eCommand == PARKOUR_ACTION::MANTLE);
-	pBB->Set("Cmd.Climb",     D.eCommand == PARKOUR_ACTION::CLIMB);
-	pBB->Set("Cmd.Hang",      D.eCommand == PARKOUR_ACTION::HANG);
-	pBB->Set("Cmd.WallRun",   D.eCommand == PARKOUR_ACTION::WALL_RUN);
+	pBB->Set(m_CollectSlots.Grounded,     D.isGrounded);
+	pBB->Set(m_CollectSlots.Supported,    D.isSupported);
+	pBB->Set(m_CollectSlots.Unsupported,  !D.isSupported);
+	pBB->Set(m_CollectSlots.Falling,      D.isFalling);
+	pBB->Set(m_CollectSlots.Airborne,     !D.isGrounded);
+	pBB->Set(m_CollectSlots.Move,         D.hasMoveInput);
+	pBB->Set(m_CollectSlots.Run,          D.wantsRun);
+	pBB->Set(m_CollectSlots.Jump,         D.wantsJump);
+	pBB->Set(m_CollectSlots.Forward,      D.wantsForward);
+	pBB->Set(m_CollectSlots.Down,         D.wantsDown);
+	pBB->Set(m_CollectSlots.CmdLowVault,  D.eCommand == PARKOUR_ACTION::LOW_VAULT);
+	pBB->Set(m_CollectSlots.CmdHighVault, D.eCommand == PARKOUR_ACTION::HIGH_VAULT);
+	pBB->Set(m_CollectSlots.CmdMantle,    D.eCommand == PARKOUR_ACTION::MANTLE);
+	pBB->Set(m_CollectSlots.CmdClimb,     D.eCommand == PARKOUR_ACTION::CLIMB);
+	pBB->Set(m_CollectSlots.CmdHang,      D.eCommand == PARKOUR_ACTION::HANG);
+	pBB->Set(m_CollectSlots.CmdWallRun,   D.eCommand == PARKOUR_ACTION::WALL_RUN);
 
 	// Climb 도메인 플래그 — CLIMB 카테고리에서만 유효
 	if (m_pStateMachineCom->Get_CurrentCategory() == ENUM_CLASS(EStateCategory::CLIMB))
 	{
 		const CLIMB_EVAL& E = m_pClimbEvalCom->Get_Eval();
-		pBB->Set("Fall",    E.shouldFall);
-		pBB->Set("Land",    E.isLanded);
-		pBB->Set("Arrive",  E.isArrived);
-		pBB->Set("Mantle",  E.canMantle);
-		pBB->Set("KneeHit", E.kneeHit);
+		pBB->Set(m_CollectSlots.EvalFall,    E.shouldFall);
+		pBB->Set(m_CollectSlots.EvalLand,    E.isLanded);
+		pBB->Set(m_CollectSlots.EvalArrive,  E.isArrived);
+		pBB->Set(m_CollectSlots.EvalMantle,  E.canMantle);
+		pBB->Set(m_CollectSlots.EvalKneeHit, E.kneeHit);
 	}
 }
 

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Component.h"
 
 NS_BEGIN(Client)
@@ -16,6 +16,8 @@ public:
 public:
 	_uint Register_Bool(const _string& strName);
 	_uint Find_Slot(const _string& strName) const;
+
+	vector<_uint> Collect_Slots(const _string& strPrefix) const;
 
 	void  Set(_uint iSlot, _bool isOn);
 	_bool Get(_uint iSlot) const;

@@ -10,9 +10,6 @@ HRESULT CTraceurClimbMove::Initialize(CTraceur* pOwner)
 	if (FAILED(__super::Initialize(pOwner)))
 		return E_FAIL;
 
-	Register_Flag("KneeHit");
-	Register_Flag("Mantle");
-
 	return S_OK;
 }
 

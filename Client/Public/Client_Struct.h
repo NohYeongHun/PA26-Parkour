@@ -106,7 +106,7 @@ namespace Client
 		ACTION_VERDICT Verdicts[ENUM_CLASS(PARKOUR_ACTION::END)];
 		_uint          iCandidateFlag = 0;
 		_float         fApproachDot = 0.f;
-		PARKOUR_ACTION eBestEnvAction = PARKOUR_ACTION::NONE; // 舊 eBestAction — 환경상 최선 (입력 무관)
+		PARKOUR_ACTION eBestEnvAction = PARKOUR_ACTION::NONE;
 		_bool          isValid = false;
 		_bool          isTopReached = false;
 		PARKOUR_ACTION eCommand = PARKOUR_ACTION::NONE;
@@ -121,23 +121,23 @@ namespace Client
 	}PARKOUR_DECISION;
 
 	typedef struct tagObstacleGeometry {
-		_bool   hasFront = false;          // ↓ 전면 그룹
+		_bool   hasFront = false;          
 		_float3 vFrontHitPos{};
 		_float3 vFrontNormal{};
-		_float3 vTraversalDir{};           // 장애물을 향하는 수평 진행 축 (전면 Normal 기반)
+		_float3 vTraversalDir{};           
 		_float  fFrontDistance = 0.f;
 
-		_bool   isTopReachable = false;    // ↓ 상단 그룹
-		_float3 vTopEdgePos{};             // 앞모서리 (모션워핑/커브 타겟)
+		_bool   isTopReachable = false;    
+		_float3 vTopEdgePos{};             
 		_float3 vTopNormal{};
 		_float3 vTopStandPos;
-		_float  fObstacleHeight = 0.f;     // 캐릭터 발 기준 상단면 높이
+		_float  fObstacleHeight = 0.f;     
 
-		_bool   hasDepth = false;          // ↓ 두께·폭 그룹
-		_float  fDepth = 0.f;              // 전면에서 뒷모서리까지
-		_float  fTopWidth = 0.f;           // 상단면 횡폭 (Task 6에서 측정)
+		_bool   hasDepth = false;          
+		_float  fDepth = 0.f;              
+		_float  fTopWidth = 0.f;           
 
-		_bool   hasLandingSpace = false;   // ↓ 착지 그룹
+		_bool   hasLandingSpace = false;   
 		_float3 vLandingPos{};
 	}OBSTACLE_GEOMETRY;
 

@@ -126,11 +126,12 @@ public:
 	ROOT_MOTION_DELTA Extract_RootMotion(_float fStartTrackPos, _float fEndTrackPos);
 
 	_float Get_AnimProgress(const _string& strAnimName);
+	_float Get_Duration(const _string& strAnimName);
 #ifdef _DEBUG
 public:
 	const vector<_string>& Get_AnimationNames() const { return m_AnimationNames; }
 	_float* Get_TrackPositionPtr(const _string& strAnimName);
-	_float								Get_Duration(const _string& strAnimName);
+	
 	
 
 	HRESULT Bind_Bone_to_GUI(_int& iBoneIndex, _fmatrix TransformMatrix);
