@@ -79,7 +79,6 @@ void CEnvironmentQueryComponent::Execute()
 #endif // _DEBUG
 }
 
-// [1단계] Owner의 Shape로 전방 충돌 가능성과 디자이너 태그를 파악합니다.
 _bool CEnvironmentQueryComponent::Detect_Obstacle()
 {
 	SHAPE_CAST_HIT ShapeHit{};
@@ -131,7 +130,6 @@ LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray(const _fvector& vStart, cons
 	return lineTrace;
 }
 
-// [2단계] 수평 레이 5개의 히트 정보와 높이 패턴 비트마스크를 기록합니다.
 void CEnvironmentQueryComponent::Scan_Obstacle()
 {
 	OBSTACLE_SCAN& Scan = m_Perception.Scan;
@@ -160,7 +158,6 @@ void CEnvironmentQueryComponent::Scan_Obstacle()
 	if (Scan.HeadHit.isHit)  Scan.iHeightFlag |= ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD);
 }
 
-// 수직 레이로 장애물의 상단면·두께·착지 공간을 추출합니다.
 void CEnvironmentQueryComponent::Measure_Geometry()
 {
 	const OBSTACLE_SCAN& Scan = m_Perception.Scan;
@@ -174,11 +171,9 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 
 	OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
 
-	// 가장 높이 히트한 수평 레이의 지점에서 안쪽으로 밀어 Down Ray 시작점 결정
 	const LINE_TRACE_HIT& TopHit = Scan.HeadHit.isHit ? Scan.HeadHit
 		: Scan.ChestHit.isHit ? Scan.ChestHit : Scan.KneeHit;
 
-	// 전면 히트: 가장 낮은 수평 레이
 	const LINE_TRACE_HIT& FrontHit = Scan.KneeHit.isHit ? Scan.KneeHit
 		: Scan.ChestHit.isHit ? Scan.ChestHit : Scan.HeadHit;
 
@@ -230,7 +225,7 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 		Geo.vTopEdgePos = _float3(XMVectorGetX(vFrontXZ), TopDownRay.vHitPosition.y, XMVectorGetZ(vFrontXZ));
 	}
 	else
-		Geo.vTopEdgePos = TopDownRay.vHitPosition; // 전면 정보가 없으면 종전 방식 폴백
+		Geo.vTopEdgePos = TopDownRay.vHitPosition;
 
 	_vector vSideAxis = XMVector3Normalize(XMVector3Cross(XMVectorSet(0.f, 1.f, 0.f, 0.f), vTraversal));
 	Geo.fTopWidth = 0.f;
@@ -249,8 +244,8 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 	_float fTopSurfaceY = TopDownRay.vHitPosition.y;
 	_float fSampleStep  = fRadius;
 
-	_float fLastHit   = 0.f;  // vStartXZ 기준, 마지막으로 상단면이 확인된 전방 거리
-	_float fFirstMiss = -1.f; // 첫 미스 거리 (-1 = 탐지 범위 내 미스 없음)
+	_float fLastHit   = 0.f; 
+	_float fFirstMiss = -1.f;
 	for (_uint i = 1; i <= FDEPTH_SAMPLE_COUNT; ++i)
 	{
 		_float  fDist   = fSampleStep * static_cast<_float>(i);
@@ -268,7 +263,6 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 
 	if (fFirstMiss < 0.f)
 	{
-		// 탐지 범위 끝까지 상단면이 이어짐 — 두께는 하한값만 보장 (기존과 동일한 값)
 		Geo.fDepth   = fInset + fSampleStep * static_cast<_float>(FDEPTH_SAMPLE_COUNT);
 		Geo.hasDepth = true;
 	}
@@ -310,13 +304,10 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 			Geo.vTopStandPos = _float3(XMVectorGetX(vStandXZ), fTopSurfaceY, XMVectorGetZ(vStandXZ));
 	}
 
-
-	// 착지점 탐지 — 뒷모서리 너머 아래로 긴 레이 1개 + 평탄성 검증 레이 2개
 	_vector vLandXZ    = vStartXZ + vTraversal * (Geo.fDepth + fRadius);
 	_vector vLandStart = XMVectorSetY(vLandXZ, fTopSurfaceY + 0.05f);
 	_vector vLandEnd   = XMVectorSetY(vLandXZ, XMVectorGetY(vBottom) - fTotalHeight);
 
-	// 바닥은 MAP 레이어 폴백
 	LINE_TRACE_HIT LandRayHit = Cast_Ray(vLandStart, vLandEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
 	if (false == LandRayHit.isHit)
 		LandRayHit = Cast_Ray(vLandStart, vLandEnd, ENUM_CLASS(COLLISIONLAYER::MAP), RAY_KIND::MEASURE);
@@ -326,7 +317,6 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 	{
 		Geo.vLandingPos = LandRayHit.vHitPosition;
 
-		// 착지점 전후가 낭떠러지·급경사면 착지 공간으로 보지 않는다
 		const _float ProbeOffsets[2] = { -fRadius * 0.75f, fRadius * 0.75f };
 		for (_uint i = 0; i < 2; ++i)
 		{

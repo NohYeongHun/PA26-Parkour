@@ -20,7 +20,7 @@ void CTraceurClimbEnter::OnEnter(void* pArg)
 	__super::OnEnter(pArg);
 	m_pColliderCom->Set_Gravity(false);
 
-	if (!Ready_Enter())
+	if (!Ready_Enter(pArg))
 	{
 		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move));
 		return;
@@ -45,15 +45,18 @@ void CTraceurClimbEnter::Late_Anim_Update(_float fTimeDelta)
 	m_pMotionWarpCom->Update_CurveWarp(fCurveT);
 }
 
-_bool CTraceurClimbEnter::Ready_Enter()
+_bool CTraceurClimbEnter::Ready_Enter(void* pArg)
 {
-	if (!m_Decision.isValid || !m_Perception.Scan.HeadHit.isHit)
+	const PARKOUR_DECISION& Decision   = Enter_Decision(pArg);
+	const ENV_PERCEPTION&   Perception = Enter_Perception(pArg);
+
+	if (!Decision.isValid || !Perception.Scan.HeadHit.isHit)
 		return false;
 
 	if (!Select_Animation())
 		return false;
 
-	const OBSTACLE_SCAN& Scan = m_Perception.Scan;
+	const OBSTACLE_SCAN& Scan = Perception.Scan;
 	_float fColliderRadius = m_pColliderCom->Get_Radius();
 
 	_vector vP0         = m_pTransformCom->Get_State(Engine::STATE::POSITION);

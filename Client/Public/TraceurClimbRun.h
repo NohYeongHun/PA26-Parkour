@@ -18,7 +18,7 @@ private:
 	void Update_Animations(_float fTimeDelta) override;
 
 private:
-	_bool Ready_WallRun();
+	_bool Ready_WallRun(void* pArg);
 
 #ifdef _DEBUG
 private:

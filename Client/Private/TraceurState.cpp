@@ -105,22 +105,13 @@ void CTraceurState::OnEnter(void* pArg)
 {
 	CState::OnEnter(pArg);
 
-	_uint iReqAnim = 0; // enterAnim 미지정 시 기본값 id=0
+	_uint iReqAnim = 0;
 	if (pArg)
 	{
 		auto* pDesc = static_cast<STATE_ENTER_DESC*>(pArg);
 		if (pDesc->iAnimIndex != UINT_MAX)
 			iReqAnim = pDesc->iAnimIndex;
-		if (pDesc->hasEnvSnapshot)
-		{
-			m_Perception = pDesc->Perception;
-			m_Decision   = pDesc->Decision;
-		}
-		else
-			Snapshot_Env();
 	}
-	else
-		Snapshot_Env();
 
 	Request_Anim(iReqAnim); // 항상 Request — 파생 OnEnter의 Select_Animation이 이후 덮어씀
 
@@ -215,12 +206,6 @@ const PARKOUR_DECISION& CTraceurState::Enter_Decision(void* pArg) const
 	if (pDesc && pDesc->hasEnvSnapshot)
 		return pDesc->Decision;
 	return m_pDeciderCom->Get_Decision();
-}
-
-void CTraceurState::Snapshot_Env()
-{
-	m_Perception = m_pEnvQueryCom->Get_Perception();
-	m_Decision   = m_pDeciderCom->Get_Decision();
 }
 
 void CTraceurState::Request_Anim(_uint iAnimId)

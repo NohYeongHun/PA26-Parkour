@@ -27,13 +27,13 @@ void CTraceurClimbRun::OnEnter(void* pArg)
 	m_pColliderCom->Set_Gravity(false);
 	m_pMoveCom->Set_MovementType(MOVEMENT_TYPE::CLIMB_RUN);
 
-	if (!Ready_WallRun())
+	if (!Ready_WallRun(pArg))
 	{
 		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move));
 		return;
 	}
 
-	const OBSTACLE_SCAN& Scan = m_Perception.Scan;
+	const OBSTACLE_SCAN& Scan = Enter_Perception(pArg).Scan;
 
 	// 1. 벽의 Normal을 구합니다.
 	_vector vN = XMVector3Normalize(XMLoadFloat3(&Scan.ChestHit.vHitNormal));
@@ -70,9 +70,9 @@ void CTraceurClimbRun::OnExit()
 	m_pMoveCom->Set_MovementType(MOVEMENT_TYPE::GROUND);
 }
 
-_bool CTraceurClimbRun::Ready_WallRun()
+_bool CTraceurClimbRun::Ready_WallRun(void* pArg)
 {
-	const OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
+	const OBSTACLE_GEOMETRY& Geo = Enter_Perception(pArg).Geometry;
 	if (!Geo.hasFront)
 		return false;
 
@@ -81,10 +81,9 @@ _bool CTraceurClimbRun::Ready_WallRun()
 
 void CTraceurClimbRun::Update_Animations(_float fTimeDelta)
 {
-	Snapshot_Env();
 	CTraceurState::Play_Animation(fTimeDelta);
 
-	const OBSTACLE_SCAN& Scan = m_Perception.Scan;
+	const OBSTACLE_SCAN& Scan = m_pEnvQueryCom->Get_Perception().Scan;
 	ACTORDIR eDir = CMovementComponent::Calculate_Direction(m_pInputControllerCom);
 
 	_vector vNormal = XMLoadFloat3(&m_pClimbEvalCom->Get_Eval().vClimbNormal);

@@ -19,7 +19,7 @@ private:
 	void Late_Anim_Update(_float fTimeDelta) override;
 
 private:
-	_bool  Ready_Enter();
+	_bool  Ready_Enter(void* pArg);
 	_bool  Select_Animation();
 
 #ifdef _DEBUG

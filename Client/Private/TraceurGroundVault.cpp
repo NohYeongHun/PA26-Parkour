@@ -18,7 +18,7 @@ void CTraceurGroundVault::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
 
-	if (!Ready_Enter())
+	if (!Ready_Enter(pArg))
 	{
 		m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Move));
 		return;
@@ -48,15 +48,15 @@ void CTraceurGroundVault::Late_Anim_Update(_float fTimeDelta)
 	
 }
 
-_bool CTraceurGroundVault::Ready_Enter()
+_bool CTraceurGroundVault::Ready_Enter(void* pArg)
 {
-	if (!m_Decision.isValid)
+	if (!Enter_Decision(pArg).isValid)
 		return false;
 
 	if (!Select_Animation())
 		return false;
 
-	const OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
+	const OBSTACLE_GEOMETRY& Geo = Enter_Perception(pArg).Geometry;
 	m_pMotionWarpCom->Clear_WarpTargets();
 	if (Geo.isTopReachable)
 		m_pMotionWarpCom->Set_WarpTarget("VaultTop", Geo.vTopEdgePos);
@@ -79,7 +79,7 @@ _bool CTraceurGroundVault::Select_Animation()
 #ifdef _DEBUG
 void CTraceurGroundVault::Draw_Debug()
 {
-	const OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
+	const OBSTACLE_GEOMETRY& Geo = m_pEnvQueryCom->Get_Perception().Geometry;
 	CGameInstance* pGI = CGameInstance::GetInstance();
 
 	pGI->Add_DebugSphere(XMLoadFloat3(&Geo.vTopEdgePos), 0.3f, JPH::Color(0.f, 255.f, 255.f, 1.f));

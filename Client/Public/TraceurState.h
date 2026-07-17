@@ -77,11 +77,6 @@ protected:
 	class CStateBlackboard*            m_pBlackboardCom      = { nullptr };
 	class CClimbEvaluator*             m_pClimbEvalCom       = { nullptr };
 
-protected:
-	ENV_PERCEPTION   m_Perception{};
-	PARKOUR_DECISION m_Decision{};
-	void Snapshot_Env();
-
 	const ENV_PERCEPTION&   Enter_Perception(void* pArg) const;
 	const PARKOUR_DECISION& Enter_Decision(void* pArg) const;
 

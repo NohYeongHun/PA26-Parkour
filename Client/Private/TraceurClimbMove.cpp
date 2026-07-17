@@ -33,10 +33,9 @@ void CTraceurClimbMove::OnExit()
 
 void CTraceurClimbMove::Update_Animations(_float fTimeDelta)
 {
-	Snapshot_Env();
 	CTraceurState::Play_Animation(fTimeDelta);
 
-	const OBSTACLE_SCAN& Scan = m_Perception.Scan;
+	const OBSTACLE_SCAN& Scan = m_pEnvQueryCom->Get_Perception().Scan;
 
 	ACTORDIR eDir = Scan.ChestHit.isHit
 		? CMovementComponent::Calculate_Direction(m_pInputControllerCom)

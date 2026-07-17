@@ -31,7 +31,7 @@ void CTraceurClimbExit::OnEnter(void* pArg)
 	{
 		_vector vLook = XMVector3Normalize(m_pTransformCom->Get_State(STATE::LOOK));
 
-		const OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
+		const OBSTACLE_GEOMETRY& Geo = Enter_Perception(pArg).Geometry;
 		m_pMotionWarpCom->Clear_WarpTargets();
 #ifdef _DEBUG
 		m_pMotionWarpCom->Reset_DebugTrail();
@@ -104,7 +104,7 @@ _bool CTraceurClimbExit::Is_MantleAnim() const
 #ifdef _DEBUG
 void CTraceurClimbExit::Draw_DebugCurve()
 {
-	const OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
+	const OBSTACLE_GEOMETRY& Geo = m_pEnvQueryCom->Get_Perception().Geometry;
 	CGameInstance* pGI = CGameInstance::GetInstance();
 
 	pGI->Add_DebugSphere(XMLoadFloat3(&Geo.vTopEdgePos), 0.3f, JPH::Color(255.f, 255.f, 255.f, 1.f));
