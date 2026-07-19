@@ -1,4 +1,4 @@
-#include "ClientPch.h"
+﻿#include "ClientPch.h"
 #include "TransitionEvaluator.h"
 #include "StateBlackboard.h"
 #include "TransitionTable.h"
@@ -153,7 +153,9 @@ _bool CTransitionEvaluator::Try_Fire(const BOUND_TRANSITION& Rule, _uint iCurren
 	{
 		const _string strFrom = CTraceurStateNames::To_String(CurKey);
 		const _string strTo   = CTraceurStateNames::To_String(Rule.Next);
-		cout << "[Transition] " << strFrom << " -> " << strTo << "\n";
+		cout << "[Transition] " << strFrom << " -> " << strTo
+		     << "  ObjectFlag=" << ENUM_CLASS(m_pEnvQueryCom->Get_Perception().Scan.eObjectFlag)
+		     << "  ReachFlag=" << ENUM_CLASS(m_pEnvQueryCom->Get_Perception().Scan.eReachObjectFlag) << "\n";
 	}
 #endif
 

@@ -131,7 +131,7 @@ void CTraceur::Bind_CollectSlots()
 	auto Bind = [pBB](const _string& strName)
 	{
 		const _uint iSlot = pBB->Find_Slot(strName);
-		ASSERT_CRASH(iSlot != UINT_MAX);   // TraceurTags.json 누락 검출
+		ASSERT_CRASH(iSlot != UINT_MAX);
 		return iSlot;
 	};
 
@@ -145,6 +145,9 @@ void CTraceur::Bind_CollectSlots()
 	m_CollectSlots.Jump         = Bind("Intent.Jump");
 	m_CollectSlots.Forward      = Bind("Intent.Forward");
 	m_CollectSlots.Down         = Bind("Intent.Down");
+	m_CollectSlots.Left         = Bind("Intent.Left");
+	m_CollectSlots.Right        = Bind("Intent.Right");
+	m_CollectSlots.JumpPress    = Bind("Intent.JumpPress");
 	m_CollectSlots.CmdLowVault  = Bind("Cmd.LowVault");
 	m_CollectSlots.CmdHighVault = Bind("Cmd.HighVault");
 	m_CollectSlots.CmdMantle    = Bind("Cmd.Mantle");
@@ -172,6 +175,9 @@ void CTraceur::Collect_StateFlags()
 	pBB->Set(m_CollectSlots.Jump,         D.wantsJump);
 	pBB->Set(m_CollectSlots.Forward,      D.wantsForward);
 	pBB->Set(m_CollectSlots.Down,         D.wantsDown);
+	pBB->Set(m_CollectSlots.Left,         D.wantsLeft);
+	pBB->Set(m_CollectSlots.Right,        D.wantsRight);
+	pBB->Set(m_CollectSlots.JumpPress,    D.wantsJumpPress);
 	pBB->Set(m_CollectSlots.CmdLowVault,  D.eCommand == PARKOUR_ACTION::LOW_VAULT);
 	pBB->Set(m_CollectSlots.CmdHighVault, D.eCommand == PARKOUR_ACTION::HIGH_VAULT);
 	pBB->Set(m_CollectSlots.CmdMantle,    D.eCommand == PARKOUR_ACTION::MANTLE);

@@ -6,6 +6,9 @@
 #include "MovementComponent.h"
 #include "EnvironmentQueryComponent.h"
 #include "MotionWarpingComponent.h"
+#include "GameSystem.h"
+#include "ParkourTuningTable.h"
+#include "ParkourMath.h"
 
 HRESULT CTraceurClimbEnter::Initialize(CTraceur* pOwner)
 {
@@ -48,8 +51,16 @@ void CTraceurClimbEnter::Late_Anim_Update(_float fTimeDelta)
 
 _bool CTraceurClimbEnter::Ready_Enter(void* pArg)
 {
-	const PARKOUR_DECISION& Decision   = Enter_Decision(pArg);
+ 	const PARKOUR_DECISION& Decision   = Enter_Decision(pArg);
 	const ENV_PERCEPTION&   Perception = Enter_Perception(pArg);
+
+	m_isHangEnter = (Decision.eCommand == PARKOUR_ACTION::HANG);
+	if (m_isHangEnter)
+	{
+		if (!Ready_HangEnter(Perception))
+			return false;
+		return Select_Animation();
+	}
 
 	if (!Decision.isValid || !Perception.Scan.HeadHit.isHit)
 		return false;
@@ -74,6 +85,41 @@ _bool CTraceurClimbEnter::Ready_Enter(void* pArg)
 	XMStoreFloat3(&m_vDebugWallEndPos, XMLoadFloat3(&m_vDebugWallHitPos) + vWallNormal);
 #endif
 	return true;
+}
+
+_bool CTraceurClimbEnter::Ready_HangEnter(const ENV_PERCEPTION& Perception)
+{
+	const OBSTACLE_SCAN& Scan = Perception.Scan;
+	if (!Scan.ReachHit.isHit || !Scan.hasReachEdge)
+		return false;
+
+	_vector vNormal = XMVectorSetY(XMLoadFloat3(&Scan.ReachHit.vHitNormal), 0.f);
+	if (XMVectorGetX(XMVector3LengthSq(vNormal)) < 1e-4f)
+		return false;
+	vNormal = XMVector3Normalize(vNormal);
+
+	HANG_CONTEXT& Ctx = m_pOwner->Get_HangContext();
+	Ctx.isValid      = true;
+	Ctx.vGrabEdgePos = Scan.vReachEdgePos;
+	Ctx.GrabBodyID   = Scan.ReachBodyID;
+	XMStoreFloat3(&Ctx.vWallNormal, vNormal);
+
+	const HANG_TUNING&  T     = CGameSystem::GetInstance()->Get_ParkourTuning()->Get().Hang;
+	const BODY_PROFILE* pBody = m_pOwner->Get_BodyProfile();
+
+	_vector vP0 = m_pTransformCom->Get_State(Engine::STATE::POSITION);
+	_vector vP2 = ParkourMath::Calc_HangPos(XMLoadFloat3(&Ctx.vGrabEdgePos), vNormal,
+		pBody->fRadius, pBody->fHeight, T.fHangOffsetMult, T.fWallOffset);
+
+	m_pMotionWarpCom->Begin_CurveWarp(vP0, vP2, 0.3f,
+		m_pTransformCom->Get_State(Engine::STATE::LOOK), XMVectorNegate(vNormal));
+	return true;
+}
+
+void CTraceurClimbEnter::Check_State()
+{
+	// Blackboard bool은 전환 미발생 프레임마다 전체 Clear되므로 매 프레임 재설정 (Ctx.Hang)
+	Set_Flag("Ctx.Hang", m_isHangEnter);
 }
 
 _bool CTraceurClimbEnter::Select_Animation()

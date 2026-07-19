@@ -95,7 +95,7 @@ void CTraceurState::OnEnter(void* pArg)
 			iReqAnim = pDesc->iAnimIndex;
 	}
 
-	Request_Anim(iReqAnim); // 항상 Request — 파생 OnEnter의 Select_Animation이 이후 덮어씀
+	Request_Anim(iReqAnim);
 
 	Clear_Flags();
 	m_pBlackboardCom->Clear_Notifies();

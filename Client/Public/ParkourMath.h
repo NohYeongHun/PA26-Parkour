@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Client_Define.h"
 
 NS_BEGIN(Client)
@@ -9,6 +9,14 @@ namespace ParkourMath
 		_vector vAxisWorld = XMVector3Normalize(XMVector3Cross(XMVectorNegate(vWallNormal), vWorldUp));
 		_matrix WorldInv = XMMatrixInverse(nullptr, WorldMatrix);
 		return XMVector3Normalize(XMVector3TransformNormal(vAxisWorld, WorldInv));
+	}
+
+	inline _vector Calc_HangPos(_fvector vGrabEdge, _fvector vWallNormal,
+	                            _float fRadius, _float fHeight,
+	                            _float fHangOffsetMult, _float fWallOffset)
+	{
+		_vector vPos = vGrabEdge + vWallNormal * (fRadius + fWallOffset);
+		return XMVectorSetW(XMVectorSetY(vPos, XMVectorGetY(vGrabEdge) - fHeight * fHangOffsetMult), 1.f);
 	}
 
 	inline _vector Calc_FacingYawQuat(_fvector vFrontNormal, _fvector vFallbackLook)

@@ -186,6 +186,12 @@
     <ClCompile Include="..\Private\TraceurClimbEnter.cpp">
       <Filter>04. Component\State\Climb</Filter>
     </ClCompile>
+    <ClCompile Include="..\Private\TraceurClimbHang.cpp">
+      <Filter>04. Component\State\Climb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TraceurClimbHop.cpp">
+      <Filter>04. Component\State\Climb</Filter>
+    </ClCompile>
     <ClCompile Include="..\Private\TraceurClimbMantle.cpp">
       <Filter>04. Component\State\Climb</Filter>
     </ClCompile>
@@ -342,6 +348,12 @@
       <Filter>04. Component\State\Climb</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\TraceurClimbEnter.h">
+      <Filter>04. Component\State\Climb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurClimbHang.h">
+      <Filter>04. Component\State\Climb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurClimbHop.h">
       <Filter>04. Component\State\Climb</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\TraceurClimbMantle.h">

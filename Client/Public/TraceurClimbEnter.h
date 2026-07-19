@@ -17,10 +17,15 @@ public:
 private:
 	void Update_Animations(_float fTimeDelta) override;
 	void Late_Anim_Update(_float fTimeDelta) override;
+	void Check_State() override;
 
 private:
 	_bool  Ready_Enter(void* pArg);
+	_bool  Ready_HangEnter(const ENV_PERCEPTION& Perception);
 	_bool  Select_Animation();
+
+private:
+	_bool m_isHangEnter = false; // 이번 Enter의 목적지가 CLIMB/Hang 인지 (Ctx.Hang 소스)
 
 #ifdef _DEBUG
 private:

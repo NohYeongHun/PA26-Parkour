@@ -61,16 +61,15 @@ namespace Client
 
 
 #pragma region ENVIRONMENT
-	// 캐릭터 체형 프로필 — 초기화 시 콜라이더에서 1회 추출, 감지/결정이 읽기 전용 공유.
-	// 값은 기존 EnvQuery 비율 상수(0.35/0.8/1.1/1.5 × 전고)와 동일해야 한다 (동작 보존).
+	// 캐릭터 체형 프로필, 초기화 시 콜라이더에서 1회 추출
 	typedef struct tagBodyProfile
 	{
-		_float fHeight = 0.f;      // 전고 = Collider Height + 2 × Radius
-		_float fRadius = 0.f;      // 캡슐 반지름
-		_float fKneeHeight = 0.f;  // fHeight × 0.35
-		_float fChestHeight = 0.f; // fHeight × 0.8
-		_float fHeadHeight = 0.f;  // fHeight × 1.1
-		_float fMaxReach = 0.f;    // fHeight × 1.5
+		_float fHeight = 0.f;      
+		_float fRadius = 0.f;      
+		_float fKneeHeight = 0.f;  
+		_float fChestHeight = 0.f; 
+		_float fHeadHeight = 0.f;  
+		_float fMaxReach = 0.f;    
 	}BODY_PROFILE;
 
 	typedef struct tagLineTraceHit
@@ -81,22 +80,28 @@ namespace Client
 		_float3     vHitNormal{};
 	}LINE_TRACE_HIT;
 
-	enum class HEIGHT_HIT_FLAG : _uint { KNEE = 1 << 0, CHEST = 1 << 1, HEAD = 1 << 2 };
+	enum class HEIGHT_HIT_FLAG : _uint { KNEE = 1 << 0, CHEST = 1 << 1, HEAD = 1 << 2, REACH = 1 << 3 };
 
-	// [EnvQuery 1단계 출력] 원시 스캔 — 측정 없음, 레이가 뭘 맞았는지만
 	typedef struct tagObstacleScan {
-		_bool          isObstacleDetected = false;              // ShapeCast 히트
-		PARKOUR_FLAG   eObjectFlag = PARKOUR_FLAG::END;         // 디자이너 태그 (END = 태그 없음 → ALL 취급)
+		_bool          isObstacleDetected = false;              
+		PARKOUR_FLAG   eObjectFlag = PARKOUR_FLAG::END;         
 		LINE_TRACE_HIT KneeHit;
 		LINE_TRACE_HIT ChestHit;
 		LINE_TRACE_HIT HeadHit;
 		LINE_TRACE_HIT LeftChestHit;
 		LINE_TRACE_HIT RightChestHit;
-		_uint          iHeightFlag = 0;                         // HEIGHT_HIT_FLAG 비트마스크
-		_float3        vScanDir{};                              // EnvQuery가 사용한 스캔 방향 (Decider가 재계산 없이 소비)
+		_uint          iHeightFlag = 0;                         
+		_float3        vScanDir{};                              
+
+		// 손 뻗기 대역 전방 스피어 캐스트 — 벽면 중간 난간 전용.
+		LINE_TRACE_HIT ReachHit;
+		PARKOUR_FLAG   eReachObjectFlag = PARKOUR_FLAG::END;
+		BodyID         ReachBodyID{};                        // ReachHit가 맞은 물리 바디 — Hop 앵커용 (body)
+		_bool          hasReachEdge = false;
+		_float3        vReachEdgePos{};
+		_float         fReachEdgeHeight = 0.f;
 	}OBSTACLE_SCAN;
 
-	// [EnvQuery 3단계 출력] 액션별 판정 결과 — 탈락 시 첫 번째로 걸린 사유 기록
 	typedef struct tagActionVerdict {
 		_bool         isPossible = false;
 		REJECT_REASON eReject = REJECT_REASON::NONE;
@@ -118,6 +123,9 @@ namespace Client
 		_bool wantsJump     = false;
 		_bool wantsForward  = false;
 		_bool wantsDown     = false;
+		_bool wantsLeft      = false; 
+		_bool wantsRight     = false; 
+		_bool wantsJumpPress = false; 
 	}PARKOUR_DECISION;
 
 	typedef struct tagObstacleGeometry {
@@ -141,18 +149,16 @@ namespace Client
 		_float3 vLandingPos{};
 	}OBSTACLE_GEOMETRY;
 
-	// EnvQuery 출력 = 순수 관측 (Scan + Geometry). 판정은 CParkourDeciderComponent::PARKOUR_DECISION으로 분리됨.
 	typedef struct tagEnvPerception {
 		OBSTACLE_SCAN     Scan;
 		OBSTACLE_GEOMETRY Geometry;
 	}ENV_PERCEPTION;
 
-	// 이름표 붙은 월드좌표 워프 타겟. CMotionWarpingComponent가 map<이름, WARP_TARGET>로 보유.
 	typedef struct tagWarpTarget
 	{
-		_float3 vPosition{};          // 월드 목표 좌표
-		_bool   hasRotation = false;  // 회전 워프 대상 여부 (이 슬라이스에선 미사용)
-		_float4 qRotation{};          // 선택적 목표 방향
+		_float3 vPosition{};          
+		_bool   hasRotation = false;
+		_float4 qRotation{};          
 		_bool   isValid = false;
 	}WARP_TARGET;
 
@@ -166,6 +172,15 @@ namespace Client
 		_bool   kneeHit      = false;
 		_float3 vClimbNormal = {};
 	}CLIMB_EVAL;
+
+	typedef struct tagHangContext
+	{
+		_bool   isValid = false;
+		_float3 vGrabEdgePos{};
+		_float3 vWallNormal{};
+		BodyID  GrabBodyID{};  // 지금 잡고 있는 장애물의 물리 바디 — Hop 탐색 앵커 (anchor)
+		void Reset() { isValid = false; GrabBodyID = BodyID{}; }
+	}HANG_CONTEXT;
 #pragma endregion
 
 #pragma region STATE_ENTER

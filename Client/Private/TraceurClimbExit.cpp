@@ -19,6 +19,7 @@ void CTraceurClimbExit::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
 	m_pColliderCom->Set_Gravity(true);
+	m_pOwner->Get_HangContext().Reset(); // 행 세션 종료 — 잔존 컨텍스트로 인한 오동작 방지
 
 	const _bool isMantle = Is_MantleAnim();
 

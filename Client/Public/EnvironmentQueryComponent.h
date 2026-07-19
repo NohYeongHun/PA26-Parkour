@@ -47,6 +47,7 @@ private:
 	_bool Detect_Obstacle();
 	void  Scan_Obstacle();
 	void  Measure_Geometry();
+	void  Scan_Reach();
 
 private:
 	LINE_TRACE_HIT Cast_Ray(const _fvector& vStart, const _fvector& vEnd, _uint iLayer, RAY_KIND eKind);
@@ -60,6 +61,9 @@ private:
 #ifdef _DEBUG
 public:
 	void Print_Debug();
+
+private:
+	const void* m_pDebugLastShapeHitDesc = nullptr; // ShapeCast 히트 오브젝트 변경 시에만 로그 (dedup)
 #endif
 
 private:

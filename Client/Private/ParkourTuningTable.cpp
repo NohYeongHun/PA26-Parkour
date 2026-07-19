@@ -66,6 +66,25 @@ HRESULT CParkourTuningTable::Parse(const _string& strFilePath, PARKOUR_TUNING& O
 			OutTuning.WallRun.fMaxNormalY       = GetF(Root["wallrun"], "maxNormalY", OutTuning.WallRun.fMaxNormalY);
 			OutTuning.WallRun.fMaxStartDistMult = GetF(Root["wallrun"], "maxStartDistMult", OutTuning.WallRun.fMaxStartDistMult);
 		}
+		if (Root.contains("hang")) {
+			OutTuning.Hang.fMinTopHeightMult  = GetF(Root["hang"], "minTopHeightMult",  OutTuning.Hang.fMinTopHeightMult);
+			OutTuning.Hang.fMaxTopHeightMult  = GetF(Root["hang"], "maxTopHeightMult",  OutTuning.Hang.fMaxTopHeightMult);
+			OutTuning.Hang.fMinApproachDot    = GetF(Root["hang"], "minApproachDot",    OutTuning.Hang.fMinApproachDot);
+			OutTuning.Hang.fMaxNormalY        = GetF(Root["hang"], "maxNormalY",        OutTuning.Hang.fMaxNormalY);
+			OutTuning.Hang.fHangOffsetMult    = GetF(Root["hang"], "hangOffsetMult",    OutTuning.Hang.fHangOffsetMult);
+			OutTuning.Hang.fWallOffset        = GetF(Root["hang"], "wallOffset",        OutTuning.Hang.fWallOffset);
+			OutTuning.Hang.fSnapTime          = GetF(Root["hang"], "snapTime",          OutTuning.Hang.fSnapTime);
+			OutTuning.Hang.fHopDistLR         = GetF(Root["hang"], "hopDistLR",         OutTuning.Hang.fHopDistLR);
+			OutTuning.Hang.fHopDistUp         = GetF(Root["hang"], "hopDistUp",         OutTuning.Hang.fHopDistUp);
+			OutTuning.Hang.fHopDistDown       = GetF(Root["hang"], "hopDistDown",       OutTuning.Hang.fHopDistDown);
+			OutTuning.Hang.fHopProbeRadius    = GetF(Root["hang"], "hopProbeRadius",    OutTuning.Hang.fHopProbeRadius);
+			OutTuning.Hang.fStartClearance    = GetF(Root["hang"], "startClearance",    OutTuning.Hang.fStartClearance);
+			OutTuning.Hang.fMinNormalDot      = GetF(Root["hang"], "minNormalDot",      OutTuning.Hang.fMinNormalDot);
+			OutTuning.Hang.fTopStandDepthMult = GetF(Root["hang"], "topStandDepthMult", OutTuning.Hang.fTopStandDepthMult);
+			OutTuning.Hang.fStandProbeUp      = GetF(Root["hang"], "standProbeUp",      OutTuning.Hang.fStandProbeUp);
+			OutTuning.Hang.fStandProbeInset   = GetF(Root["hang"], "standProbeInset",   OutTuning.Hang.fStandProbeInset);
+			OutTuning.Hang.fStandMaxRise      = GetF(Root["hang"], "standMaxRise",      OutTuning.Hang.fStandMaxRise);
+		}
 		if (Root.contains("cooldowns"))
 			OutTuning.fWallRunCooldown = GetF(Root["cooldowns"], "WALL_RUN", OutTuning.fWallRunCooldown);
 		if (Root.contains("priority")) {

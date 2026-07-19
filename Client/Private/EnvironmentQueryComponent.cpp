@@ -52,7 +52,7 @@ void CEnvironmentQueryComponent::Set_ScanDirOverride(_fvector vDir)
 {
 	_vector vXZ = XMVectorSetY(vDir, 0.f);
 	if (XMVectorGetX(XMVector3LengthSq(vXZ)) < 1e-6f)
-		return; // 무의미한 방향 — 기존 오버라이드/LOOK 유지
+		return;
 	XMStoreFloat3(&m_vScanDirOverride, XMVector3Normalize(vXZ));
 	m_hasScanDirOverride = true;
 }
@@ -67,6 +67,8 @@ _vector CEnvironmentQueryComponent::Get_ScanDir() const
 void CEnvironmentQueryComponent::Execute()
 {
 	m_Perception = {};
+
+	Scan_Reach();
 
 	if (!Detect_Obstacle())
 		return;
@@ -92,12 +94,21 @@ _bool CEnvironmentQueryComponent::Detect_Obstacle()
 	{
 		CALLBACK_CLIENT* pDesc = static_cast<CALLBACK_CLIENT*>(ShapeHit.pDesc);
 		m_Perception.Scan.eObjectFlag = pDesc->eObjectParkourFlag;
+
+#ifdef _DEBUG
+		if (ShapeHit.pDesc != m_pDebugLastShapeHitDesc)
+		{
+			m_pDebugLastShapeHitDesc = ShapeHit.pDesc;
+			cout << "[EnvQuery] ShapeCast hit  pos=(" << ShapeHit.vHitPoint.x << ", "
+			     << ShapeHit.vHitPoint.y << ", " << ShapeHit.vHitPoint.z
+			     << ")  flag=" << ENUM_CLASS(pDesc->eObjectParkourFlag) << endl;
+		}
+#endif
 	}
 
 	return isHit;
 }
 
-// 모든 레이 캐스트의 단일 창구 — 디버그 빌드에서 자동 시각화되므로 레이를 빠뜨리고 그릴 수 없다.
 LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray(const _fvector& vStart, const _fvector& vEnd, _uint iLayer, RAY_KIND eKind)
 {
 	LINE_TRACE_HIT lineTrace;
@@ -107,13 +118,13 @@ LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray(const _fvector& vStart, cons
 		lineTrace.isHit = true;
 		lineTrace.vHitPosition = RayCastHit.vHitPosition;
 		lineTrace.vHitNormal = RayCastHit.vHitNormal;
-		lineTrace.fCenterDistance = RayCastHit.fDistance; // 센터 기준 Distance
+		lineTrace.fCenterDistance = RayCastHit.fDistance;
 	}
 
 #ifdef _DEBUG
 	if (m_pGameInstance->IsParkourDebug())
 	{
-		JPH::Color color = JPH::Color(128.f, 128.f, 128.f, 1.f); // 미스 = 회색
+		JPH::Color color = JPH::Color(128.f, 128.f, 128.f, 1.f);
 		if (lineTrace.isHit)
 		{
 			switch (eKind)
@@ -156,6 +167,50 @@ void CEnvironmentQueryComponent::Scan_Obstacle()
 	if (Scan.KneeHit.isHit)  Scan.iHeightFlag |= ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE);
 	if (Scan.ChestHit.isHit) Scan.iHeightFlag |= ENUM_CLASS(HEIGHT_HIT_FLAG::CHEST);
 	if (Scan.HeadHit.isHit)  Scan.iHeightFlag |= ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD);
+}
+
+// 손 뻗기 대역(머리~최대 리치) 전방 스피어 캐스트
+void CEnvironmentQueryComponent::Scan_Reach()
+{
+	OBSTACLE_SCAN& Scan = m_Perception.Scan;
+
+	_vector vLook = Get_ScanDir();
+	XMStoreFloat3(&Scan.vScanDir, vLook);
+
+	_vector vCenter = m_pOwnerTransformCom->Get_State(STATE::POSITION) + m_pOwnerColliderCom->Get_Offset();
+	_vector vBottom = vCenter - XMVectorSet(0.f, m_pBodyProfile->fHeight * 0.5f, 0.f, 0.f);
+	const _float fBandCenterY = (m_pBodyProfile->fHeadHeight + m_pBodyProfile->fMaxReach) * 0.5f;
+	_vector vStart = vBottom + XMVectorSet(0.f, fBandCenterY, 0.f, 0.f);
+
+	SHAPE_CAST_HIT Hit{};
+	if (!m_pGameInstance->Shape_Cast(m_pOwnerColliderCom->Get_Shape(), XMQuaternionIdentity(),
+			vStart, vLook, m_fLineTraceDistance, ENUM_CLASS(m_eTargetLayer), Hit))
+		return;
+
+	Scan.ReachHit.isHit           = true;
+	Scan.ReachHit.vHitPosition    = _float3(Hit.vHitPoint.x, Hit.vHitPoint.y, Hit.vHitPoint.z);
+	Scan.ReachHit.vHitNormal      = _float3(Hit.vHitNormal.x, Hit.vHitNormal.y, Hit.vHitNormal.z);
+	Scan.ReachHit.fCenterDistance = Hit.fFraction * m_fLineTraceDistance;
+	Scan.ReachBodyID = Hit.HitBodyID;
+	Scan.iHeightFlag |= ENUM_CLASS(HEIGHT_HIT_FLAG::REACH);
+	if (Hit.pDesc)
+		Scan.eReachObjectFlag = static_cast<CALLBACK_CLIENT*>(Hit.pDesc)->eObjectParkourFlag;
+
+	_vector vNormalXZ = XMVectorSetY(XMLoadFloat3(&Scan.ReachHit.vHitNormal), 0.f);
+	_vector vInward = XMVectorGetX(XMVector3LengthSq(vNormalXZ)) > 1e-4f
+		? -XMVector3Normalize(vNormalXZ) : vLook;
+	_vector vProbeXZ = XMLoadFloat3(&Scan.ReachHit.vHitPosition) + vInward * (m_pBodyProfile->fRadius * 0.5f);
+	const _float fTopY = XMVectorGetY(vBottom) + m_pBodyProfile->fMaxReach + m_pBodyProfile->fRadius;
+	_vector vDownStart = XMVectorSetY(vProbeXZ, fTopY);
+	_vector vDownEnd   = XMVectorSetY(vProbeXZ, Scan.ReachHit.vHitPosition.y - 0.1f);
+
+	LINE_TRACE_HIT TopHit = Cast_Ray(vDownStart, vDownEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
+	if (!TopHit.isHit)
+		return;
+
+	Scan.hasReachEdge     = true;
+	Scan.vReachEdgePos    = _float3(Scan.ReachHit.vHitPosition.x, TopHit.vHitPosition.y, Scan.ReachHit.vHitPosition.z);
+	Scan.fReachEdgeHeight = TopHit.vHitPosition.y - XMVectorGetY(vBottom);
 }
 
 void CEnvironmentQueryComponent::Measure_Geometry()

@@ -27,6 +27,11 @@ public:
 	void On_WarpNotify(const _string& strName, _bool isStart,
 	                   _float fWindowEndTrackPos, _bool bTrans, _bool bRot);
 
+	// 루트모션 워프 직접 시작 — 노티파이 없이 상태 코드가 창 전체를 지정 (root warp)
+	void Begin_RootWarp(const _float3& vTargetPos, const _float4* pTargetRot,
+	                    _float fWindowEndTrackPos, _bool bTrans, _bool bRot);
+	void End_RootWarp();
+
 	void Begin_CurveWarp(_fvector vStart, _fvector vEnd, _float fApexOffsetY,
 	                     _fvector vLookStart, _fvector vLookTarget);
 	void Update_CurveWarp(_float fCurveT);

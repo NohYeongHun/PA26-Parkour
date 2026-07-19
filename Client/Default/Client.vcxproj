@@ -27,6 +27,8 @@
     <ClCompile Include="..\Private\TraceurAirJump.cpp" />
     <ClCompile Include="..\Private\TraceurClimbEnter.cpp" />
     <ClCompile Include="..\Private\TraceurClimbExit.cpp" />
+    <ClCompile Include="..\Private\TraceurClimbHang.cpp" />
+    <ClCompile Include="..\Private\TraceurClimbHop.cpp" />
     <ClCompile Include="..\Private\TraceurClimbMantle.cpp" />
     <ClCompile Include="..\Private\TraceurClimbMove.cpp" />
     <ClCompile Include="..\Private\TraceurClimbRun.cpp" />
@@ -79,6 +81,8 @@
     <ClInclude Include="..\Public\TraceurAirJump.h" />
     <ClInclude Include="..\Public\TraceurClimbEnter.h" />
     <ClInclude Include="..\Public\TraceurClimbExit.h" />
+    <ClInclude Include="..\Public\TraceurClimbHang.h" />
+    <ClInclude Include="..\Public\TraceurClimbHop.h" />
     <ClInclude Include="..\Public\TraceurClimbMantle.h" />
     <ClInclude Include="..\Public\TraceurClimbMove.h" />
     <ClInclude Include="..\Public\TraceurClimbRun.h" />

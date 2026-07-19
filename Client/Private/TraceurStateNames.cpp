@@ -36,6 +36,8 @@ namespace
 				{ "Mantle", ENUM_CLASS(ETraceurClimbState::Mantle) },
 				{ "Exit",   ENUM_CLASS(ETraceurClimbState::Exit) },
 				{ "Run",    ENUM_CLASS(ETraceurClimbState::Run) },
+				{ "Hang",   ENUM_CLASS(ETraceurClimbState::Hang) },
+				{ "Hop",    ENUM_CLASS(ETraceurClimbState::Hop) },
 			}},
 		};
 		return Table;
@@ -88,6 +90,15 @@ namespace
 			{ { ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Run) }, {
 				{ "Move", ENUM_CLASS(ETraceurClimbRun::Move) },
 				{ "WallRunUp", ENUM_CLASS(ETraceurClimbRun::WallRunUp) },
+			}},
+			{ { ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Hang) }, {
+				{ "BracedHangHopIdle", ENUM_CLASS(ETraceurClimbHang::HopIdle) },
+			}},
+			{ { ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Hop) }, {
+				{ "BracedHangHopLeft",  ENUM_CLASS(ETraceurClimbHop::HopLeft) },
+				{ "BracedHangHopRight", ENUM_CLASS(ETraceurClimbHop::HopRight) },
+				{ "BracedHangHopUp",    ENUM_CLASS(ETraceurClimbHop::HopUp) },
+				{ "BracedHangHopDrop",  ENUM_CLASS(ETraceurClimbHop::HopDrop) },
 			}},
 		};
 		return Table;

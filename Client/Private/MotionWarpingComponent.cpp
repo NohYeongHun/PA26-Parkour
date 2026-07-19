@@ -98,6 +98,20 @@ void CMotionWarpingComponent::On_WarpNotify(const _string& strName, _bool isStar
 	
 }
 
+void CMotionWarpingComponent::Begin_RootWarp(const _float3& vTargetPos, const _float4* pTargetRot,
+	_float fWindowEndTrackPos, _bool bTrans, _bool bRot)
+{
+	if (nullptr == m_pOwnerModelCom)
+		return;
+	m_pOwnerModelCom->Begin_MotionWarp(vTargetPos, pTargetRot, fWindowEndTrackPos, bTrans, bRot);
+}
+
+void CMotionWarpingComponent::End_RootWarp()
+{
+	if (m_pOwnerModelCom)
+		m_pOwnerModelCom->End_MotionWarp();
+}
+
 #ifdef _DEBUG
 void CMotionWarpingComponent::Update_DebugTrail()
 {

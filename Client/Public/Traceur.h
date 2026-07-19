@@ -24,6 +24,7 @@ public:
 	_vector Get_CamForward() const;
 	_vector Get_CamRight()   const;
 	const BODY_PROFILE* Get_BodyProfile() const { return &m_BodyProfile; }
+	HANG_CONTEXT& Get_HangContext() { return m_HangCtx; }
 
 public:
 	void Notify_StateFlag(const _string& strFlag, _bool isOn);
@@ -63,6 +64,7 @@ private:
 
 private:
 	BODY_PROFILE m_BodyProfile{};
+	HANG_CONTEXT m_HangCtx{};
 
 private:
 	// 임시 Variables
@@ -96,7 +98,8 @@ private:
 		_uint Grounded = UINT_MAX, Supported = UINT_MAX, Unsupported = UINT_MAX,
 		      Falling = UINT_MAX, Airborne = UINT_MAX;
 		_uint Move = UINT_MAX, Run = UINT_MAX, Jump = UINT_MAX,
-		      Forward = UINT_MAX, Down = UINT_MAX;
+		      Forward = UINT_MAX, Down = UINT_MAX,
+		      Left = UINT_MAX, Right = UINT_MAX, JumpPress = UINT_MAX;
 		_uint CmdLowVault = UINT_MAX, CmdHighVault = UINT_MAX, CmdMantle = UINT_MAX,
 		      CmdClimb = UINT_MAX, CmdHang = UINT_MAX, CmdWallRun = UINT_MAX;
 		_uint EvalFall = UINT_MAX, EvalLand = UINT_MAX, EvalArrive = UINT_MAX,
