@@ -875,6 +875,7 @@
     <ClInclude Include="..\Public\BoneReadbackProfiler.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Public\Tracy\TracyClient.cpp" />
     <ClCompile Include="..\Private\Animation.cpp">
       <Filter>01. Utility\04. Component\Model\Animation</Filter>
     </ClCompile>

@@ -4,7 +4,6 @@
 namespace Engine { class CAnimator; }
 
 NS_BEGIN(Client)
-// 이름↔월드좌표 매핑 + 엔진 워프 위임. EnvQuery 목표점을 상태가 이름표 붙여 등록한다.
 class CMotionWarpingComponent final : public Engine::CComponent
 {
 public:
@@ -29,7 +28,7 @@ public:
 	void On_WarpNotify(const _string& strName, _bool isStart,
 	                   _float fWindowEndTrackPos, _bool bTrans, _bool bRot);
 
-	// 루트모션 워프 직접 시작 — 노티파이 없이 상태 코드가 창 전체를 지정 (root warp)
+	// 루트모션 워프 직접 시작 — 노티파이 없이 상태 코드가 창 전체를 지정
 	void Begin_RootWarp(const _float3& vTargetPos, const _float4* pTargetRot,
 	                    _float fWindowEndTrackPos, _bool bTrans, _bool bRot);
 	void End_RootWarp();
