@@ -133,18 +133,20 @@ void CAnimation::Load_Notify(const json& notifyJson, function<void(const _wstrin
 		}
 		else if (type == "MotionWarp")
 		{
-			// 시작점(on) — 자기 trackpos + 창 끝 정보 보유
-			CMotionWarpNotify* pStart = CMotionWarpNotify::From_Json(notifyObject);
+			json warpJson = notifyObject;
+			if (warpJson.contains("EndTrackPosition") && warpJson["EndTrackPosition"].get<_float>() < 0.f)
+				warpJson["EndTrackPosition"] = m_fDuration;
+
+			CMotionWarpNotify* pStart = CMotionWarpNotify::From_Json(warpJson);
 			pStart->Set_WarpCallback(WarpCallback);
 			pAnimNotify = pStart;
 
-			// 끝점(off) — EndTrackPosition에 별도 생성 (StateFlag 분해 패턴 동일)
-			if (notifyObject.contains("EndTrackPosition"))
+			if (warpJson.contains("EndTrackPosition"))
 			{
 				CMotionWarpNotify* pEnd = new CMotionWarpNotify(
-					notifyObject["EndTrackPosition"], notifyObject.value("TargetName", string("")),
-					false, notifyObject["EndTrackPosition"],
-					notifyObject.value("WarpTranslation", true), notifyObject.value("WarpRotation", false));
+					warpJson["EndTrackPosition"], warpJson.value("TargetName", string("")),
+					false, warpJson["EndTrackPosition"],
+					warpJson.value("WarpTranslation", true), warpJson.value("WarpRotation", false));
 				pEnd->Set_WarpCallback(WarpCallback);
 				m_AnimNotifies.emplace_back(pEnd);
 			}
