@@ -802,6 +802,11 @@ _bool CGameInstance::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat, c
 	return m_pPhysicsManager->Shape_Cast(pShape, vQuat, vPos, vDir, fDistance, iObjectLayer, OutHit);
 }
 
+_bool CGameInstance::Get_Body_AABB(const BodyID& ID, _float3& vOutMin, _float3& vOutMax)
+{
+	return m_pPhysicsManager->Get_Body_AABB(ID, vOutMin, vOutMax);
+}
+
 #ifdef _DEBUG
 void CGameInstance::DrawShape(const Shape* pShape, RMat44 Matrix, Color BodyColor)
 {

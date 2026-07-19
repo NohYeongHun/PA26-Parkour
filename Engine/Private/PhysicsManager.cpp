@@ -378,6 +378,18 @@ _bool CPhysicsManager::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat,
 	return isHit;
 }
 
+_bool CPhysicsManager::Get_Body_AABB(const BodyID& ID, _float3& vOutMin, _float3& vOutMax)
+{
+	BodyLockRead Lock(m_pPhysicsSystem->GetBodyLockInterface(), ID);
+	if (!Lock.Succeeded())
+		return false;
+
+	const AABox Bounds = Lock.GetBody().GetWorldSpaceBounds();
+	vOutMin = _float3(Bounds.mMin.GetX(), Bounds.mMin.GetY(), Bounds.mMin.GetZ());
+	vOutMax = _float3(Bounds.mMax.GetX(), Bounds.mMax.GetY(), Bounds.mMax.GetZ());
+	return true;
+}
+
 // 현재 시점을 정확하게 구할려면
 
 

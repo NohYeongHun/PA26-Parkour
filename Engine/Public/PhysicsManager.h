@@ -78,6 +78,7 @@ public:
 	_bool				Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer, _float4* pOut);
 	RAY_CAST_HIT		Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer);
 	_bool				Shape_Cast(RefConst<Shape> pShape,  const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, const _float fDistance, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit);
+	_bool				Get_Body_AABB(const BodyID& ID, _float3& vOutMin, _float3& vOutMax);
 	
 	
 
