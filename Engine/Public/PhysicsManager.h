@@ -68,9 +68,9 @@ public:
 	void				DrawShapeCast(const Shape* pShape, const RMat44& StartMatrix, const RMat44& EndMatrix, _bool isHit, const vector<_float3>& HitPoints);
 	_bool				IsParkourDebug() { return m_isParkourDebug; }
 
-	// 지정한 지점에 와이어 스피어를 큐잉합니다. Render()에서 그려진 뒤 매 프레임 클리어됩니다.
+	// 지정한 지점에 와이어 스피어
 	void				Add_DebugSphere(const _fvector& vCenter, _float fRadius, const Color& color = Color(0.f, 255.f, 255.f, 1.f));
-	// 지정한 두 지점 사이의 라인을 큐잉합니다. Render()에서 그려진 뒤 매 프레임 클리어됩니다.
+	// 지정한 두 지점 사이의 라인
 	void				Add_DebugLine(const _fvector& vStart, const _fvector& vEnd, const Color& color = Color(0.f, 255.f, 0.f, 1.f));
 #endif
 
@@ -78,6 +78,8 @@ public:
 	_bool				Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer, _float4* pOut);
 	RAY_CAST_HIT		Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer);
 	_bool				Shape_Cast(RefConst<Shape> pShape,  const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, const _float fDistance, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit);
+	// 스피어 스윕
+	_bool				Sphere_Cast(const _fvector& vPos, const _fvector& vDir, const _float fDistance, const _float fRadius, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit);
 	_bool				Get_Body_AABB(const BodyID& ID, _float3& vOutMin, _float3& vOutMax);
 	
 	
@@ -133,7 +135,7 @@ private:
 
 	struct SHAPE_CAST_DEBUG
 	{
-		const Shape* pShape;
+		RefConst<Shape>			pShape; // 임시 셰이프(Sphere_Cast)도 렌더 시점까지 살아있도록 참조 보관 (lifetime)
 		RMat44					StartMatrix;
 		RMat44					EndMatrix;
 		_bool					isHit;

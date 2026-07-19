@@ -1218,6 +1218,7 @@ void CEdit_MapObject::Copy_MapObject(_bool IsChild, CEdit_MapObject* pParent)
 	Desc.WorldMatrix = &WorldPos;
 	Desc.pCopyObject = this;
 	Desc.IsChild = IsChild;
+	Desc.eObjectType = m_eObjectType;
 
 	if (Desc.IsChild)
 		Desc.pParent = pParent;
