@@ -37,6 +37,7 @@ HRESULT CAnimationController::Initialize_Clone(void* pArg)
 
 	m_pAnimator = CAnimator::Create(m_pModelCom);
 	if (nullptr == m_pAnimator) return E_FAIL;
+	m_pAnimator->Set_OwnerWorld(m_pTransformCom->Get_WorldMatrixPtr());
 
 	return S_OK;
 }

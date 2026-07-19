@@ -92,7 +92,6 @@ private:
 	void Collect_StateFlags();
 	void Bind_CollectSlots();
 
-	// Collect_StateFlags가 매 프레임 쓰는 슬롯 (map lookup 제거)
 	struct COLLECT_SLOTS
 	{
 		_uint Grounded = UINT_MAX, Supported = UINT_MAX, Unsupported = UINT_MAX,

@@ -174,13 +174,11 @@ void CAnimMachine::Update(CModel* pModelCom, CComputeShader* pComputeShaderCom, 
 	rootMotionDesc.isRotate = m_isRootMotionRotate;
 	rootMotionDesc.isTranslate = m_isRootMotionTranslate;
 
-	isAnimFinished = pModelCom->Play_NonRibAnimation_GPU(pComputeShaderCom, playDesc, rootMotionDesc, fTimeDelta);
-	/*isAnimFinished = pModelCom->Play_Animation_GPU(pComputeShaderCom, m_strCurrentAnimTag, fTimeDelata, 
-		&m_fCurrentTrackPositon, m_isRootMotion, m_isRootMotionRotate, m_isRootMotionTranslate, m_fRootMotionRate);*/
-	//isAnimFinished = pModelCom->Play_Animation_CPU(m_strCurrentAnimTag, fTimeDelata, 
-	//	&m_fCurrentTrackPositon, false, m_isRootMotion, m_fRootMotionRate);
-	
-	pModelCom->Sync_RootNode(pTransform, fTimeDelta);
+	if (nullptr == m_pAnimator)
+		m_pAnimator = CAnimator::Create(pModelCom);
+
+	isAnimFinished = m_pAnimator->Play_NonRibAnimation_GPU(pComputeShaderCom, playDesc, rootMotionDesc, fTimeDelta);
+	m_pAnimator->Sync_RootNode(pTransform, fTimeDelta);
 
 	m_AnimStates[m_strCurrentAnimTag]->Feedback(isAnimFinished, pState, this, pModelCom);
 	if (m_isLoop)
@@ -218,9 +216,12 @@ void CAnimMachine::Update(CModel* pModelCom, CComputeShader* pComputeShaderCom, 
 	rootMotionDesc.isRotate = m_isRootMotionRotate;
 	rootMotionDesc.isTranslate = m_isRootMotionTranslate;
 
-	isAnimFinished = pModelCom->Play_Animation_GPU(pComputeShaderCom, pFacialShaderCom, playDesc, rootMotionDesc, fTimeDelta);
+	if (nullptr == m_pAnimator)
+		m_pAnimator = CAnimator::Create(pModelCom);
 
-	pModelCom->Sync_RootNode(pTransform, fTimeDelta);
+	isAnimFinished = m_pAnimator->Play_Animation_GPU(pComputeShaderCom, pFacialShaderCom, playDesc, rootMotionDesc, fTimeDelta);
+
+	m_pAnimator->Sync_RootNode(pTransform, fTimeDelta);
 
 	m_AnimStates[m_strCurrentAnimTag]->Feedback(isAnimFinished, pState, this, pModelCom);
 	if (m_isLoop)

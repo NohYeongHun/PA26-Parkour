@@ -4,6 +4,8 @@
 #include "Transform.h"
 #include "Bone.h"
 #include "Animation.h"
+#include "ComputeShader.h"
+#include "Mesh.h"
 
 namespace {
 	constexpr Engine::_float MW_EPS = 1e-4f;
@@ -20,6 +22,52 @@ HRESULT CAnimator::Initialize(CModel* pModel)
 	Safe_AddRef(m_pModel);
 
 	return S_OK;
+}
+
+_float CAnimator::PARAM_SNAPSHOT::Get_Float(const _string& strName, _float fDefault) const
+{
+	auto iter = Floats.find(strName);
+	return (iter != Floats.end()) ? iter->second : fDefault;
+}
+
+_float2 CAnimator::PARAM_SNAPSHOT::Get_Float2(const _string& strName) const
+{
+	auto iter = Float2s.find(strName);
+	return (iter != Float2s.end()) ? iter->second : _float2{ 0.f, 0.f };
+}
+
+_float3 CAnimator::PARAM_SNAPSHOT::Get_Float3(const _string& strName) const
+{
+	auto iter = Float3s.find(strName);
+	return (iter != Float3s.end()) ? iter->second : _float3{ 0.f, 0.f, 0.f };
+}
+
+void CAnimator::Bind_Parameter(const _string& strName, const _float* pValue)
+{
+	m_BoundFloats[strName] = pValue;
+}
+
+void CAnimator::Bind_Parameter2D(const _string& strName, const _float2* pValue)
+{
+	m_BoundFloat2s[strName] = pValue;
+}
+
+void CAnimator::Bind_Parameter3D(const _string& strName, const _float3* pValue)
+{
+	m_BoundFloat3s[strName] = pValue;
+}
+
+void CAnimator::Snapshot_Params()
+{
+	for (auto& Pair : m_BoundFloats)
+		m_Snapshot.Floats[Pair.first] = *Pair.second;
+	for (auto& Pair : m_BoundFloat2s)
+		m_Snapshot.Float2s[Pair.first] = *Pair.second;
+	for (auto& Pair : m_BoundFloat3s)
+		m_Snapshot.Float3s[Pair.first] = *Pair.second;
+
+	if (nullptr != m_pOwnerWorld)
+		m_SnapWorldMatrix = *m_pOwnerWorld;
 }
 
 void CAnimator::Clear_Animation(const _string& strAnimationName, _float fTrackPosition)
@@ -76,44 +124,15 @@ _bool CAnimator::Play_Animation_CPU(const ANIMATION_PLAY_DESC& playDesc, const R
 	if (iter == m_pModel->m_Animations.end())
 		return false;
 
-	Handle_PlaybackChange(ETransitionSourceType::CLIP, playDesc.strAnimationName, playDesc.fBlendIn);
-	m_fCurBlendOut = playDesc.fBlendOut;
-	m_fCurPlaySpeed = playDesc.fSpeed;
-	m_pCurBS1 = nullptr;
-	m_pCurBS2 = nullptr;
+	m_eRequest = EPlayRequest::CLIP;
+	m_ReqClipDesc = playDesc;
+	m_ReqRootDesc = rootMotionDesc;
+	m_fReqDt = fTimeDelta;
 
-	_float fTrackPosition = {};
-	_bool IsAnimationEnd = false;
+	Update_Phase();
+	Evaluate_Phase();
 
-	_float fWeight = Update_TransitionSource(fTimeDelta);
-	if (fWeight < 1.f)
-	{
-		IsAnimationEnd = iter->second->Update_TrackPosition(playDesc.fSpeed * fTimeDelta, &fTrackPosition);
-		iter->second->Blend_AtTrackPosition(fTrackPosition, m_pModel->m_Bones, fWeight);
-		iter->second->Sample_BoneAtTrackPosition(fTrackPosition, m_pModel->m_Bones, m_pModel->m_iRootBoneIndex);
-	}
-	else
-	{
-		IsAnimationEnd = iter->second->Update_TransformationMatrices_All(fTimeDelta * playDesc.fSpeed, m_pModel->m_Bones, &fTrackPosition);
-	}
-
-	if (nullptr != playDesc.pTrackPosition)
-		*playDesc.pTrackPosition = fTrackPosition;
-	m_fCurPlayTrackPos = fTrackPosition;
-
-	Compute_RootAnimation(rootMotionDesc.fRate, rootMotionDesc.isRotate, rootMotionDesc.isTranslate, rootMotionDesc.isEnable);
-
-	if (IsAnimationEnd)
-	{
-		Clear_Animation(playDesc.strAnimationName);
-		m_TransitionSource.eType = ETransitionSourceType::NONE;
-		return true;
-	}
-
-	for (auto& pBone : m_pModel->m_Bones)
-		pBone->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_pModel->m_PreTransformMatrix), m_pModel->m_Bones);
-
-	return false;
+	return m_isFrameAnimEnd;
 }
 
 _bool CAnimator::Play_BlendSpace_CPU(const BLENDSPACE_1D_DESC& desc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta)
@@ -121,21 +140,13 @@ _bool CAnimator::Play_BlendSpace_CPU(const BLENDSPACE_1D_DESC& desc, const ROOTM
 	if (nullptr == desc.pParam || desc.Samples.size() < 2)
 		return false;
 
-	Handle_PlaybackChange(ETransitionSourceType::BLENDSPACE_1D, desc.Samples[0].strAnimationName, desc.fBlendIn);
-	m_fCurBlendOut = desc.fBlendOut;
-	m_fCurPlaySpeed = desc.fPlayRate;
-	m_pCurBS1 = &desc;
-	m_pCurBS2 = nullptr;
+	m_eRequest = EPlayRequest::BLENDSPACE_1D;
+	m_pReqBS1 = &desc;
+	m_ReqRootDesc = rootMotionDesc;
+	m_fReqDt = fTimeDelta;
 
-	_float fWeight = Update_TransitionSource(fTimeDelta);
-	Layer_BlendSpace1D(desc, *desc.pParam, m_fBlendSpacePhase, fWeight, fTimeDelta);
-
-	Compute_RootAnimation(rootMotionDesc.fRate,
-		rootMotionDesc.isEnable && rootMotionDesc.isRotate,
-		rootMotionDesc.isEnable && rootMotionDesc.isTranslate);
-
-	for (auto& pBone : m_pModel->m_Bones)
-		pBone->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_pModel->m_PreTransformMatrix), m_pModel->m_Bones);
+	Update_Phase();
+	Evaluate_Phase();
 
 	return false;
 }
@@ -145,23 +156,153 @@ _bool CAnimator::Play_BlendSpace2D_CPU(const BLENDSPACE_2D_DESC& desc, const ROO
 	if (nullptr == desc.pParam || desc.Samples.size() < 3)
 		return false;
 
-	Handle_PlaybackChange(ETransitionSourceType::BLENDSPACE_2D, desc.Samples[0].strAnimationName, desc.fBlendIn);
-	m_fCurBlendOut = desc.fBlendOut;
-	m_fCurPlaySpeed = desc.fPlayRate;
-	m_pCurBS1 = nullptr;
-	m_pCurBS2 = &desc;
+	m_eRequest = EPlayRequest::BLENDSPACE_2D;
+	m_pReqBS2 = &desc;
+	m_ReqRootDesc = rootMotionDesc;
+	m_fReqDt = fTimeDelta;
 
-	_float fWeight = Update_TransitionSource(fTimeDelta);
-	Layer_BlendSpace2D(desc, desc.pParam->x, desc.pParam->y, m_fBlendSpacePhase, fWeight, fTimeDelta);
-
-	Compute_RootAnimation(rootMotionDesc.fRate,
-		rootMotionDesc.isEnable && rootMotionDesc.isRotate,
-		rootMotionDesc.isEnable && rootMotionDesc.isTranslate);
-
-	for (auto& pBone : m_pModel->m_Bones)
-		pBone->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_pModel->m_PreTransformMatrix), m_pModel->m_Bones);
+	Update_Phase();
+	Evaluate_Phase();
 
 	return false;
+}
+
+// Update phase: last point that reads game state. Snapshots parameters, decides
+// playback change, advances tracks/phases/crossfade and fires notifies.
+// No bone is written here.
+void CAnimator::Update_Phase()
+{
+	Snapshot_Params();
+	m_isFrameAnimEnd = false;
+	m_fFrameWeight = 1.f;
+
+	switch (m_eRequest)
+	{
+	case EPlayRequest::CLIP:
+	{
+		auto iter = m_pModel->m_Animations.find(m_ReqClipDesc.strAnimationName);
+		if (iter == m_pModel->m_Animations.end())
+		{
+			m_eRequest = EPlayRequest::NONE;
+			return;
+		}
+
+		Handle_PlaybackChange(ETransitionSourceType::CLIP, m_ReqClipDesc.strAnimationName, m_ReqClipDesc.fBlendIn);
+		m_fCurBlendOut = m_ReqClipDesc.fBlendOut;
+		m_fCurPlaySpeed = m_ReqClipDesc.fSpeed;
+		m_pCurBS1 = nullptr;
+		m_pCurBS2 = nullptr;
+
+		m_fFrameWeight = Advance_TransitionSource(m_fReqDt);
+
+		m_isFrameAnimEnd = iter->second->Update_TrackPosition(m_ReqClipDesc.fSpeed * m_fReqDt, &m_fFrameTrack);
+
+		if (nullptr != m_ReqClipDesc.pTrackPosition)
+			*m_ReqClipDesc.pTrackPosition = m_fFrameTrack;
+		m_fCurPlayTrackPos = m_fFrameTrack;
+		break;
+	}
+	case EPlayRequest::BLENDSPACE_1D:
+	{
+		Handle_PlaybackChange(ETransitionSourceType::BLENDSPACE_1D, m_pReqBS1->Samples[0].strAnimationName, m_pReqBS1->fBlendIn);
+		m_fCurBlendOut = m_pReqBS1->fBlendOut;
+		m_fCurPlaySpeed = m_pReqBS1->fPlayRate;
+		m_pCurBS1 = m_pReqBS1;
+		m_pCurBS2 = nullptr;
+
+		m_fFrameWeight = Advance_TransitionSource(m_fReqDt);
+
+		m_fFrameBSParamX = *m_pReqBS1->pParam;
+		Advance_BlendSpacePhase1D(*m_pReqBS1, m_fFrameBSParamX, m_fBlendSpacePhase, m_fReqDt);
+		break;
+	}
+	case EPlayRequest::BLENDSPACE_2D:
+	{
+		Handle_PlaybackChange(ETransitionSourceType::BLENDSPACE_2D, m_pReqBS2->Samples[0].strAnimationName, m_pReqBS2->fBlendIn);
+		m_fCurBlendOut = m_pReqBS2->fBlendOut;
+		m_fCurPlaySpeed = m_pReqBS2->fPlayRate;
+		m_pCurBS1 = nullptr;
+		m_pCurBS2 = m_pReqBS2;
+
+		m_fFrameWeight = Advance_TransitionSource(m_fReqDt);
+
+		m_fFrameBSParamX = m_pReqBS2->pParam->x;
+		m_fFrameBSParamY = m_pReqBS2->pParam->y;
+		Advance_BlendSpacePhase2D(*m_pReqBS2, m_fFrameBSParamX, m_fFrameBSParamY, m_fBlendSpacePhase, m_fReqDt);
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+void CAnimator::Evaluate_Phase()
+{
+	switch (m_eRequest)
+	{
+	case EPlayRequest::CLIP:
+	{
+		auto iter = m_pModel->m_Animations.find(m_ReqClipDesc.strAnimationName);
+		if (iter == m_pModel->m_Animations.end())
+			break;
+
+		if (m_fFrameWeight < 1.f)
+		{
+			Sample_TransitionSource();
+			iter->second->Blend_AtTrackPosition(m_fFrameTrack, m_pModel->m_Bones, m_fFrameWeight);
+			iter->second->Sample_BoneAtTrackPosition(m_fFrameTrack, m_pModel->m_Bones, m_pModel->m_iRootBoneIndex);
+		}
+		else if (false == m_isFrameAnimEnd)
+		{
+			iter->second->Sample_AtTrackPosition(m_fFrameTrack, m_pModel->m_Bones);
+		}
+
+		Compute_RootAnimation(m_ReqRootDesc.fRate, m_ReqRootDesc.isRotate, m_ReqRootDesc.isTranslate, m_ReqRootDesc.isEnable);
+
+		if (m_isFrameAnimEnd)
+		{
+			Clear_Animation(m_ReqClipDesc.strAnimationName);
+			m_TransitionSource.eType = ETransitionSourceType::NONE;
+			break;
+		}
+
+		for (auto& pBone : m_pModel->m_Bones)
+			pBone->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_pModel->m_PreTransformMatrix), m_pModel->m_Bones);
+		break;
+	}
+	case EPlayRequest::BLENDSPACE_1D:
+	{
+		if (m_fFrameWeight < 1.f)
+			Sample_TransitionSource();
+		Sample_BlendSpace1D(*m_pReqBS1, m_fFrameBSParamX, m_fBlendSpacePhase, m_fFrameWeight);
+
+		Compute_RootAnimation(m_ReqRootDesc.fRate,
+			m_ReqRootDesc.isEnable && m_ReqRootDesc.isRotate,
+			m_ReqRootDesc.isEnable && m_ReqRootDesc.isTranslate);
+
+		for (auto& pBone : m_pModel->m_Bones)
+			pBone->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_pModel->m_PreTransformMatrix), m_pModel->m_Bones);
+		break;
+	}
+	case EPlayRequest::BLENDSPACE_2D:
+	{
+		if (m_fFrameWeight < 1.f)
+			Sample_TransitionSource();
+		Sample_BlendSpace2D(*m_pReqBS2, m_fFrameBSParamX, m_fFrameBSParamY, m_fBlendSpacePhase, m_fFrameWeight);
+
+		Compute_RootAnimation(m_ReqRootDesc.fRate,
+			m_ReqRootDesc.isEnable && m_ReqRootDesc.isRotate,
+			m_ReqRootDesc.isEnable && m_ReqRootDesc.isTranslate);
+
+		for (auto& pBone : m_pModel->m_Bones)
+			pBone->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_pModel->m_PreTransformMatrix), m_pModel->m_Bones);
+		break;
+	}
+	default:
+		break;
+	}
+
+	m_eRequest = EPlayRequest::NONE;
 }
 
 void CAnimator::Freeze_TransitionSource()
@@ -184,7 +325,7 @@ void CAnimator::Handle_PlaybackChange(ETransitionSourceType eNewType, const _str
 	if (m_fBlendOverride >= 0.f)
 	{
 		fDuration = m_fBlendOverride;
-		m_fBlendOverride = -1.f; // consumed once.
+		m_fBlendOverride = -1.f;
 	}
 	else
 		fDuration = min(m_fCurBlendOut, fNewBlendIn);
@@ -240,7 +381,7 @@ void CAnimator::Handle_PlaybackChange(ETransitionSourceType eNewType, const _str
 	m_strCurPlayKey = strNewKey;
 }
 
-_float CAnimator::Update_TransitionSource(_float fTimeDelta)
+_float CAnimator::Advance_TransitionSource(_float fTimeDelta)
 {
 	if (ETransitionSourceType::NONE == m_TransitionSource.eType)
 		return 1.f;
@@ -266,31 +407,56 @@ _float CAnimator::Update_TransitionSource(_float fTimeDelta)
 			Freeze_TransitionSource();
 			break;
 		}
-		iter->second->Sample_AtTrackPosition(m_TransitionSource.fTrackPos, m_pModel->m_Bones);
+		m_fSrcSampleTrack = m_TransitionSource.fTrackPos;
 		m_TransitionSource.fTrackPos += iter->second->Get_TickPerSecond() * m_TransitionSource.fSpeed * fTimeDelta;
 		break;
 	}
 	case ETransitionSourceType::BLENDSPACE_1D:
-		Layer_BlendSpace1D(m_TransitionSource.BS1, m_TransitionSource.fFrozenParamX,
-			m_TransitionSource.fPhase, 1.f, fTimeDelta);
+		Advance_BlendSpacePhase1D(m_TransitionSource.BS1, m_TransitionSource.fFrozenParamX,
+			m_TransitionSource.fPhase, fTimeDelta);
 		break;
 	case ETransitionSourceType::BLENDSPACE_2D:
-		Layer_BlendSpace2D(m_TransitionSource.BS2, m_TransitionSource.fFrozenParamX,
-			m_TransitionSource.fFrozenParamY, m_TransitionSource.fPhase, 1.f, fTimeDelta);
+		Advance_BlendSpacePhase2D(m_TransitionSource.BS2, m_TransitionSource.fFrozenParamX,
+			m_TransitionSource.fFrozenParamY, m_TransitionSource.fPhase, fTimeDelta);
 		break;
 	case ETransitionSourceType::FROZEN:
-		for (size_t i = 0; i < m_pModel->m_Bones.size(); ++i)
-			m_pModel->m_Bones[i]->Set_TransformationMatrix(XMLoadFloat4x4(&m_TransitionSource.FrozenPose[i]));
 		break;
 	}
 
 	return fWeight;
 }
 
-void CAnimator::Layer_BlendSpace1D(const BLENDSPACE_1D_DESC& desc, _float fParam, _float& fPhase, _float fLayerWeight, _float fTimeDelta)
+void CAnimator::Sample_TransitionSource()
 {
-	if (desc.Samples.size() < 2 || fLayerWeight <= 0.f)
-		return;
+	switch (m_TransitionSource.eType)
+	{
+	case ETransitionSourceType::CLIP:
+	{
+		auto iter = m_pModel->m_Animations.find(m_TransitionSource.strClip);
+		if (iter == m_pModel->m_Animations.end())
+			break;
+		iter->second->Sample_AtTrackPosition(m_fSrcSampleTrack, m_pModel->m_Bones);
+		break;
+	}
+	case ETransitionSourceType::BLENDSPACE_1D:
+		Sample_BlendSpace1D(m_TransitionSource.BS1, m_TransitionSource.fFrozenParamX,
+			m_TransitionSource.fPhase, 1.f);
+		break;
+	case ETransitionSourceType::BLENDSPACE_2D:
+		Sample_BlendSpace2D(m_TransitionSource.BS2, m_TransitionSource.fFrozenParamX,
+			m_TransitionSource.fFrozenParamY, m_TransitionSource.fPhase, 1.f);
+		break;
+	case ETransitionSourceType::FROZEN:
+		for (size_t i = 0; i < m_pModel->m_Bones.size(); ++i)
+			m_pModel->m_Bones[i]->Set_TransformationMatrix(XMLoadFloat4x4(&m_TransitionSource.FrozenPose[i]));
+		break;
+	}
+}
+
+_bool CAnimator::Pick_BlendSpace1D(const BLENDSPACE_1D_DESC& desc, _float fParam, BS1_PICK& Out)
+{
+	if (desc.Samples.size() < 2)
+		return false;
 
 	_uint iA = 0;
 	_uint iB = 1;
@@ -310,38 +476,60 @@ void CAnimator::Layer_BlendSpace1D(const BLENDSPACE_1D_DESC& desc, _float fParam
 	auto iterA = m_pModel->m_Animations.find(desc.Samples[iA].strAnimationName);
 	auto iterB = m_pModel->m_Animations.find(desc.Samples[iB].strAnimationName);
 	if (iterA == m_pModel->m_Animations.end() || iterB == m_pModel->m_Animations.end())
-		return;
+		return false;
 
 	_float fRange = desc.Samples[iB].fXParamValue - desc.Samples[iA].fXParamValue;
 	_float fU = (fRange > 0.f) ? ((fParam - desc.Samples[iA].fXParamValue) / fRange) : 0.f;
 	fU = max(0.f, min(1.f, fU));
 
-	_float fDurA = iterA->second->Get_Duration();
-	_float fDurB = iterB->second->Get_Duration();
-	_float fTickA = iterA->second->Get_TickPerSecond();
-	_float fTickB = iterB->second->Get_TickPerSecond();
+	Out.pA = iterA->second;
+	Out.pB = iterB->second;
+	Out.fU = fU;
+	return true;
+}
+
+void CAnimator::Advance_BlendSpacePhase1D(const BLENDSPACE_1D_DESC& desc, _float fParam, _float& fPhase, _float fTimeDelta)
+{
+	BS1_PICK Pick{};
+	if (false == Pick_BlendSpace1D(desc, fParam, Pick))
+		return;
+
+	_float fDurA = Pick.pA->Get_Duration();
+	_float fDurB = Pick.pB->Get_Duration();
+	_float fTickA = Pick.pA->Get_TickPerSecond();
+	_float fTickB = Pick.pB->Get_TickPerSecond();
 	_float fRealDurA = (fTickA > 0.f) ? (fDurA / fTickA) : fDurA;
 	_float fRealDurB = (fTickB > 0.f) ? (fDurB / fTickB) : fDurB;
-	_float fBlendedDur = fRealDurA + fU * (fRealDurB - fRealDurA);
+	_float fBlendedDur = fRealDurA + Pick.fU * (fRealDurB - fRealDurA);
 	if (fBlendedDur > 0.f)
 		fPhase += (fTimeDelta * desc.fPlayRate) / fBlendedDur;
 	if (fPhase >= 1.f)
 		fPhase -= 1.f;
-
-	_float fTrackA = fPhase * fDurA;
-	_float fTrackB = fPhase * fDurB;
-
-	_float wA = fLayerWeight * (1.f - fU);
-	_float wB = fLayerWeight * fU;
-	_float S = 1.f - fLayerWeight;
-	if (wA > 0.f) { iterA->second->Blend_AtTrackPosition(fTrackA, m_pModel->m_Bones, wA / (S + wA)); S += wA; }
-	if (wB > 0.f) { iterB->second->Blend_AtTrackPosition(fTrackB, m_pModel->m_Bones, wB / (S + wB)); S += wB; }
 }
 
-void CAnimator::Layer_BlendSpace2D(const BLENDSPACE_2D_DESC& desc, _float fParamX, _float fParamY, _float& fPhase, _float fLayerWeight, _float fTimeDelta)
+void CAnimator::Sample_BlendSpace1D(const BLENDSPACE_1D_DESC& desc, _float fParam, _float fPhase, _float fLayerWeight)
 {
-	if (desc.Samples.size() < 3 || fLayerWeight <= 0.f)
+	if (fLayerWeight <= 0.f)
 		return;
+
+	BS1_PICK Pick{};
+	if (false == Pick_BlendSpace1D(desc, fParam, Pick))
+		return;
+
+	_float fTrackA = fPhase * Pick.pA->Get_Duration();
+	_float fTrackB = fPhase * Pick.pB->Get_Duration();
+
+	_float wA = fLayerWeight * (1.f - Pick.fU);
+	_float wB = fLayerWeight * Pick.fU;
+	_float S = 1.f - fLayerWeight;
+	if (wA > 0.f) { Pick.pA->Blend_AtTrackPosition(fTrackA, m_pModel->m_Bones, wA / (S + wA)); S += wA; }
+	if (wB > 0.f) { Pick.pB->Blend_AtTrackPosition(fTrackB, m_pModel->m_Bones, wB / (S + wB)); S += wB; }
+}
+
+_bool CAnimator::Pick_BlendSpace2D(const BLENDSPACE_2D_DESC& desc, _float fParamX, _float fParamY, BS2_PICK& Out)
+{
+	if (desc.Samples.size() < 3)
+		return false;
 
 	_float fX = max(-1.f, min(1.f, fParamX));
 	_float fY = max(-1.f, min(1.f, fParamY));
@@ -360,40 +548,61 @@ void CAnimator::Layer_BlendSpace2D(const BLENDSPACE_2D_DESC& desc, _float fParam
 	const BLENDSPACE_SAMPLE* pIdle = Find(0.f, 0.f);
 	const BLENDSPACE_SAMPLE* pX = Find(sx, 0.f);
 	const BLENDSPACE_SAMPLE* pY = Find(0.f, sy);
-	if (!pIdle || !pX || !pY) return;
+	if (!pIdle || !pX || !pY) return false;
 
 	auto iterI = m_pModel->m_Animations.find(pIdle->strAnimationName);
 	auto iterX = m_pModel->m_Animations.find(pX->strAnimationName);
 	auto iterY = m_pModel->m_Animations.find(pY->strAnimationName);
 	if (iterI == m_pModel->m_Animations.end() || iterX == m_pModel->m_Animations.end() || iterY == m_pModel->m_Animations.end())
-		return;
+		return false;
 
 	_float fSum = tx + ty;
-	_float wX, wY, wIdle;
-	if (fSum < 1e-5f) { wIdle = 1.f; wX = 0.f; wY = 0.f; }
-	else { wX = (tx * tx) / fSum; wY = (ty * ty) / fSum; wIdle = 1.f - wX - wY; }
+	if (fSum < 1e-5f) { Out.wI = 1.f; Out.wX = 0.f; Out.wY = 0.f; }
+	else { Out.wX = (tx * tx) / fSum; Out.wY = (ty * ty) / fSum; Out.wI = 1.f - Out.wX - Out.wY; }
+
+	Out.pI = iterI->second;
+	Out.pX = iterX->second;
+	Out.pY = iterY->second;
+	return true;
+}
+
+void CAnimator::Advance_BlendSpacePhase2D(const BLENDSPACE_2D_DESC& desc, _float fParamX, _float fParamY, _float& fPhase, _float fTimeDelta)
+{
+	BS2_PICK Pick{};
+	if (false == Pick_BlendSpace2D(desc, fParamX, fParamY, Pick))
+		return;
 
 	auto RealDur = [](CAnimation* pAnim) {
 		_float dur = pAnim->Get_Duration(), tick = pAnim->Get_TickPerSecond();
 		return (tick > 0.f) ? (dur / tick) : dur;
 	};
-	_float fBlendedDur = wIdle * RealDur(iterI->second) + wX * RealDur(iterX->second) + wY * RealDur(iterY->second);
+	_float fBlendedDur = Pick.wI * RealDur(Pick.pI) + Pick.wX * RealDur(Pick.pX) + Pick.wY * RealDur(Pick.pY);
 	if (fBlendedDur > 0.f)
 		fPhase += (fTimeDelta * desc.fPlayRate) / fBlendedDur;
 	if (fPhase >= 1.f)
 		fPhase -= 1.f;
+}
 
-	_float trackI = fPhase * iterI->second->Get_Duration();
-	_float trackX = fPhase * iterX->second->Get_Duration();
-	_float trackY = fPhase * iterY->second->Get_Duration();
+void CAnimator::Sample_BlendSpace2D(const BLENDSPACE_2D_DESC& desc, _float fParamX, _float fParamY, _float fPhase, _float fLayerWeight)
+{
+	if (fLayerWeight <= 0.f)
+		return;
 
-	wIdle *= fLayerWeight;
-	wX *= fLayerWeight;
-	wY *= fLayerWeight;
+	BS2_PICK Pick{};
+	if (false == Pick_BlendSpace2D(desc, fParamX, fParamY, Pick))
+		return;
+
+	_float trackI = fPhase * Pick.pI->Get_Duration();
+	_float trackX = fPhase * Pick.pX->Get_Duration();
+	_float trackY = fPhase * Pick.pY->Get_Duration();
+
+	_float wIdle = Pick.wI * fLayerWeight;
+	_float wX = Pick.wX * fLayerWeight;
+	_float wY = Pick.wY * fLayerWeight;
 	_float S = 1.f - fLayerWeight;
-	if (wIdle > 0.f) { iterI->second->Blend_AtTrackPosition(trackI, m_pModel->m_Bones, wIdle / (S + wIdle)); S += wIdle; }
-	if (wX > 0.f)    { iterX->second->Blend_AtTrackPosition(trackX, m_pModel->m_Bones, wX / (S + wX));       S += wX; }
-	if (wY > 0.f)    { iterY->second->Blend_AtTrackPosition(trackY, m_pModel->m_Bones, wY / (S + wY));       S += wY; }
+	if (wIdle > 0.f) { Pick.pI->Blend_AtTrackPosition(trackI, m_pModel->m_Bones, wIdle / (S + wIdle)); S += wIdle; }
+	if (wX > 0.f)    { Pick.pX->Blend_AtTrackPosition(trackX, m_pModel->m_Bones, wX / (S + wX));       S += wX; }
+	if (wY > 0.f)    { Pick.pY->Blend_AtTrackPosition(trackY, m_pModel->m_Bones, wY / (S + wY));       S += wY; }
 }
 
 const ROOT_MOTION_DELTA& CAnimator::Get_RootMotionDelta()
@@ -484,7 +693,6 @@ void CAnimator::Compute_RootAnimation(_float fRootMotionRate, _bool isRootMotion
 		m_RootMatrix = XMMatrixIdentity();
 	}
 
-	// Store converted T/R for the next frame.
 	XMStoreFloat4(&m_vPreRootPosition, vConvertedTranslation);
 	XMStoreFloat4(&m_vPreRootRotation, vConvertedRotation);
 }
@@ -595,6 +803,360 @@ _matrix CAnimator::Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float 
 	);
 
 	return ResultMatrix;
+}
+
+_bool CAnimator::Play_Animation_GPU(CComputeShader* pComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta)
+{
+	CAnimation* pAnimation = m_pModel->Get_AnimationOrNull(playDesc.strAnimationName);
+	if (nullptr == pComputeShaderCom || nullptr == playDesc.pTrackPosition || nullptr == pAnimation)
+		return false;
+
+	HandleAnimationChange(playDesc.strAnimationName);
+
+	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fSpeed * fTimeDelta);
+	FetchLocalMatrices_FromCompute(pComputeShaderCom, *playDesc.pTrackPosition, playDesc.strAnimationName);
+
+	if (true == rootMotionDesc.isEnable)
+		Compute_RootAnimation(rootMotionDesc.fRate, rootMotionDesc.isRotate, rootMotionDesc.isTranslate);
+	else
+		m_RootMatrix = XMMatrixIdentity();
+
+	for (_uint i = 0; i < m_pModel->m_Bones.size(); i++)
+		m_pModel->m_Bones[i]->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_pModel->m_PreTransformMatrix), m_pModel->m_Bones);
+
+	if (isAnimationEnd)
+	{
+		Clear_Animation(playDesc.strAnimationName);
+		return true;
+	}
+
+	return false;
+}
+
+_bool CAnimator::Play_Animation_GPU(CComputeShader* pComputeShaderCom, CComputeShader* pMorphComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta)
+{
+	CAnimation* pAnimation = m_pModel->Get_AnimationOrNull(playDesc.strAnimationName);
+	if (nullptr == pComputeShaderCom || nullptr == pMorphComputeShaderCom ||
+		nullptr == playDesc.pTrackPosition || nullptr == pAnimation)
+		return false;
+
+	HandleAnimationChange(playDesc.strAnimationName);
+	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fSpeed * fTimeDelta);
+
+	FetchLocalMatrices_FromCompute(pComputeShaderCom, *playDesc.pTrackPosition, playDesc.strAnimationName);
+
+	Update_MorphAnimation(pAnimation, pMorphComputeShaderCom, playDesc.fSpeed * fTimeDelta, playDesc.isFacial);
+
+	if (true == rootMotionDesc.isEnable)
+		Compute_RootAnimation(rootMotionDesc.fRate, rootMotionDesc.isRotate, rootMotionDesc.isTranslate);
+	else
+		m_RootMatrix = XMMatrixIdentity();
+
+	for (_uint i = 0; i < m_pModel->m_Bones.size(); i++)
+		m_pModel->m_Bones[i]->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_pModel->m_PreTransformMatrix), m_pModel->m_Bones);
+
+	if (isAnimationEnd)
+	{
+		Clear_Animation(playDesc.strAnimationName);
+		return true;
+	}
+
+	return false;
+}
+
+_bool CAnimator::Play_NonRibAnimation_GPU(CComputeShader* pComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta)
+{
+	CAnimation* pAnimation = m_pModel->Get_AnimationOrNull(playDesc.strAnimationName);
+	if (nullptr == pComputeShaderCom || nullptr == playDesc.pTrackPosition || nullptr == pAnimation)
+		return false;
+
+	HandleAnimationChange(playDesc.strAnimationName);
+	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fSpeed * fTimeDelta);
+
+	FetchLocalMatrices_FromComputeNonRib(pComputeShaderCom, *playDesc.pTrackPosition, playDesc.strAnimationName);
+
+	if (true == rootMotionDesc.isEnable)
+		Compute_RootAnimation(rootMotionDesc.fRate, rootMotionDesc.isRotate, rootMotionDesc.isTranslate);
+	else
+		m_RootMatrix = XMMatrixIdentity();
+
+	for (_uint i = 0; i < m_pModel->m_Bones.size(); i++)
+		m_pModel->m_Bones[i]->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_pModel->m_PreTransformMatrix), m_pModel->m_Bones);
+
+	if (isAnimationEnd)
+	{
+		Clear_Animation(playDesc.strAnimationName);
+		return true;
+	}
+
+	return false;
+}
+
+_bool CAnimator::Play_FlyAnimation_GPU(CComputeShader* pComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, const GPU_BLEND_INFO& gpuBlendInfo, _float fTimeDelta)
+{
+	CAnimation* pAnimation = m_pModel->Get_AnimationOrNull(playDesc.strAnimationName);
+	if (nullptr == pComputeShaderCom || nullptr == playDesc.pTrackPosition || nullptr == pAnimation)
+		return false;
+
+	HandleAnimationChange(playDesc.strAnimationName);
+	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fSpeed * fTimeDelta);
+
+	FetchLocalMatrices_FromComputeFly(pComputeShaderCom, *playDesc.pTrackPosition, playDesc.strAnimationName, gpuBlendInfo);
+
+	if (true == rootMotionDesc.isEnable)
+		Compute_RootAnimation(rootMotionDesc.fRate, rootMotionDesc.isRotate, rootMotionDesc.isTranslate);
+	else
+		m_RootMatrix = XMMatrixIdentity();
+
+	for (_uint i = 0; i < m_pModel->m_Bones.size(); i++)
+		m_pModel->m_Bones[i]->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_pModel->m_PreTransformMatrix), m_pModel->m_Bones);
+
+	if (isAnimationEnd)
+	{
+		Clear_Animation(playDesc.strAnimationName);
+		return true;
+	}
+
+	return false;
+}
+
+_bool CAnimator::Play_FlyAnimation_GPU(CComputeShader* pComputeShaderCom, CComputeShader* pMorphComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, const GPU_BLEND_INFO& gpuBlendInfo, _float fTimeDelta)
+{
+	CAnimation* pAnimation = m_pModel->Get_AnimationOrNull(playDesc.strAnimationName);
+	if (nullptr == pComputeShaderCom || nullptr == pMorphComputeShaderCom ||
+		nullptr == playDesc.pTrackPosition || nullptr == pAnimation)
+		return false;
+
+	HandleAnimationChange(playDesc.strAnimationName);
+	_bool isAnimationEnd = Update_TrackPosition(pAnimation, playDesc.pTrackPosition, playDesc.fSpeed * fTimeDelta);
+
+	FetchLocalMatrices_FromComputeFly(pComputeShaderCom, *playDesc.pTrackPosition, playDesc.strAnimationName, gpuBlendInfo);
+
+	Update_MorphAnimation(pAnimation, pMorphComputeShaderCom, playDesc.fSpeed * fTimeDelta, playDesc.isFacial);
+
+	if (true == rootMotionDesc.isEnable)
+		Compute_RootAnimation(rootMotionDesc.fRate, rootMotionDesc.isRotate, rootMotionDesc.isTranslate);
+	else
+		m_RootMatrix = XMMatrixIdentity();
+
+	for (_uint i = 0; i < m_pModel->m_Bones.size(); i++)
+		m_pModel->m_Bones[i]->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_pModel->m_PreTransformMatrix), m_pModel->m_Bones);
+
+	if (isAnimationEnd)
+	{
+		Clear_Animation(playDesc.strAnimationName);
+		return true;
+	}
+
+	return false;
+}
+
+void CAnimator::FetchLocalMatrices_FromCompute(CComputeShader* pComputeShaderCom, _float fTrackPosition, const _string& strAnimationName)
+{
+	if (nullptr == pComputeShaderCom)
+		return;
+
+	Update_AnimConstantBuffer(strAnimationName, fTrackPosition);
+	Bind_AnimationResource(pComputeShaderCom);
+
+	_uint iNumBones = static_cast<_uint>(m_pModel->m_Bones.size());
+	_uint iGroupCount = (iNumBones + (pComputeShaderCom->Get_ThreadInfo().iThreadGroupX - 1)) /
+		pComputeShaderCom->Get_ThreadInfo().iThreadGroupX;
+	pComputeShaderCom->Dispatch(iGroupCount, 1, 1);
+
+	Readback_BoneMatrices();
+}
+
+void CAnimator::FetchLocalMatrices_FromComputeFly(CComputeShader* pComputeShaderCom, _float fTrackPosition, const _string& strAnimationName, const GPU_BLEND_INFO& gpuBlendInfo)
+{
+	ASSERT_CRASH(pComputeShaderCom);
+	Update_FlyAnimConstantBuffer(gpuBlendInfo, strAnimationName, fTrackPosition);
+	Bind_FlyAnimationResource(pComputeShaderCom);
+	_uint iNumBones = static_cast<_uint>(m_pModel->m_Bones.size());
+	_uint iGroupCount = (iNumBones + (pComputeShaderCom->Get_ThreadInfo().iThreadGroupX - 1)) / pComputeShaderCom->Get_ThreadInfo().iThreadGroupX;
+	pComputeShaderCom->Dispatch(iGroupCount, 1, 1);
+	Readback_BoneMatrices();
+}
+
+void CAnimator::FetchLocalMatrices_FromComputeNonRib(CComputeShader* pComputeShaderCom, _float fTrackPosition, const _string& strAnimationName)
+{
+	ASSERT_CRASH(pComputeShaderCom);
+
+	Update_NonRibAnimConstantBuffer(strAnimationName, fTrackPosition);
+	Bind_AnimationResource(pComputeShaderCom);
+
+	_uint iNumBones = static_cast<_uint>(m_pModel->m_Bones.size());
+	_uint iGroupCount = (iNumBones + (pComputeShaderCom->Get_ThreadInfo().iThreadGroupX - 1)) / pComputeShaderCom->Get_ThreadInfo().iThreadGroupX;
+	pComputeShaderCom->Dispatch(iGroupCount, 1, 1);
+
+	Readback_BoneMatrices();
+}
+
+void CAnimator::Update_NonRibAnimConstantBuffer(const _string& strAnimationName, _float fTrackPosition)
+{
+	D3D11_MAPPED_SUBRESOURCE MappedSubResource;
+	m_pModel->m_pContext->Map(m_pModel->m_Buffers[CModel::BUFFER_ANIM_INFOCB], 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedSubResource);
+
+	ANIMATION_CBINFO* pAnimCBInfo = static_cast<ANIMATION_CBINFO*>(MappedSubResource.pData);
+	pAnimCBInfo->fTrackPosition = fTrackPosition;
+	pAnimCBInfo->iAnimindex = m_pModel->m_AnimationNameToIndex[strAnimationName];
+	pAnimCBInfo->iRibAnimUsed = 0;
+	pAnimCBInfo->iRibbonAnimIndex = 0;
+
+	m_pModel->m_pContext->Unmap(m_pModel->m_Buffers[CModel::BUFFER_ANIM_INFOCB], 0);
+}
+
+void CAnimator::Update_AnimConstantBuffer(const _string& strAnimationName, _float fTrackPosition)
+{
+	D3D11_MAPPED_SUBRESOURCE MappedSubResource;
+	m_pModel->m_pContext->Map(m_pModel->m_Buffers[CModel::BUFFER_ANIM_INFOCB], 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedSubResource);
+
+	_bool IsRibAnimUsed = false;
+	ANIMATION_CBINFO* pAnimCBInfo = static_cast<ANIMATION_CBINFO*>(MappedSubResource.pData);
+	pAnimCBInfo->fTrackPosition = fTrackPosition;
+	pAnimCBInfo->iAnimindex = m_pModel->m_AnimationNameToIndex[strAnimationName];
+	pAnimCBInfo->iRibAnimUsed = 0;
+	pAnimCBInfo->iRibbonAnimIndex = 0;
+
+	_string strRibAnimationName = CModel::kRibPrefix + strAnimationName;
+	auto iter = m_pModel->m_Animations.find(strRibAnimationName);
+	if (iter == m_pModel->m_Animations.end())
+	{
+		pAnimCBInfo->iRibAnimUsed = 0;
+	}
+	else
+	{
+		pAnimCBInfo->iRibAnimUsed = 1;
+		pAnimCBInfo->iRibbonAnimIndex = m_pModel->m_AnimationNameToIndex[strRibAnimationName];
+	}
+
+	m_pModel->m_pContext->Unmap(m_pModel->m_Buffers[CModel::BUFFER_ANIM_INFOCB], 0);
+}
+
+void CAnimator::Update_FlyAnimConstantBuffer(const GPU_BLEND_INFO& gpuBlendInfo, const _string& strAnimationName, _float fTrackPosition)
+{
+	D3D11_MAPPED_SUBRESOURCE MappedSubResource;
+	m_pModel->m_pContext->Map(m_pModel->m_Buffers[CModel::BUFFER_ANIM_INFOFLYCB], 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedSubResource);
+
+	_bool IsRibAnimUsed = false;
+	ANIMATIONFLY_CBINFO* pAnimCBInfo = static_cast<ANIMATIONFLY_CBINFO*>(MappedSubResource.pData);
+	pAnimCBInfo->fTrackPosition = fTrackPosition;
+	pAnimCBInfo->iAnimindex = m_pModel->m_AnimationNameToIndex[strAnimationName];
+	pAnimCBInfo->iRibAnimUsed = 0;
+	pAnimCBInfo->iRibbonAnimIndex = 0;
+
+	_string strRibAnimationName = CModel::kRibPrefix + strAnimationName;
+	auto iter = m_pModel->m_Animations.find(strRibAnimationName);
+	if (iter == m_pModel->m_Animations.end())
+	{
+		pAnimCBInfo->iRibAnimUsed = 0;
+	}
+	else
+	{
+		pAnimCBInfo->iRibAnimUsed = 1;
+		pAnimCBInfo->iRibbonAnimIndex = m_pModel->m_AnimationNameToIndex[strRibAnimationName];
+	}
+
+	if (gpuBlendInfo.IsBlendEnabled)
+	{
+		pAnimCBInfo->IsBlendEnabled = gpuBlendInfo.IsBlendEnabled;
+		pAnimCBInfo->fBlendParamLR = gpuBlendInfo.fBlendParamLR;
+		pAnimCBInfo->fBlendParamDU = gpuBlendInfo.fBlendParamDU;
+		pAnimCBInfo->fPadding = 0.f;
+
+		pAnimCBInfo->iClipIndexL = m_pModel->GetSafeIndex(gpuBlendInfo.strClipxL);
+		pAnimCBInfo->iClipIndexMidLR = m_pModel->GetSafeIndex(gpuBlendInfo.strClipMidLR);
+		pAnimCBInfo->iClipIndexR = m_pModel->GetSafeIndex(gpuBlendInfo.strClipxR);
+		pAnimCBInfo->iWeightClipLR = m_pModel->GetSafeIndex(gpuBlendInfo.strWeightClipLR);
+
+		pAnimCBInfo->iClipIndexD = m_pModel->GetSafeIndex(gpuBlendInfo.strClipxD);
+		pAnimCBInfo->iClipIndexMidDU = m_pModel->GetSafeIndex(gpuBlendInfo.strClipMidDU);
+		pAnimCBInfo->iClipIndexU = m_pModel->GetSafeIndex(gpuBlendInfo.strClipxU);
+		pAnimCBInfo->iWeightClipDU = m_pModel->GetSafeIndex(gpuBlendInfo.strWeightClipDU);
+	}
+	else
+	{
+		pAnimCBInfo->fBlendParamLR = 0.f;
+		pAnimCBInfo->fBlendParamDU = 0.f;
+
+		pAnimCBInfo->iClipIndexL = 0;
+		pAnimCBInfo->iClipIndexMidLR = 0;
+		pAnimCBInfo->iClipIndexR = 0;
+		pAnimCBInfo->iWeightClipLR = 0;
+
+		pAnimCBInfo->iClipIndexD = 0;
+		pAnimCBInfo->iClipIndexMidDU = 0;
+		pAnimCBInfo->iClipIndexU = 0;
+		pAnimCBInfo->iWeightClipDU = 0;
+	}
+
+	m_pModel->m_pContext->Unmap(m_pModel->m_Buffers[CModel::BUFFER_ANIM_INFOFLYCB], 0);
+}
+
+void CAnimator::Bind_AnimationResource(CComputeShader* pComputeShaderCom)
+{
+	pComputeShaderCom->Set_SRV("g_AllKeyframes", m_pModel->m_SRVs[CModel::SRV_KEY_FRAME]);
+	pComputeShaderCom->Set_SRV("g_AllAnimInfos", m_pModel->m_SRVs[CModel::SRV_ANIM_INFO]);
+	pComputeShaderCom->Set_SRV("g_ChannelInfos", m_pModel->m_SRVs[CModel::SRV_BONE_CHANNEL]);
+	pComputeShaderCom->Set_UAV("g_OutLocalMatrices", m_pModel->m_UAVs[CModel::UAV_FINAL_BONEMATRIX]);
+	pComputeShaderCom->Set_ConstantBuffer("AnimationInfoCB", m_pModel->m_Buffers[CModel::BUFFER_ANIM_INFOCB]);
+}
+
+void CAnimator::Bind_FlyAnimationResource(CComputeShader* pComputeShaderCom)
+{
+	pComputeShaderCom->Set_SRV("g_AllKeyframes", m_pModel->m_SRVs[CModel::SRV_KEY_FRAME]);
+	pComputeShaderCom->Set_SRV("g_AllAnimInfos", m_pModel->m_SRVs[CModel::SRV_ANIM_INFO]);
+	pComputeShaderCom->Set_SRV("g_ChannelInfos", m_pModel->m_SRVs[CModel::SRV_BONE_CHANNEL]);
+	pComputeShaderCom->Set_UAV("g_OutLocalMatrices", m_pModel->m_UAVs[CModel::UAV_FINAL_BONEMATRIX]);
+	pComputeShaderCom->Set_ConstantBuffer("AnimationInfoCB", m_pModel->m_Buffers[CModel::BUFFER_ANIM_INFOFLYCB]);
+}
+
+void CAnimator::Readback_BoneMatrices()
+{
+	_uint iNumBones = static_cast<_uint>(m_pModel->m_Bones.size());
+	_uint iReadIdx = CModel::BUFFER_STAGING_0;
+
+	m_pModel->m_pContext->CopyResource(m_pModel->m_Buffers[iReadIdx], m_pModel->m_Buffers[CModel::BUFFER_FINAL_BONEMATRIX]);
+
+	D3D11_MAPPED_SUBRESOURCE Mapped;
+	LARGE_INTEGER t0{}, t1{};
+	const HRESULT hr = m_pModel->m_pContext->Map(m_pModel->m_Buffers[iReadIdx], 0, D3D11_MAP_READ, 0, &Mapped);
+
+	if (SUCCEEDED(hr))
+	{
+		memcpy(m_pModel->m_vLocalMatrices.data(), Mapped.pData, sizeof(_float4x4) * iNumBones);
+		m_pModel->m_pContext->Unmap(m_pModel->m_Buffers[iReadIdx], 0);
+
+		for (size_t i = 0; i < iNumBones; ++i)
+			m_pModel->m_Bones[i]->Set_TransformationMatrix(XMLoadFloat4x4(&m_pModel->m_vLocalMatrices[i]));
+	}
+
+	m_pModel->m_iCurStagingFlip = (m_pModel->m_iCurStagingFlip + 1) % 2;
+}
+
+void CAnimator::Update_MorphAnimation(CAnimation* pAnimation, CComputeShader* pMorphComputeShaderCom, _float fTimeDelta, _bool isFacial)
+{
+	if (m_pModel->m_eType != MODELTYPE::CHARACTER || !isFacial)
+		return;
+	if (nullptr == m_pModel->m_Buffers[CModel::BUFFER_MORPH_WEIGHT] || nullptr == m_pModel->m_SRVs[CModel::SRV_MORPH_WEIGHT])
+		return;
+
+	pAnimation->Update_MorphWeights(fTimeDelta, m_pModel->m_ShapeKeyWeights);
+
+	D3D11_MAPPED_SUBRESOURCE MappedSubResource;
+	if (SUCCEEDED(m_pModel->m_pContext->Map(m_pModel->m_Buffers[CModel::BUFFER_MORPH_WEIGHT], 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedSubResource)))
+	{
+		memcpy(MappedSubResource.pData, m_pModel->m_ShapeKeyWeights.data(), sizeof(_float) * m_pModel->m_ShapeKeyWeights.size());
+		m_pModel->m_pContext->Unmap(m_pModel->m_Buffers[CModel::BUFFER_MORPH_WEIGHT], 0);
+	}
+
+	for (auto& pMesh : m_pModel->m_Meshes)
+	{
+		if (false == pMesh->HasMorphTargets())
+			continue;
+
+		pMesh->Compute_Morph(pMorphComputeShaderCom, m_pModel->m_SRVs[CModel::SRV_MORPH_WEIGHT]);
+	}
 }
 
 CAnimator* CAnimator::Create(CModel* pModel)

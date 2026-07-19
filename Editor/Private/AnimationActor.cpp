@@ -93,7 +93,10 @@ HRESULT CAnimationActor::Initialize_Clone(void* pArg)
 	rootMotionDesc.isRotate = true;
 	rootMotionDesc.isTranslate = true;
 
-    m_pModelCom->Play_Animation_GPU(m_pComputeShaderCom, playDesc, rootMotionDesc, m_fTimeDelta);
+    if (nullptr == m_pAnimator)
+        m_pAnimator = CAnimator::Create(m_pModelCom);
+
+    m_pAnimator->Play_Animation_GPU(m_pComputeShaderCom, playDesc, rootMotionDesc, m_fTimeDelta);
 
 #ifdef _DEBUG
 	XMStoreFloat4x4(&m_StartMatrix, m_pTransformCom->Get_WorldMatrix());
@@ -163,8 +166,10 @@ void CAnimationActor::Update(_float fTimeDelta)
 		{
 			playDesc.isFacial = true;
 
-			
-			IsAnimationEnd = m_pModelCom->Play_Animation_GPU(m_pComputeShaderCom, m_pMorphComputeShaderCom, playDesc, rootMotionDesc, fTimeDelta);
+			if (nullptr == m_pAnimator)
+				m_pAnimator = CAnimator::Create(m_pModelCom);
+
+			IsAnimationEnd = m_pAnimator->Play_Animation_GPU(m_pComputeShaderCom, m_pMorphComputeShaderCom, playDesc, rootMotionDesc, fTimeDelta);
 		}
 		else
 		{
@@ -184,11 +189,7 @@ void CAnimationActor::Update(_float fTimeDelta)
 			IsAnimationEnd = m_pAnimator->Play_Animation_CPU(playDesc, rootMotionDesc, fTimeDelta);
 		}
 
-		// Transitional (Phase 1): GPU path still runs on CModel until Phase 2.
-		if (m_IsFacial || nullptr == m_pAnimator)
-			m_pModelCom->Sync_RootNode(m_pTransformCom, fTimeDelta);
-		else
-			m_pAnimator->Sync_RootNode(m_pTransformCom, fTimeDelta);
+		m_pAnimator->Sync_RootNode(m_pTransformCom, fTimeDelta);
     }
 
 #ifdef _DEBUG

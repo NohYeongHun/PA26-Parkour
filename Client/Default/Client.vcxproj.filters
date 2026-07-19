@@ -88,6 +88,9 @@
     <Filter Include="04. Component\State\Air">
       <UniqueIdentifier>{6f6e8885-137d-4bc0-b111-4d776b1ec527}</UniqueIdentifier>
     </Filter>
+    <Filter Include="04. Component\State\Transition">
+      <UniqueIdentifier>{832b8e6b-3112-4b84-82bf-d1217841fab8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -162,15 +165,6 @@
     <ClCompile Include="..\Private\TraceurState.cpp">
       <Filter>04. Component\State</Filter>
     </ClCompile>
-    <ClCompile Include="..\Private\TraceurStateNames.cpp">
-      <Filter>04. Component\State</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Private\TransitionTable.cpp">
-      <Filter>04. Component\State</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Private\TagRegistry.cpp">
-      <Filter>04. Component\State</Filter>
-    </ClCompile>
     <ClCompile Include="..\Private\GroundState.cpp">
       <Filter>04. Component\State\Ground</Filter>
     </ClCompile>
@@ -218,6 +212,30 @@
     </ClCompile>
     <ClCompile Include="..\Private\TraceurClimbRun.cpp">
       <Filter>04. Component\State\Climb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\ParkourDeciderComponent.cpp">
+      <Filter>04. Component\Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\ParkourTuningTable.cpp">
+      <Filter>04. Component\Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TraceurStateNames.cpp">
+      <Filter>04. Component\State\Transition</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TransitionEvaluator.cpp">
+      <Filter>04. Component\State\Transition</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TransitionTable.cpp">
+      <Filter>04. Component\State\Transition</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\ClimbEvaluator.cpp">
+      <Filter>04. Component\State\Transition</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\TagRegistry.cpp">
+      <Filter>04. Component\State\Transition</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\StateBlackboard.cpp">
+      <Filter>04. Component\State\Transition</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -323,15 +341,6 @@
     <ClInclude Include="..\Public\TraceurState.h">
       <Filter>04. Component\State</Filter>
     </ClInclude>
-    <ClInclude Include="..\Public\TraceurStateNames.h">
-      <Filter>04. Component\State</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Public\TransitionTable.h">
-      <Filter>04. Component\State</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Public\TagRegistry.h">
-      <Filter>04. Component\State</Filter>
-    </ClInclude>
     <ClInclude Include="..\Public\GroundState.h">
       <Filter>04. Component\State\Ground</Filter>
     </ClInclude>
@@ -382,6 +391,33 @@
     </ClInclude>
     <ClInclude Include="..\Public\TraceurClimbRun.h">
       <Filter>04. Component\State\Climb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\ParkourDeciderComponent.h">
+      <Filter>04. Component\Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\ParkourMath.h">
+      <Filter>99. Define</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\ParkourTuningTable.h">
+      <Filter>04. Component\Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TraceurStateNames.h">
+      <Filter>04. Component\State\Transition</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TransitionEvaluator.h">
+      <Filter>04. Component\State\Transition</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TransitionTable.h">
+      <Filter>04. Component\State\Transition</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\ClimbEvaluator.h">
+      <Filter>04. Component\State\Transition</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\TagRegistry.h">
+      <Filter>04. Component\State\Transition</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\StateBlackboard.h">
+      <Filter>04. Component\State\Transition</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
