@@ -1,6 +1,7 @@
 ﻿#include "ClientPch.h"
 #include "MotionWarpingComponent.h"
-#include "Model.h"
+#include "Animator.h"
+#include "AnimationController.h"
 #include "Transform.h"
 #include "Collider.h"
 
@@ -28,8 +29,11 @@ HRESULT CMotionWarpingComponent::Initialize_Clone(void* pArg)
 	if (nullptr == m_pOwner)
 		return E_FAIL;
 
-	m_pOwnerModelCom = dynamic_cast<CModel*>(m_pOwner->Get_Component(TEXT("Com_Model")));
-	if (nullptr == m_pOwnerModelCom)
+	CAnimationController* pAnimCtrl = dynamic_cast<CAnimationController*>(m_pOwner->Get_Component(TEXT("Com_AnimController")));
+	if (nullptr == pAnimCtrl)
+		return E_FAIL;
+	m_pAnimator = pAnimCtrl->Get_Animator();
+	if (nullptr == m_pAnimator)
 		return E_FAIL;
 
 	m_pOwnerTransformCom = dynamic_cast<CTransform*>(m_pOwner->Get_Component(TEXT("Com_Transform")));
@@ -69,20 +73,20 @@ void CMotionWarpingComponent::Clear_WarpTargets()
 
 void CMotionWarpingComponent::Abort_Warp()
 {
-	if (m_pOwnerModelCom)
-		m_pOwnerModelCom->End_MotionWarp();
+	if (m_pAnimator)
+		m_pAnimator->End_MotionWarp();
 	Clear_WarpTargets();
 }
 
 void CMotionWarpingComponent::On_WarpNotify(const _string& strName, _bool isStart,
                                             _float fWindowEndTrackPos, _bool bTrans, _bool bRot)
 {
-	if (nullptr == m_pOwnerModelCom)
+	if (nullptr == m_pAnimator)
 		return;
 
 	if (!isStart)
 	{
-		m_pOwnerModelCom->End_MotionWarp();
+		m_pAnimator->End_MotionWarp();
 		return;
 	}
 
@@ -91,7 +95,7 @@ void CMotionWarpingComponent::On_WarpNotify(const _string& strName, _bool isStar
 		return;
 
 	const WARP_TARGET& T = it->second;
-	m_pOwnerModelCom->Begin_MotionWarp(
+	m_pAnimator->Begin_MotionWarp(
 		T.vPosition, T.hasRotation ? &T.qRotation : nullptr,
 		fWindowEndTrackPos, bTrans, bRot);
 
@@ -101,24 +105,24 @@ void CMotionWarpingComponent::On_WarpNotify(const _string& strName, _bool isStar
 void CMotionWarpingComponent::Begin_RootWarp(const _float3& vTargetPos, const _float4* pTargetRot,
 	_float fWindowEndTrackPos, _bool bTrans, _bool bRot)
 {
-	if (nullptr == m_pOwnerModelCom)
+	if (nullptr == m_pAnimator)
 		return;
-	m_pOwnerModelCom->Begin_MotionWarp(vTargetPos, pTargetRot, fWindowEndTrackPos, bTrans, bRot);
+	m_pAnimator->Begin_MotionWarp(vTargetPos, pTargetRot, fWindowEndTrackPos, bTrans, bRot);
 }
 
 void CMotionWarpingComponent::End_RootWarp()
 {
-	if (m_pOwnerModelCom)
-		m_pOwnerModelCom->End_MotionWarp();
+	if (m_pAnimator)
+		m_pAnimator->End_MotionWarp();
 }
 
 #ifdef _DEBUG
 void CMotionWarpingComponent::Update_DebugTrail()
 {
-	if (nullptr == m_pOwnerModelCom || nullptr == m_pOwnerTransformCom)
+	if (nullptr == m_pAnimator || nullptr == m_pOwnerTransformCom)
 		return;
 
-	if (m_pOwnerModelCom->Is_MotionWarping())
+	if (m_pAnimator->Is_MotionWarping())
 	{
 		_float3 vPos{};
 		XMStoreFloat3(&vPos, m_pOwnerTransformCom->Get_State(STATE::POSITION));
@@ -240,7 +244,7 @@ Engine::CComponent* CMotionWarpingComponent::Clone(void* pArg)
 void CMotionWarpingComponent::Free()
 {
 	__super::Free();
-	m_pOwnerModelCom = nullptr;
+	m_pAnimator = nullptr;
 	m_WarpTargets.clear();
 
 #ifdef _DEBUG

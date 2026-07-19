@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "Component.h"
 
+namespace Engine { class CAnimator; }
+
 NS_BEGIN(Client)
 // 이름↔월드좌표 매핑 + 엔진 워프 위임. EnvQuery 목표점을 상태가 이름표 붙여 등록한다.
 class CMotionWarpingComponent final : public Engine::CComponent
@@ -45,8 +47,8 @@ public:
 
 private:
 	map<_string, WARP_TARGET> m_WarpTargets;
-	class CModel*     m_pOwnerModelCom     = { nullptr };
-	class CTransform* m_pOwnerTransformCom = { nullptr };
+	Engine::CAnimator* m_pAnimator          = { nullptr };
+	class CTransform*  m_pOwnerTransformCom = { nullptr };
 	class CCollider*  m_pOwnerColliderCom  = { nullptr };
 
 	_float3 m_vCurveP0 = {}, m_vCurveP1 = {}, m_vCurveP2 = {};

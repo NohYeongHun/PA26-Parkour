@@ -713,6 +713,9 @@
     <ClInclude Include="..\Public\AnimationController.h">
       <Filter>01. Utility\04. Component\State</Filter>
     </ClInclude>
+    <ClInclude Include="..\Public\Animator.h">
+      <Filter>01. Utility\04. Component\State</Filter>
+    </ClInclude>
     <ClInclude Include="..\Public\StateMachine.h">
       <Filter>01. Utility\04. Component\State</Filter>
     </ClInclude>
@@ -1138,6 +1141,9 @@
       <Filter>01. Utility\04. Component\State</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\AnimationController.cpp">
+      <Filter>01. Utility\04. Component\State</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Animator.cpp">
       <Filter>01. Utility\04. Component\State</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\StateMachine.cpp">

@@ -2,7 +2,7 @@
 #include "Component.h"
 #include "StateMachine.h"
 
-namespace Engine { class CAnimationController; }
+namespace Engine { class CAnimationController; class CAnimator; }
 
 NS_BEGIN(Client)
 
@@ -47,7 +47,7 @@ private:
 	Engine::CStateMachine*            m_pStateMachineCom = { nullptr };
 	class CEnvironmentQueryComponent* m_pEnvQueryCom     = { nullptr };
 	class CParkourDeciderComponent*   m_pDeciderCom      = { nullptr };
-	class CModel*                     m_pModelCom        = { nullptr };
+	Engine::CAnimator*                m_pAnimator        = { nullptr };
 	Engine::CAnimationController*     m_pAnimCtrlCom     = { nullptr };
 
 	map<Engine::StateKey, vector<BOUND_TRANSITION>> m_BoundRules;

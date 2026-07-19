@@ -61,6 +61,8 @@ typedef struct tagMotionWarpState
 
 class ENGINE_DLL CModel final : public CComponent
 {
+	friend class CAnimator;
+
 public:
 	enum BUFFER
 	{
@@ -174,15 +176,8 @@ public:
 	HRESULT							Bind_MorphedResult(class CShader* pShader, _uint iMeshIndex, const _char* pConstantName); // Mesh의 Morph 연산을 바인딩합니다.
 	HRESULT							Clear_Materials(class CDeferredShader* pShader, const _char* pConstanceName, _uint iMeshIndex, TEXTURETYPE eTextureType, ID3DX11Effect* pEffect);
 
-	_bool	Play_Animation_CPU(const _string& strAnimationName, _float fTimeDelta, _float* pTrackPosition, _bool isBlend = true, _bool isRootMotion = true, _bool IsRootMotionRotate = true, _bool IsRootMotionTranslate = true, _float fRootMotionRate = 0.1f);
-	_bool	Play_Animation_CPU(const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta);
-	_bool	Play_BlendSpace_CPU(const BLENDSPACE_1D_DESC& desc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta);
-	_bool	Play_BlendSpace2D_CPU(const BLENDSPACE_2D_DESC& desc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta);
+	// CPU playback moved to CAnimator (see Animator.h).
 
-	// 바로 다음 Play_*_CPU 호출 1회에만 유효한 크로스페이드 시간 강제 (JSON 전환 오버라이드용).
-	// 해당 호출에서 전환이 감지되면 소비되고, 전환이 없으면 폐기된다.
-	void Set_NextBlendOverride(_float fDuration) { m_fBlendOverride = fDuration; }
-	
 	// Compute Shader
 	_bool	Play_Animation_GPU(class CComputeShader* pComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta);
 	_bool	Play_Animation_GPU(class CComputeShader* pComputeShaderCom, class CComputeShader* pMorphComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta);
@@ -227,22 +222,11 @@ private:
 	_bool									m_isChangeAnimation = { false };
 
 private:
-	// 현재 재생물 식별 — 매 프레임 각 Play_*_CPU가 갱신 (전환 감지·소스 승격 재료)
-	ETransitionSourceType     m_eCurPlayType = ETransitionSourceType::NONE;
-	_string                   m_strCurPlayKey;        // CLIP: 애님 이름 / BS: 첫 샘플 이름
-	_float                    m_fCurPlayTrackPos = 0.f;
-	_float                    m_fCurPlaySpeed = 1.f;
-	_float                    m_fCurBlendOut = 0.2f;
-	const BLENDSPACE_1D_DESC* m_pCurBS1 = nullptr;    // 상태 소유 desc (주소 안정적) — 승격 시 값 복사
-	const BLENDSPACE_2D_DESC* m_pCurBS2 = nullptr;
-
-	TRANSITION_SOURCE         m_TransitionSource;
-	_float                    m_fBlendOverride = -1.f; // < 0 = 오버라이드 없음
-
-	_string                   m_strPreAnimation;       // 레거시 경로 전용
-
-	// BlendSpace
-	_float                    m_fBlendSpacePhase = 0.f;
+	// Playback state moved to CAnimator. The three below remain only for the
+	// GPU path and motion-warp code, both of which move out in Phase 2.
+	_string                   m_strCurPlayKey;         // used by 2-arg Extract_RootMotion
+	_float                    m_fCurPlayTrackPos = 0.f; // used by warp code
+	_string                   m_strPreAnimation;        // used by HandleAnimationChange (GPU)
 
 private:
 	_float								m_fPreScale = {}; // RootMotionRate에 곱해줄 값.
@@ -303,15 +287,6 @@ private:
 	_bool							Update_TrackPosition(CAnimation* pAnimation, _float* pTrackPosition,  _float fTimeDelta);
 
 	_matrix Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTimeDelta);
-	// 현재 본 로컬 포즈를 스냅샷해 전환 소스를 FROZEN으로 전환
-	void   Freeze_TransitionSource();
-	// 전환 감지 + 직전 재생물의 소스 승격. 모든 Play_*_CPU 진입부에서 호출.
-	void   Handle_PlaybackChange(ETransitionSourceType eNewType, const _string& strNewKey, _float fNewBlendIn);
-	// 소스 포즈를 본에 기록(가중치 1)하고 진행. 반환: 들어오는 쪽 가중치 w (1.f = 크로스페이드 없음/종료)
-	_float Update_TransitionSource(_float fTimeDelta);
-	// 블렌드스페이스 포즈를 fLayerWeight로 본에 합성 (1.f = 덮어쓰기). fPhase는 참조로 진행.
-	void   Layer_BlendSpace1D(const BLENDSPACE_1D_DESC& desc, _float fParam, _float& fPhase, _float fLayerWeight, _float fTimeDelta);
-	void   Layer_BlendSpace2D(const BLENDSPACE_2D_DESC& desc, _float fParamX, _float fParamY, _float& fPhase, _float fLayerWeight, _float fTimeDelta);
 
 	void							Update_NonRibAnimConstantBuffer(const _string& strAnimationName, _float fTrackPosition);
 	void 							Update_AnimConstantBuffer(const _string& strAnimationName, _float fTrackPosition);

@@ -41,6 +41,8 @@ public:
 	_uint   Get_CurrentAnimId() const { return m_iCurrentAnimId; }
 	const CState::ANIM_DATA* Get_CurrentAnimData() const;
 
+	class CAnimator* Get_Animator() const { return m_pAnimator; }
+
 private:
 	HRESULT Parse(const _string& strFilePath, const FnResolveKey& fnResolveKey,
 	              map<StateKey, map<_uint, CState::ANIM_DATA>>& OutRegistry,
@@ -61,6 +63,7 @@ private:
 
 	class CModel*     m_pModelCom     = nullptr;
 	class CTransform* m_pTransformCom = nullptr;
+	class CAnimator*  m_pAnimator     = nullptr;
 
 	_uint m_iVersion = 1;
 

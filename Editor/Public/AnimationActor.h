@@ -98,6 +98,7 @@ public:
 private:
 	LEVEL m_eCurLevel = {LEVEL::END};
 	class CModel* m_pModelCom = { nullptr };
+	class CAnimator* m_pAnimator = { nullptr };   // lazy-bound pose evaluator (CPU path)
 	class CShader* m_pShaderCom = { nullptr };
 	class CComputeShader* m_pComputeShaderCom = { nullptr };
 	class CComputeShader* m_pMorphComputeShaderCom = { nullptr };

@@ -3,7 +3,7 @@
 #include "StateBlackboard.h"
 #include "TransitionTable.h"
 #include "GameSystem.h"
-#include "Model.h"
+#include "Animator.h"
 #include "AnimationController.h"
 #include "EnvironmentQueryComponent.h"
 #include "ParkourDeciderComponent.h"
@@ -44,11 +44,11 @@ HRESULT CTransitionEvaluator::Initialize_Clone(void* pArg)
 	m_pDeciderCom = dynamic_cast<CParkourDeciderComponent*>(m_pOwner->Get_Component(TEXT("Com_ParkourDecider")));
 	if (nullptr == m_pDeciderCom) return E_FAIL;
 
-	m_pModelCom = dynamic_cast<CModel*>(m_pOwner->Get_Component(TEXT("Com_Model")));
-	if (nullptr == m_pModelCom) return E_FAIL;
-
 	m_pAnimCtrlCom = dynamic_cast<Engine::CAnimationController*>(m_pOwner->Get_Component(TEXT("Com_AnimController")));
 	if (nullptr == m_pAnimCtrlCom) return E_FAIL;
+
+	m_pAnimator = m_pAnimCtrlCom->Get_Animator();
+	if (nullptr == m_pAnimator) return E_FAIL;
 
 	return S_OK;
 }
@@ -147,7 +147,7 @@ _bool CTransitionEvaluator::Try_Fire(const BOUND_TRANSITION& Rule, _uint iCurren
 		return false;
 
 	if (Rule.fBlendOverride >= 0.f)
-		m_pModelCom->Set_NextBlendOverride(Rule.fBlendOverride);
+		m_pAnimator->Set_NextBlendOverride(Rule.fBlendOverride);
 
 #ifdef _DEBUG
 	{

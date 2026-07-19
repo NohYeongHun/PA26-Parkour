@@ -3,6 +3,7 @@
 #include "GameObject.h"
 #include "Model.h"
 #include "Transform.h"
+#include "Animator.h"
 #include <fstream>
 
 NS_BEGIN(Engine)
@@ -33,6 +34,9 @@ HRESULT CAnimationController::Initialize_Clone(void* pArg)
 
 	m_pTransformCom = dynamic_cast<CTransform*>(m_pOwner->Get_Component(TEXT("Com_Transform")));
 	if (nullptr == m_pTransformCom) return E_FAIL;
+
+	m_pAnimator = CAnimator::Create(m_pModelCom);
+	if (nullptr == m_pAnimator) return E_FAIL;
 
 	return S_OK;
 }
@@ -95,18 +99,18 @@ void CAnimationController::Tick(_float fTimeDelta)
 	CState::ANIM_DATA& Data = itAnim->second;
 	if (Data.eType == CState::EAnimSlotType::BLENDSPACE_1D)
 	{
-		m_pModelCom->Play_BlendSpace_CPU(Data.BlendSpaceDesc, Data.RootMotionDesc, fTimeDelta);
+		m_pAnimator->Play_BlendSpace_CPU(Data.BlendSpaceDesc, Data.RootMotionDesc, fTimeDelta);
 		m_isAnimEnd = false;
 	}
 	else if (Data.eType == CState::EAnimSlotType::BLENDSPACE_2D)
 	{
-		m_pModelCom->Play_BlendSpace2D_CPU(Data.BlendSpace2Desc, Data.RootMotionDesc, fTimeDelta);
+		m_pAnimator->Play_BlendSpace2D_CPU(Data.BlendSpace2Desc, Data.RootMotionDesc, fTimeDelta);
 		m_isAnimEnd = false;
 	}
 	else
-		m_isAnimEnd = m_pModelCom->Play_Animation_CPU(Data.AnimPlayDesc, Data.RootMotionDesc, fTimeDelta);
+		m_isAnimEnd = m_pAnimator->Play_Animation_CPU(Data.AnimPlayDesc, Data.RootMotionDesc, fTimeDelta);
 
-	m_pModelCom->Sync_RootNode(m_pTransformCom, fTimeDelta);
+	m_pAnimator->Sync_RootNode(m_pTransformCom, fTimeDelta);
 }
 
 const CState::ANIM_DATA* CAnimationController::Get_CurrentAnimData() const
@@ -292,6 +296,8 @@ CComponent* CAnimationController::Clone(void* pArg)
 void CAnimationController::Free()
 {
 	__super::Free();
+
+	Safe_Release(m_pAnimator);
 }
 
 NS_END

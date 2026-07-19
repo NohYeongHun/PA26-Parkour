@@ -1,6 +1,7 @@
 ﻿#include "EditorPch.h"
 #include "AnimationActor.h"
 #include "Model.h"
+#include "Animator.h"
 
 #include "SpringCamera_Edit.h"
 #include "EditorPropWeapon.h"
@@ -177,11 +178,17 @@ void CAnimationActor::Update(_float fTimeDelta)
 				IsAnimationEnd = m_pModelCom->Play_Animation_CPU(m_strCurrentAnimation, fTimeDelta * m_fAnimationSpeed, &m_fTrackPosition, false, true, false, true, 1.f);
 			}*/
 			
-			//IsAnimationEnd = m_pModelCom->Play_Animation_CPU(m_strCurrentAnimation, fTimeDelta * m_fAnimationSpeed, &m_fTrackPosition, false, true, false, true, 1.f);
-			IsAnimationEnd = m_pModelCom->Play_Animation_CPU(playDesc, rootMotionDesc, fTimeDelta);
+			if (nullptr == m_pAnimator)
+				m_pAnimator = CAnimator::Create(m_pModelCom);
+
+			IsAnimationEnd = m_pAnimator->Play_Animation_CPU(playDesc, rootMotionDesc, fTimeDelta);
 		}
 
-        m_pModelCom->Sync_RootNode(m_pTransformCom, fTimeDelta);
+		// Transitional (Phase 1): GPU path still runs on CModel until Phase 2.
+		if (m_IsFacial || nullptr == m_pAnimator)
+			m_pModelCom->Sync_RootNode(m_pTransformCom, fTimeDelta);
+		else
+			m_pAnimator->Sync_RootNode(m_pTransformCom, fTimeDelta);
     }
 
 #ifdef _DEBUG
@@ -372,7 +379,10 @@ void CAnimationActor::Set_TrackPosition(_float fTrackPosition)
 
         // 4. fTimeDelta = 0.f로 GPU 업데이트를 1회 실행합니다.
         //    (기존 주석 코드를 GPU 버전으로 변경)
-		m_pModelCom->Play_Animation_CPU(playDesc, rootMotionDesc, m_fTimeDelta);
+		if (nullptr == m_pAnimator)
+			m_pAnimator = CAnimator::Create(m_pModelCom);
+
+		m_pAnimator->Play_Animation_CPU(playDesc, rootMotionDesc, m_fTimeDelta);
         /*m_pModelCom->Play_Animation_GPU(m_pComputeShaderCom,
 			playDesc, rootMotionDesc, 0.f);*/
 
@@ -866,6 +876,7 @@ CAnimationActor* CAnimationActor::Create(ID3D11Device* pDevice, ID3D11DeviceCont
 void CAnimationActor::Free()
 {
     CContainerObject::Free();
+    Safe_Release(m_pAnimator);
     Safe_Release(m_pModelCom);
     Safe_Release(m_pShaderCom);
     Safe_Release(m_pComputeShaderCom);

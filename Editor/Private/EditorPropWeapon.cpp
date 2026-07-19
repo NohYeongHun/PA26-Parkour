@@ -1,6 +1,7 @@
 ﻿#include "EditorPch.h"
 #include "EditorPropWeapon.h"
 #include "Model.h"
+#include "Animator.h"
 
 CEditorPropWeapon::CEditorPropWeapon(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
     : CEditorProp{ pDevice, pContext }
@@ -55,8 +56,11 @@ void CEditorPropWeapon::Update(_float fTimeDelta)
     // Animation Play
     if (m_IsPlayAnimation && m_pModelCom)
     {
-        m_pModelCom->Play_Animation_CPU(m_strCurrentAnimName, fTimeDelta, &m_fTrackPosition, false, true, 1.f);
-        m_pModelCom->Sync_RootNode(m_pTransformCom, fTimeDelta);
+        if (nullptr == m_pAnimator)
+            m_pAnimator = CAnimator::Create(m_pModelCom);
+
+        m_pAnimator->Play_Animation_CPU(m_strCurrentAnimName, fTimeDelta, &m_fTrackPosition, false, true, 1.f);
+        m_pAnimator->Sync_RootNode(m_pTransformCom, fTimeDelta);
     }
 
     // Combined Matrix 계산
@@ -127,8 +131,11 @@ void CEditorPropWeapon::Set_TrackPosition(_float fTrackPosition)
 
     if (!m_IsPlayAnimation)
     {
+        if (nullptr == m_pAnimator)
+            m_pAnimator = CAnimator::Create(m_pModelCom);
+
         m_fTrackPosition = fTrackPosition;
-        m_pModelCom->Play_Animation_CPU(m_strCurrentAnimName, 0.f, &m_fTrackPosition, false, true, 1.f);
+        m_pAnimator->Play_Animation_CPU(m_strCurrentAnimName, 0.f, &m_fTrackPosition, false, true, 1.f);
     }
 }
 #endif

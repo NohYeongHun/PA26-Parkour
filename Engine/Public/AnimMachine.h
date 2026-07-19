@@ -71,6 +71,7 @@ public:
 
 private:
 	_string m_strCurrentAnimTag;
+	class CAnimator* m_pAnimator = nullptr;   // lazy-bound to the model passed into Update
 	//vector<class CAnimState*> m_AnimStates;
 	map<_string, CAnimState*> m_AnimStates;
 	vector<CAnimTransition*> m_AnyState;
