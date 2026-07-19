@@ -82,24 +82,26 @@ namespace Client
 
 	enum class HEIGHT_HIT_FLAG : _uint { KNEE = 1 << 0, CHEST = 1 << 1, HEAD = 1 << 2, REACH = 1 << 3 };
 
+	typedef struct tagReachScan {
+		LINE_TRACE_HIT Hit;
+		PARKOUR_FLAG   eObjectFlag = PARKOUR_FLAG::END;
+		BodyID         HitBodyID{};
+		_bool          hasEdge = false;
+		_float3        vEdgePos{};
+		_float         fEdgeHeight = 0.f;
+	}REACH_SCAN;
+
 	typedef struct tagObstacleScan {
-		_bool          isObstacleDetected = false;              
-		PARKOUR_FLAG   eObjectFlag = PARKOUR_FLAG::END;         
+		_bool          isObstacleDetected = false;
+		PARKOUR_FLAG   eObjectFlag = PARKOUR_FLAG::END;
+		_float3        vScanDir{};
 		LINE_TRACE_HIT KneeHit;
 		LINE_TRACE_HIT ChestHit;
 		LINE_TRACE_HIT HeadHit;
 		LINE_TRACE_HIT LeftChestHit;
 		LINE_TRACE_HIT RightChestHit;
-		_uint          iHeightFlag = 0;                         
-		_float3        vScanDir{};                              
-
-		// 손 뻗기 대역 전방 스피어 캐스트 — 벽면 중간 난간 전용.
-		LINE_TRACE_HIT ReachHit;
-		PARKOUR_FLAG   eReachObjectFlag = PARKOUR_FLAG::END;
-		BodyID         ReachBodyID{};                        // ReachHit가 맞은 물리 바디 — Hop 앵커용 (body)
-		_bool          hasReachEdge = false;
-		_float3        vReachEdgePos{};
-		_float         fReachEdgeHeight = 0.f;
+		_uint          iHeightFlag = 0;
+		REACH_SCAN     Reach;
 	}OBSTACLE_SCAN;
 
 	typedef struct tagActionVerdict {
@@ -128,25 +130,34 @@ namespace Client
 		_bool wantsJumpPress = false; 
 	}PARKOUR_DECISION;
 
+	typedef struct tagGeoFront {
+		_bool   hasHit = false;
+		_float3 vHitPos{};
+		_float3 vNormal{};
+		_float  fDistance = 0.f;
+	}GEO_FRONT;
+
+	typedef struct tagGeoTop {
+		_bool   isReachable = false;
+		_float3 vEdgePos{};
+		_float3 vNormal{};
+		_float3 vStandPos{};
+		_float  fHeight = 0.f;
+	}GEO_TOP;
+
+	typedef struct tagGeoLanding {
+		_bool   hasSpace = false;
+		_float3 vPos{};
+	}GEO_LANDING;
+
 	typedef struct tagObstacleGeometry {
-		_bool   hasFront = false;          
-		_float3 vFrontHitPos{};
-		_float3 vFrontNormal{};
-		_float3 vTraversalDir{};           
-		_float  fFrontDistance = 0.f;
-
-		_bool   isTopReachable = false;    
-		_float3 vTopEdgePos{};             
-		_float3 vTopNormal{};
-		_float3 vTopStandPos;
-		_float  fObstacleHeight = 0.f;     
-
-		_bool   hasDepth = false;          
-		_float  fDepth = 0.f;              
-		_float  fTopWidth = 0.f;           
-
-		_bool   hasLandingSpace = false;   
-		_float3 vLandingPos{};
+		_float3     vTraversalDir{};
+		GEO_FRONT   Front;
+		GEO_TOP     Top;
+		_bool       hasDepth = false;
+		_float      fDepth = 0.f;
+		_float      fTopWidth = 0.f;
+		GEO_LANDING Landing;
 	}OBSTACLE_GEOMETRY;
 
 	typedef struct tagEnvPerception {

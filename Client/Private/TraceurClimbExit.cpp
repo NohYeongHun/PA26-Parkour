@@ -33,9 +33,9 @@ void CTraceurClimbExit::OnEnter(void* pArg)
 		m_pMotionWarpCom->Reset_DebugTrail();
 #endif
 
-		if (Geo.isTopReachable)
+		if (Geo.Top.isReachable)
 		{
-			_vector vFacing = -XMVectorSetY(XMLoadFloat3(&Geo.vFrontNormal), 0.f);
+			_vector vFacing = -XMVectorSetY(XMLoadFloat3(&Geo.Front.vNormal), 0.f);
 			if (XMVectorGetX(XMVector3LengthSq(vFacing)) < 1e-4f)
 				vFacing = vLook;
 
@@ -46,16 +46,16 @@ void CTraceurClimbExit::OnEnter(void* pArg)
 			_float4 qRot{};
 			XMStoreFloat4(&qRot, vQuat);
 
-			m_pMotionWarpCom->Set_WarpTarget("VaultLedge", Geo.vTopEdgePos, qRot);
-			m_pMotionWarpCom->Set_WarpTarget("VaultStand", Geo.vTopStandPos);
+			m_pMotionWarpCom->Set_WarpTarget("VaultLedge", Geo.Top.vEdgePos, qRot);
+			m_pMotionWarpCom->Set_WarpTarget("VaultStand", Geo.Top.vStandPos);
 
 #ifdef _DEBUG
-			cout << "현재 Edge, Stand Y: " << Geo.vTopEdgePos.y << ", " << Geo.vTopStandPos.y << endl;
+			cout << "현재 Edge, Stand Y: " << Geo.Top.vEdgePos.y << ", " << Geo.Top.vStandPos.y << endl;
 #endif
 		}
 
-		if (Geo.hasLandingSpace)
-			m_pMotionWarpCom->Set_WarpTarget("VaultLand", Geo.vLandingPos);
+		if (Geo.Landing.hasSpace)
+			m_pMotionWarpCom->Set_WarpTarget("VaultLand", Geo.Landing.vPos);
 		m_pColliderCom->Set_Gravity(false);
 	}
 }
@@ -101,8 +101,8 @@ void CTraceurClimbExit::Draw_DebugCurve()
 	const OBSTACLE_GEOMETRY& Geo = m_pEnvQueryCom->Get_Perception().Geometry;
 	CGameInstance* pGI = CGameInstance::GetInstance();
 
-	pGI->Add_DebugSphere(XMLoadFloat3(&Geo.vTopEdgePos), 0.3f, JPH::Color(255.f, 255.f, 255.f, 1.f));
-	pGI->Add_DebugSphere(XMLoadFloat3(&Geo.vTopStandPos), 0.3f, JPH::Color(0.f, 255.f, 255.f, 1.f));
+	pGI->Add_DebugSphere(XMLoadFloat3(&Geo.Top.vEdgePos), 0.3f, JPH::Color(255.f, 255.f, 255.f, 1.f));
+	pGI->Add_DebugSphere(XMLoadFloat3(&Geo.Top.vStandPos), 0.3f, JPH::Color(0.f, 255.f, 255.f, 1.f));
 }
 #endif
 

@@ -92,17 +92,10 @@ _bool CEnvironmentQueryComponent::Detect_Obstacle()
 	m_Perception.Scan.isObstacleDetected = isHit;
 	if (isHit && (nullptr != ShapeHit.pDesc))
 	{
-		CALLBACK_CLIENT* pDesc = static_cast<CALLBACK_CLIENT*>(ShapeHit.pDesc);
-		m_Perception.Scan.eObjectFlag = pDesc->eObjectParkourFlag;
+		m_Perception.Scan.eObjectFlag = static_cast<CALLBACK_CLIENT*>(ShapeHit.pDesc)->eObjectParkourFlag;
 
 #ifdef _DEBUG
-		if (ShapeHit.pDesc != m_pDebugLastShapeHitDesc)
-		{
-			m_pDebugLastShapeHitDesc = ShapeHit.pDesc;
-			cout << "[EnvQuery] ShapeCast hit  pos=(" << ShapeHit.vHitPoint.x << ", "
-			     << ShapeHit.vHitPoint.y << ", " << ShapeHit.vHitPoint.z
-			     << ")  flag=" << ENUM_CLASS(pDesc->eObjectParkourFlag) << endl;
-		}
+		Log_ShapeHit(ShapeHit);
 #endif
 	}
 
@@ -139,6 +132,14 @@ LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray(const _fvector& vStart, cons
 #endif // _DEBUG
 
 	return lineTrace;
+}
+
+LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray_WithMapFallback(const _fvector& vStart, const _fvector& vEnd, RAY_KIND eKind)
+{
+	LINE_TRACE_HIT Hit = Cast_Ray(vStart, vEnd, ENUM_CLASS(m_eTargetLayer), eKind);
+	if (!Hit.isHit)
+		Hit = Cast_Ray(vStart, vEnd, ENUM_CLASS(COLLISIONLAYER::MAP), eKind);
+	return Hit;
 }
 
 void CEnvironmentQueryComponent::Scan_Obstacle()
@@ -187,43 +188,74 @@ void CEnvironmentQueryComponent::Scan_Reach()
 			vStart, vLook, m_fLineTraceDistance, ENUM_CLASS(m_eTargetLayer), Hit))
 		return;
 
-	Scan.ReachHit.isHit           = true;
-	Scan.ReachHit.vHitPosition    = _float3(Hit.vHitPoint.x, Hit.vHitPoint.y, Hit.vHitPoint.z);
-	Scan.ReachHit.vHitNormal      = _float3(Hit.vHitNormal.x, Hit.vHitNormal.y, Hit.vHitNormal.z);
-	Scan.ReachHit.fCenterDistance = Hit.fFraction * m_fLineTraceDistance;
-	Scan.ReachBodyID = Hit.HitBodyID;
+	Scan.Reach.Hit.isHit           = true;
+	Scan.Reach.Hit.vHitPosition    = _float3(Hit.vHitPoint.x, Hit.vHitPoint.y, Hit.vHitPoint.z);
+	Scan.Reach.Hit.vHitNormal      = _float3(Hit.vHitNormal.x, Hit.vHitNormal.y, Hit.vHitNormal.z);
+	Scan.Reach.Hit.fCenterDistance = Hit.fFraction * m_fLineTraceDistance;
+	Scan.Reach.HitBodyID = Hit.HitBodyID;
 	Scan.iHeightFlag |= ENUM_CLASS(HEIGHT_HIT_FLAG::REACH);
 	if (Hit.pDesc)
-		Scan.eReachObjectFlag = static_cast<CALLBACK_CLIENT*>(Hit.pDesc)->eObjectParkourFlag;
+		Scan.Reach.eObjectFlag = static_cast<CALLBACK_CLIENT*>(Hit.pDesc)->eObjectParkourFlag;
 
-	_vector vNormalXZ = XMVectorSetY(XMLoadFloat3(&Scan.ReachHit.vHitNormal), 0.f);
+	Probe_ReachEdge(vBottom);
+}
+
+void CEnvironmentQueryComponent::Probe_ReachEdge(const _fvector& vBottom)
+{
+	OBSTACLE_SCAN& Scan = m_Perception.Scan;
+
+	_vector vLook = Get_ScanDir();
+	_vector vNormalXZ = XMVectorSetY(XMLoadFloat3(&Scan.Reach.Hit.vHitNormal), 0.f);
 	_vector vInward = XMVectorGetX(XMVector3LengthSq(vNormalXZ)) > 1e-4f
 		? -XMVector3Normalize(vNormalXZ) : vLook;
-	_vector vProbeXZ = XMLoadFloat3(&Scan.ReachHit.vHitPosition) + vInward * (m_pBodyProfile->fRadius * 0.5f);
+	_vector vProbeXZ = XMLoadFloat3(&Scan.Reach.Hit.vHitPosition) + vInward * (m_pBodyProfile->fRadius * 0.5f);
 	const _float fTopY = XMVectorGetY(vBottom) + m_pBodyProfile->fMaxReach + m_pBodyProfile->fRadius;
 	_vector vDownStart = XMVectorSetY(vProbeXZ, fTopY);
-	_vector vDownEnd   = XMVectorSetY(vProbeXZ, Scan.ReachHit.vHitPosition.y - 0.1f);
+	_vector vDownEnd   = XMVectorSetY(vProbeXZ, Scan.Reach.Hit.vHitPosition.y - 0.1f);
 
 	LINE_TRACE_HIT TopHit = Cast_Ray(vDownStart, vDownEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
 	if (!TopHit.isHit)
 		return;
 
-	Scan.hasReachEdge     = true;
-	Scan.vReachEdgePos    = _float3(Scan.ReachHit.vHitPosition.x, TopHit.vHitPosition.y, Scan.ReachHit.vHitPosition.z);
-	Scan.fReachEdgeHeight = TopHit.vHitPosition.y - XMVectorGetY(vBottom);
+	Scan.Reach.hasEdge     = true;
+	Scan.Reach.vEdgePos    = _float3(Scan.Reach.Hit.vHitPosition.x, TopHit.vHitPosition.y, Scan.Reach.Hit.vHitPosition.z);
+	Scan.Reach.fEdgeHeight = TopHit.vHitPosition.y - XMVectorGetY(vBottom);
 }
 
 void CEnvironmentQueryComponent::Measure_Geometry()
 {
-	const OBSTACLE_SCAN& Scan = m_Perception.Scan;
-	if (Scan.iHeightFlag == 0) return;
+	if (m_Perception.Scan.iHeightFlag == 0)
+		return;
 
-	_vector vLook = Get_ScanDir();
+	MEASURE_FRAME Frame = Make_MeasureFrame();
+	Measure_Front(Frame);
+
+	if (!Measure_Top(Frame))
+		return;
+
+	Measure_TopWidth(Frame);
+	Measure_Depth(Frame);
+	Measure_StandPos(Frame);
+	Measure_Landing(Frame);
+}
+
+CEnvironmentQueryComponent::MEASURE_FRAME CEnvironmentQueryComponent::Make_MeasureFrame() const
+{
+	MEASURE_FRAME Frame{};
+	Frame.fRadius = m_pBodyProfile->fRadius;
+	Frame.fTotalHeight = m_pBodyProfile->fHeight;
+
 	_vector vCenter = m_pOwnerTransformCom->Get_State(STATE::POSITION) + m_pOwnerColliderCom->Get_Offset();
-	_float fRadius = m_pBodyProfile->fRadius;
-	_float fTotalHeight = m_pBodyProfile->fHeight;
-	_vector vBottom = vCenter - XMVectorSet(0.f, fTotalHeight * 0.5f, 0.f, 0.f);
+	Frame.vBottom = vCenter - XMVectorSet(0.f, Frame.fTotalHeight * 0.5f, 0.f, 0.f);
+	Frame.fStartY = XMVectorGetY(Frame.vBottom) + m_pBodyProfile->fMaxReach;
+	Frame.vTraversal = Get_ScanDir();
 
+	return Frame;
+}
+
+void CEnvironmentQueryComponent::Measure_Front(MEASURE_FRAME& Frame)
+{
+	const OBSTACLE_SCAN& Scan = m_Perception.Scan;
 	OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
 
 	const LINE_TRACE_HIT& TopHit = Scan.HeadHit.isHit ? Scan.HeadHit
@@ -232,81 +264,92 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 	const LINE_TRACE_HIT& FrontHit = Scan.KneeHit.isHit ? Scan.KneeHit
 		: Scan.ChestHit.isHit ? Scan.ChestHit : Scan.HeadHit;
 
-	_vector vTraversal = vLook;
 	if (FrontHit.isHit)
 	{
-		Geo.hasFront = true;
-		Geo.vFrontHitPos = FrontHit.vHitPosition;
-		Geo.vFrontNormal = FrontHit.vHitNormal;
+		Geo.Front.hasHit = true;
+		Geo.Front.vHitPos = FrontHit.vHitPosition;
+		Geo.Front.vNormal = FrontHit.vHitNormal;
 
-		_vector vNormalXZ = XMVectorSetY(XMLoadFloat3(&Geo.vFrontNormal), 0.f);
-		if (XMVectorGetX(XMVector3LengthSq(vNormalXZ)) > 1e-4f) 
-			vTraversal = -XMVector3Normalize(vNormalXZ);
+		_vector vNormalXZ = XMVectorSetY(XMLoadFloat3(&Geo.Front.vNormal), 0.f);
+		if (XMVectorGetX(XMVector3LengthSq(vNormalXZ)) > 1e-4f)
+			Frame.vTraversal = -XMVector3Normalize(vNormalXZ);
 
-		Geo.fFrontDistance = XMVectorGetX(XMVector3Length(XMLoadFloat3(&Geo.vFrontHitPos) - m_pOwnerTransformCom->Get_State(STATE::POSITION)));
+		Geo.Front.fDistance = XMVectorGetX(XMVector3Length(XMLoadFloat3(&Geo.Front.vHitPos) - m_pOwnerTransformCom->Get_State(STATE::POSITION)));
 	}
-	XMStoreFloat3(&Geo.vTraversalDir, vTraversal);
+	XMStoreFloat3(&Geo.vTraversalDir, Frame.vTraversal);
 
-	_float fInset = fRadius * 0.5f;
-	_vector vStartXZ = XMLoadFloat3(&TopHit.vHitPosition) + vTraversal * fInset;
+	Frame.vStartXZ = XMLoadFloat3(&TopHit.vHitPosition) + Frame.vTraversal * (Frame.fRadius * 0.5f);
+}
 
-	_float fStartY = XMVectorGetY(vBottom) + m_pBodyProfile->fMaxReach;
-	_vector vDownStart = XMVectorSetY(vStartXZ, fStartY);
-	_vector vDownEnd = XMVectorSetY(vStartXZ, XMVectorGetY(vBottom));
+_bool CEnvironmentQueryComponent::Measure_Top(MEASURE_FRAME& Frame)
+{
+	const OBSTACLE_SCAN& Scan = m_Perception.Scan;
+	OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
+
+	const LINE_TRACE_HIT& TopHit = Scan.HeadHit.isHit ? Scan.HeadHit
+		: Scan.ChestHit.isHit ? Scan.ChestHit : Scan.KneeHit;
+
+	_vector vDownStart = XMVectorSetY(Frame.vStartXZ, Frame.fStartY);
+	_vector vDownEnd = XMVectorSetY(Frame.vStartXZ, XMVectorGetY(Frame.vBottom));
 
 	LINE_TRACE_HIT TopDownRay = Cast_Ray(vDownStart, vDownEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
 
-	if (!TopDownRay.isHit)
+	if (!TopDownRay.isHit || TopDownRay.vHitPosition.y <= TopHit.vHitPosition.y)
 	{
-		Geo.isTopReachable  = false;
-		Geo.fObstacleHeight = m_pBodyProfile->fMaxReach;
-		return;
+		Geo.Top.isReachable = false;
+		Geo.Top.fHeight = m_pBodyProfile->fMaxReach;
+		return false;
 	}
 
-	if (TopDownRay.vHitPosition.y <= TopHit.vHitPosition.y)
-	{
-		Geo.isTopReachable  = false;
-		Geo.fObstacleHeight = m_pBodyProfile->fMaxReach;
-		return;
-	}
+	Geo.Top.isReachable = true;
+	Geo.Top.vNormal = TopDownRay.vHitNormal;
+	Geo.Top.fHeight = TopDownRay.vHitPosition.y - XMVectorGetY(Frame.vBottom);
+	Frame.fTopSurfaceY = TopDownRay.vHitPosition.y;
 
-	Geo.isTopReachable  = true;
-	Geo.vTopNormal      = TopDownRay.vHitNormal;
-	Geo.fObstacleHeight = TopDownRay.vHitPosition.y - XMVectorGetY(vBottom);
-
-	if (Geo.hasFront)
+	if (Geo.Front.hasHit)
 	{
-		_vector vFrontXZ = XMLoadFloat3(&Geo.vFrontHitPos);
-		Geo.vTopEdgePos = _float3(XMVectorGetX(vFrontXZ), TopDownRay.vHitPosition.y, XMVectorGetZ(vFrontXZ));
+		_vector vFrontXZ = XMLoadFloat3(&Geo.Front.vHitPos);
+		Geo.Top.vEdgePos = _float3(XMVectorGetX(vFrontXZ), TopDownRay.vHitPosition.y, XMVectorGetZ(vFrontXZ));
 	}
 	else
-		Geo.vTopEdgePos = TopDownRay.vHitPosition;
+		Geo.Top.vEdgePos = TopDownRay.vHitPosition;
 
-	_vector vSideAxis = XMVector3Normalize(XMVector3Cross(XMVectorSet(0.f, 1.f, 0.f, 0.f), vTraversal));
+	return true;
+}
+
+void CEnvironmentQueryComponent::Measure_TopWidth(const MEASURE_FRAME& Frame)
+{
+	OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
+
+	_vector vSideAxis = XMVector3Normalize(XMVector3Cross(XMVectorSet(0.f, 1.f, 0.f, 0.f), Frame.vTraversal));
 	Geo.fTopWidth = 0.f;
+
+	const _float SideOffsets[2] = { -Frame.fRadius, Frame.fRadius };
+	for (_uint i = 0; i < 2; ++i)
 	{
-		const _float SideOffsets[2] = { -fRadius, fRadius };
-		for (_uint i = 0; i < 2; ++i)
-		{
-			_vector vWSample = vStartXZ + vSideAxis * SideOffsets[i];
-			_vector vWStart  = XMVectorSetY(vWSample, fStartY);
-			_vector vWEnd    = XMVectorSetY(vWSample, TopDownRay.vHitPosition.y);
-			if (Cast_Ray(vWStart, vWEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE).isHit)
-				Geo.fTopWidth += fRadius;
-		}
+		_vector vWSample = Frame.vStartXZ + vSideAxis * SideOffsets[i];
+		_vector vWStart  = XMVectorSetY(vWSample, Frame.fStartY);
+		_vector vWEnd    = XMVectorSetY(vWSample, Frame.fTopSurfaceY);
+		if (Cast_Ray(vWStart, vWEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE).isHit)
+			Geo.fTopWidth += Frame.fRadius;
 	}
+}
 
-	_float fTopSurfaceY = TopDownRay.vHitPosition.y;
-	_float fSampleStep  = fRadius;
+void CEnvironmentQueryComponent::Measure_Depth(const MEASURE_FRAME& Frame)
+{
+	OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
 
-	_float fLastHit   = 0.f; 
+	const _float fInset = Frame.fRadius * 0.5f;
+	const _float fSampleStep = Frame.fRadius;
+
+	_float fLastHit   = 0.f;
 	_float fFirstMiss = -1.f;
 	for (_uint i = 1; i <= FDEPTH_SAMPLE_COUNT; ++i)
 	{
 		_float  fDist   = fSampleStep * static_cast<_float>(i);
-		_vector vSample = vStartXZ + vTraversal * fDist;
-		_vector vSStart = XMVectorSetY(vSample, fStartY);
-		_vector vSEnd   = XMVectorSetY(vSample, fTopSurfaceY);
+		_vector vSample = Frame.vStartXZ + Frame.vTraversal * fDist;
+		_vector vSStart = XMVectorSetY(vSample, Frame.fStartY);
+		_vector vSEnd   = XMVectorSetY(vSample, Frame.fTopSurfaceY);
 		if (Cast_Ray(vSStart, vSEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE).isHit)
 			fLastHit = fDist;
 		else
@@ -317,77 +360,78 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 	}
 
 	if (fFirstMiss < 0.f)
-	{
-		Geo.fDepth   = fInset + fSampleStep * static_cast<_float>(FDEPTH_SAMPLE_COUNT);
-		Geo.hasDepth = true;
-	}
+		Geo.fDepth = fInset + fSampleStep * static_cast<_float>(FDEPTH_SAMPLE_COUNT);
 	else
+		Geo.fDepth = fInset + Refine_DepthEdge(Frame, fLastHit, fFirstMiss);
+	Geo.hasDepth = true;
+}
+
+_float CEnvironmentQueryComponent::Refine_DepthEdge(const MEASURE_FRAME& Frame, _float fLo, _float fHi)
+{
+	for (_uint i = 0; i < FEDGE_REFINE_ITERATIONS; ++i)
 	{
-		_float fLo = fLastHit;
-		_float fHi = fFirstMiss;
-		for (_uint i = 0; i < FEDGE_REFINE_ITERATIONS; ++i)
-		{
-			_float  fMid    = (fLo + fHi) * 0.5f;
-			_vector vSample = vStartXZ + vTraversal * fMid;
-			_vector vSStart = XMVectorSetY(vSample, fStartY);
-			_vector vSEnd   = XMVectorSetY(vSample, fTopSurfaceY);
-			if (Cast_Ray(vSStart, vSEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::REFINE).isHit)
-				fLo = fMid;
-			else
-				fHi = fMid;
-		}
-		Geo.fDepth   = fInset + (fLo + fHi) * 0.5f;
-		Geo.hasDepth = true;
-	}
-
-	if (Geo.isTopReachable && Geo.hasDepth)
-	{
-		const _float fStandMargin = 0.15f;
-		_float fStandInset = (Geo.fDepth >= 2.f * fRadius)
-			? std::clamp(fRadius + fStandMargin, fRadius, Geo.fDepth - fRadius)
-			: Geo.fDepth * 0.5f;
-
-		_vector vStandXZ = XMLoadFloat3(&Geo.vTopEdgePos) + vTraversal * fStandInset;
-
-		_vector vStandStart = XMVectorSetY(vStandXZ, fStartY);
-		_vector vStandEnd = XMVectorSetY(vStandXZ, XMVectorGetY(vBottom));
-		LINE_TRACE_HIT StandHit = Cast_Ray(vStandStart, vStandEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
-
-		if (StandHit.isHit)
-			Geo.vTopStandPos = StandHit.vHitPosition;
+		_float  fMid    = (fLo + fHi) * 0.5f;
+		_vector vSample = Frame.vStartXZ + Frame.vTraversal * fMid;
+		_vector vSStart = XMVectorSetY(vSample, Frame.fStartY);
+		_vector vSEnd   = XMVectorSetY(vSample, Frame.fTopSurfaceY);
+		if (Cast_Ray(vSStart, vSEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::REFINE).isHit)
+			fLo = fMid;
 		else
-			Geo.vTopStandPos = _float3(XMVectorGetX(vStandXZ), fTopSurfaceY, XMVectorGetZ(vStandXZ));
+			fHi = fMid;
 	}
+	return (fLo + fHi) * 0.5f;
+}
 
-	_vector vLandXZ    = vStartXZ + vTraversal * (Geo.fDepth + fRadius);
-	_vector vLandStart = XMVectorSetY(vLandXZ, fTopSurfaceY + 0.05f);
-	_vector vLandEnd   = XMVectorSetY(vLandXZ, XMVectorGetY(vBottom) - fTotalHeight);
+void CEnvironmentQueryComponent::Measure_StandPos(const MEASURE_FRAME& Frame)
+{
+	OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
+	if (!Geo.Top.isReachable || !Geo.hasDepth)
+		return;
 
-	LINE_TRACE_HIT LandRayHit = Cast_Ray(vLandStart, vLandEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
-	if (false == LandRayHit.isHit)
-		LandRayHit = Cast_Ray(vLandStart, vLandEnd, ENUM_CLASS(COLLISIONLAYER::MAP), RAY_KIND::MEASURE);
+	const _float fStandMargin = 0.15f;
+	_float fStandInset = (Geo.fDepth >= 2.f * Frame.fRadius)
+		? std::clamp(Frame.fRadius + fStandMargin, Frame.fRadius, Geo.fDepth - Frame.fRadius)
+		: Geo.fDepth * 0.5f;
 
-	Geo.hasLandingSpace = LandRayHit.isHit;
-	if (LandRayHit.isHit)
+	_vector vStandXZ = XMLoadFloat3(&Geo.Top.vEdgePos) + Frame.vTraversal * fStandInset;
+	_vector vStandStart = XMVectorSetY(vStandXZ, Frame.fStartY);
+	_vector vStandEnd   = XMVectorSetY(vStandXZ, XMVectorGetY(Frame.vBottom));
+	LINE_TRACE_HIT StandHit = Cast_Ray(vStandStart, vStandEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
+
+	if (StandHit.isHit)
+		Geo.Top.vStandPos = StandHit.vHitPosition;
+	else
+		Geo.Top.vStandPos = _float3(XMVectorGetX(vStandXZ), Frame.fTopSurfaceY, XMVectorGetZ(vStandXZ));
+}
+
+void CEnvironmentQueryComponent::Measure_Landing(const MEASURE_FRAME& Frame)
+{
+	OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
+
+	_vector vLandXZ    = Frame.vStartXZ + Frame.vTraversal * (Geo.fDepth + Frame.fRadius);
+	_vector vLandStart = XMVectorSetY(vLandXZ, Frame.fTopSurfaceY + 0.05f);
+	_vector vLandEnd   = XMVectorSetY(vLandXZ, XMVectorGetY(Frame.vBottom) - Frame.fTotalHeight);
+
+	LINE_TRACE_HIT LandRayHit = Cast_Ray_WithMapFallback(vLandStart, vLandEnd, RAY_KIND::MEASURE);
+
+	Geo.Landing.hasSpace = LandRayHit.isHit;
+	if (!LandRayHit.isHit)
+		return;
+
+	Geo.Landing.vPos = LandRayHit.vHitPosition;
+
+	const _float ProbeOffsets[2] = { -Frame.fRadius * 0.75f, Frame.fRadius * 0.75f };
+	for (_uint i = 0; i < 2; ++i)
 	{
-		Geo.vLandingPos = LandRayHit.vHitPosition;
+		_vector vProbeXZ = vLandXZ + Frame.vTraversal * ProbeOffsets[i];
+		_vector vPStart  = XMVectorSetY(vProbeXZ, Frame.fTopSurfaceY + 0.05f);
+		_vector vPEnd    = XMVectorSetY(vProbeXZ, XMVectorGetY(Frame.vBottom) - Frame.fTotalHeight);
 
-		const _float ProbeOffsets[2] = { -fRadius * 0.75f, fRadius * 0.75f };
-		for (_uint i = 0; i < 2; ++i)
+		LINE_TRACE_HIT ProbeHit = Cast_Ray_WithMapFallback(vPStart, vPEnd, RAY_KIND::MEASURE);
+		if (!ProbeHit.isHit || fabsf(ProbeHit.vHitPosition.y - Geo.Landing.vPos.y) > FLANDING_MAX_HEIGHT_DIFF)
 		{
-			_vector vProbeXZ = vLandXZ + vTraversal * ProbeOffsets[i];
-			_vector vPStart  = XMVectorSetY(vProbeXZ, fTopSurfaceY + 0.05f);
-			_vector vPEnd    = XMVectorSetY(vProbeXZ, XMVectorGetY(vBottom) - fTotalHeight);
-
-			LINE_TRACE_HIT ProbeHit = Cast_Ray(vPStart, vPEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
-			if (false == ProbeHit.isHit)
-				ProbeHit = Cast_Ray(vPStart, vPEnd, ENUM_CLASS(COLLISIONLAYER::MAP), RAY_KIND::MEASURE);
-
-			if (!ProbeHit.isHit || fabsf(ProbeHit.vHitPosition.y - Geo.vLandingPos.y) > FLANDING_MAX_HEIGHT_DIFF)
-			{
-				Geo.hasLandingSpace = false;
-				break;
-			}
+			Geo.Landing.hasSpace = false;
+			break;
 		}
 	}
 }
@@ -400,10 +444,21 @@ void CEnvironmentQueryComponent::Draw_DebugMarkers()
 		return;
 
 	const OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
-	if (Geo.isTopReachable)
-		m_pGameInstance->Add_DebugSphere(XMLoadFloat3(&Geo.vTopEdgePos), 0.07f, JPH::Color(255.f, 0.f, 0.f, 1.f));
-	if (Geo.hasLandingSpace)
-		m_pGameInstance->Add_DebugSphere(XMLoadFloat3(&Geo.vLandingPos), 0.07f, JPH::Color(255.f, 255.f, 0.f, 1.f));
+	if (Geo.Top.isReachable)
+		m_pGameInstance->Add_DebugSphere(XMLoadFloat3(&Geo.Top.vEdgePos), 0.07f, JPH::Color(255.f, 0.f, 0.f, 1.f));
+	if (Geo.Landing.hasSpace)
+		m_pGameInstance->Add_DebugSphere(XMLoadFloat3(&Geo.Landing.vPos), 0.07f, JPH::Color(255.f, 255.f, 0.f, 1.f));
+}
+
+void CEnvironmentQueryComponent::Log_ShapeHit(const SHAPE_CAST_HIT& Hit)
+{
+	if (Hit.pDesc == m_pDebugLastShapeHitDesc)
+		return;
+
+	m_pDebugLastShapeHitDesc = Hit.pDesc;
+	cout << "[EnvQuery] ShapeCast hit  pos=(" << Hit.vHitPoint.x << ", "
+	     << Hit.vHitPoint.y << ", " << Hit.vHitPoint.z
+	     << ")  flag=" << ENUM_CLASS(static_cast<CALLBACK_CLIENT*>(Hit.pDesc)->eObjectParkourFlag) << endl;
 }
 #endif // _DEBUG
 
@@ -420,12 +475,12 @@ void CEnvironmentQueryComponent::Print_Debug()
 	     << "  R " << (Scan.RightChestHit.isHit ? "O" : "X")
 	     << "  ObjectFlag=" << ENUM_CLASS(Scan.eObjectFlag) << endl;
 
-	cout << "[Geometry] H=" << Geo.fObstacleHeight
+	cout << "[Geometry] H=" << Geo.Top.fHeight
 	     << " D=" << Geo.fDepth
 	     << " W=" << Geo.fTopWidth
-	     << " Front=" << Geo.fFrontDistance
-	     << " Top=" << (Geo.isTopReachable ? "O" : "X")
-	     << " Landing=" << (Geo.hasLandingSpace ? "O" : "X") << endl;
+	     << " Front=" << Geo.Front.fDistance
+	     << " Top=" << (Geo.Top.isReachable ? "O" : "X")
+	     << " Landing=" << (Geo.Landing.hasSpace ? "O" : "X") << endl;
 }
 #endif // _DEBUG
 

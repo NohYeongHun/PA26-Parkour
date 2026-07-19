@@ -58,10 +58,10 @@ _bool CTraceurGroundVault::Ready_Enter(void* pArg)
 
 	const OBSTACLE_GEOMETRY& Geo = Enter_Perception(pArg).Geometry;
 	m_pMotionWarpCom->Clear_WarpTargets();
-	if (Geo.isTopReachable)
-		m_pMotionWarpCom->Set_WarpTarget("VaultTop", Geo.vTopEdgePos);
-	if (Geo.hasLandingSpace)
-		m_pMotionWarpCom->Set_WarpTarget("VaultLand", Geo.vLandingPos);
+	if (Geo.Top.isReachable)
+		m_pMotionWarpCom->Set_WarpTarget("VaultTop", Geo.Top.vEdgePos);
+	if (Geo.Landing.hasSpace)
+		m_pMotionWarpCom->Set_WarpTarget("VaultLand", Geo.Landing.vPos);
 
 #ifdef _DEBUG
 	m_pMotionWarpCom->Reset_DebugTrail();   // 새 Vault 시작 → 이전 궤적 리셋
@@ -82,7 +82,7 @@ void CTraceurGroundVault::Draw_Debug()
 	const OBSTACLE_GEOMETRY& Geo = m_pEnvQueryCom->Get_Perception().Geometry;
 	CGameInstance* pGI = CGameInstance::GetInstance();
 
-	pGI->Add_DebugSphere(XMLoadFloat3(&Geo.vTopEdgePos), 0.3f, JPH::Color(0.f, 255.f, 255.f, 1.f));
+	pGI->Add_DebugSphere(XMLoadFloat3(&Geo.Top.vEdgePos), 0.3f, JPH::Color(0.f, 255.f, 255.f, 1.f));
 	//pGI->Add_DebugSphere(XMLoadFloat3(&Geo.vLandingPos), 0.3f, JPH::Color(255.f, 255.f, 255.f, 1.f));
 }
 #endif // _DEBUG

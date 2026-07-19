@@ -24,6 +24,17 @@ private:
 	// 디버그 레이 색 분류
 	enum class RAY_KIND { SCAN, MEASURE, REFINE };
 
+	struct MEASURE_FRAME
+	{
+		_vector vBottom{};
+		_vector vTraversal{};
+		_vector vStartXZ{};
+		_float  fStartY = 0.f;
+		_float  fTopSurfaceY = 0.f;
+		_float  fRadius = 0.f;
+		_float  fTotalHeight = 0.f;
+	};
+
 protected:
 	explicit CEnvironmentQueryComponent(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
 	explicit CEnvironmentQueryComponent(const CEnvironmentQueryComponent& Prototype);
@@ -46,16 +57,29 @@ public:
 private:
 	_bool Detect_Obstacle();
 	void  Scan_Obstacle();
-	void  Measure_Geometry();
 	void  Scan_Reach();
+	void  Probe_ReachEdge(const _fvector& vBottom);
+
+private:
+	void   Measure_Geometry();
+	MEASURE_FRAME Make_MeasureFrame() const;
+	void   Measure_Front(MEASURE_FRAME& Frame);
+	_bool  Measure_Top(MEASURE_FRAME& Frame);
+	void   Measure_TopWidth(const MEASURE_FRAME& Frame);
+	void   Measure_Depth(const MEASURE_FRAME& Frame);
+	_float Refine_DepthEdge(const MEASURE_FRAME& Frame, _float fLo, _float fHi);
+	void   Measure_StandPos(const MEASURE_FRAME& Frame);
+	void   Measure_Landing(const MEASURE_FRAME& Frame);
 
 private:
 	LINE_TRACE_HIT Cast_Ray(const _fvector& vStart, const _fvector& vEnd, _uint iLayer, RAY_KIND eKind);
+	LINE_TRACE_HIT Cast_Ray_WithMapFallback(const _fvector& vStart, const _fvector& vEnd, RAY_KIND eKind);
 	_vector Get_ScanDir() const;
 
 #ifdef _DEBUG
 private:
 	void Draw_DebugMarkers();
+	void Log_ShapeHit(const SHAPE_CAST_HIT& Hit);
 #endif
 
 #ifdef _DEBUG

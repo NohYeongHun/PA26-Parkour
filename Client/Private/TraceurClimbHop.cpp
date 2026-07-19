@@ -46,7 +46,6 @@ void CTraceurClimbHop::OnEnter(void* pArg)
 	_vector vP2 = ParkourMath::Calc_HangPos(XMLoadFloat3(&Target.vGrabEdgePos), vNormal,
 		pBody->fRadius, pBody->fHeight, T.fHangOffsetMult, T.fWallOffset);
 
-	// 루트모션 워프 타겟만 등록
 	_float3 vTargetPos{};
 	XMStoreFloat3(&vTargetPos, vP2);
 	m_pMotionWarpCom->Clear_WarpTargets();
@@ -75,7 +74,6 @@ _bool CTraceurClimbHop::Calc_ProbeSegment(const HANG_CONTEXT& Ctx, const HANG_TU
 	if (!Ctx.isValid)
 		return false;
 
-	// 지금 잡고 있는 장애물 바디의 월드 AABB
 	_float3 vMin{}, vMax{};
 	if (!CGameInstance::GetInstance()->Get_Body_AABB(Ctx.GrabBodyID, vMin, vMax))
 		return false;
@@ -84,7 +82,6 @@ _bool CTraceurClimbHop::Calc_ProbeSegment(const HANG_CONTEXT& Ctx, const HANG_TU
 	_vector vUp     = XMVectorSet(0.f, 1.f, 0.f, 0.f);
 	_vector vRight  = XMVector3Normalize(XMVector3Cross(vUp, XMVectorNegate(vNormal)));
 
-	// 그랩 엣지 살짝 안쪽 현 바디 풋프린트 위에 놓입니다.
 	_vector vAnchor = XMLoadFloat3(&Ctx.vGrabEdgePos) - vNormal * 0.05f;
 
 	switch (eDir)
@@ -351,11 +348,11 @@ void CTraceurClimbHop::Fallback(ETraceurClimbHop eDir)
 			Desc.Perception     = m_pEnvQueryCom->Get_Perception();
 			Desc.Decision       = m_pDeciderCom->Get_Decision();
 			OBSTACLE_GEOMETRY& Geo = Desc.Perception.Geometry;
-			Geo.isTopReachable  = true;
-			Geo.vTopEdgePos     = _float3(Ctx.vGrabEdgePos.x, vStandPos.y, Ctx.vGrabEdgePos.z);
-			Geo.vTopStandPos    = vStandPos;
-			Geo.vFrontNormal    = Ctx.vWallNormal;
-			Geo.hasLandingSpace = false;
+			Geo.Top.isReachable  = true;
+			Geo.Top.vEdgePos     = _float3(Ctx.vGrabEdgePos.x, vStandPos.y, Ctx.vGrabEdgePos.z);
+			Geo.Top.vStandPos    = vStandPos;
+			Geo.Front.vNormal    = Ctx.vWallNormal;
+			Geo.Landing.hasSpace = false;
 			m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Exit), &Desc);
 			return;
 		}

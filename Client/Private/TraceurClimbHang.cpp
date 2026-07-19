@@ -49,16 +49,16 @@ _bool CTraceurClimbHang::Ready_Hang(void* pArg)
 	{
 		// 공중 잡기 등 직접 진입 — 스냅샷의 ReachHit로 컨텍스트 구성 (air grab)
 		const OBSTACLE_SCAN& Scan = Enter_Perception(pArg).Scan;
-		if (!Scan.ReachHit.isHit || !Scan.hasReachEdge)
+		if (!Scan.Reach.Hit.isHit || !Scan.Reach.hasEdge)
 			return false;
 
-		_vector vN = XMVectorSetY(XMLoadFloat3(&Scan.ReachHit.vHitNormal), 0.f);
+		_vector vN = XMVectorSetY(XMLoadFloat3(&Scan.Reach.Hit.vHitNormal), 0.f);
 		if (XMVectorGetX(XMVector3LengthSq(vN)) < 1e-4f)
 			return false;
 
 		Ctx.isValid      = true;
-		Ctx.vGrabEdgePos = Scan.vReachEdgePos;
-		Ctx.GrabBodyID   = Scan.ReachBodyID;
+		Ctx.vGrabEdgePos = Scan.Reach.vEdgePos;
+		Ctx.GrabBodyID   = Scan.Reach.HitBodyID;
 		XMStoreFloat3(&Ctx.vWallNormal, XMVector3Normalize(vN));
 	}
 

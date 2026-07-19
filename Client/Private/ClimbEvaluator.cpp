@@ -50,9 +50,9 @@ void CClimbEvaluator::Evaluate(const ENV_PERCEPTION& P, const PARKOUR_DECISION& 
 	if (!isLand)
 		m_hasLeftGround = true;
 
-	if (P.Geometry.isTopReachable)
+	if (P.Geometry.Top.isReachable)
 	{
-		m_vTopStandCache   = P.Geometry.vTopEdgePos;
+		m_vTopStandCache   = P.Geometry.Top.vEdgePos;
 		m_hasTopStandCache = true;
 	}
 
@@ -70,7 +70,7 @@ void CClimbEvaluator::Evaluate(const ENV_PERCEPTION& P, const PARKOUR_DECISION& 
 	m_Eval.isArrived   = m_hasLeftGround && isToppingOut;
 	m_Eval.isLanded    = !m_Eval.isArrived && (m_hasLeftGround && isLand);
 	m_Eval.shouldFall  = !m_Eval.isArrived && ((D.wantsDown || !isSupported) && !inTopBand);
-	m_Eval.canMantle   = !m_Eval.isArrived && (P.Geometry.isTopReachable && !P.Scan.HeadHit.isHit);
+	m_Eval.canMantle   = !m_Eval.isArrived && (P.Geometry.Top.isReachable && !P.Scan.HeadHit.isHit);
 	m_Eval.kneeHit     = P.Scan.KneeHit.isHit;
 }
 

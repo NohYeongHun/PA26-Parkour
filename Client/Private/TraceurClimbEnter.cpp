@@ -90,18 +90,18 @@ _bool CTraceurClimbEnter::Ready_Enter(void* pArg)
 _bool CTraceurClimbEnter::Ready_HangEnter(const ENV_PERCEPTION& Perception)
 {
 	const OBSTACLE_SCAN& Scan = Perception.Scan;
-	if (!Scan.ReachHit.isHit || !Scan.hasReachEdge)
+	if (!Scan.Reach.Hit.isHit || !Scan.Reach.hasEdge)
 		return false;
 
-	_vector vNormal = XMVectorSetY(XMLoadFloat3(&Scan.ReachHit.vHitNormal), 0.f);
+	_vector vNormal = XMVectorSetY(XMLoadFloat3(&Scan.Reach.Hit.vHitNormal), 0.f);
 	if (XMVectorGetX(XMVector3LengthSq(vNormal)) < 1e-4f)
 		return false;
 	vNormal = XMVector3Normalize(vNormal);
 
 	HANG_CONTEXT& Ctx = m_pOwner->Get_HangContext();
 	Ctx.isValid      = true;
-	Ctx.vGrabEdgePos = Scan.vReachEdgePos;
-	Ctx.GrabBodyID   = Scan.ReachBodyID;
+	Ctx.vGrabEdgePos = Scan.Reach.vEdgePos;
+	Ctx.GrabBodyID   = Scan.Reach.HitBodyID;
 	XMStoreFloat3(&Ctx.vWallNormal, vNormal);
 
 	const HANG_TUNING&  T     = CGameSystem::GetInstance()->Get_ParkourTuning()->Get().Hang;

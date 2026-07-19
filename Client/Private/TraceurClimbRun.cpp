@@ -67,7 +67,7 @@ void CTraceurClimbRun::OnExit()
 _bool CTraceurClimbRun::Ready_WallRun(void* pArg)
 {
 	const OBSTACLE_GEOMETRY& Geo = Enter_Perception(pArg).Geometry;
-	if (!Geo.hasFront)
+	if (!Geo.Front.hasHit)
 		return false;
 
 	return true;

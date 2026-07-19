@@ -177,7 +177,7 @@ void CParkourDeciderComponent::Judge(const OBSTACLE_SCAN& Scan, const OBSTACLE_G
 {
 	m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::HANG)] = Judge_Hang(Scan, Geo);
 
-	if (Geo.fObstacleHeight <= 0.f) return;
+	if (Geo.Top.fHeight <= 0.f) return;
 
 	_vector vLook = XMLoadFloat3(&Scan.vScanDir);
 	_vector vApproachDir = XMVector3Normalize(XMVectorSetY(vLook, 0.f));
@@ -186,7 +186,7 @@ void CParkourDeciderComponent::Judge(const OBSTACLE_SCAN& Scan, const OBSTACLE_G
 	const ACTION_VERDICT VaultVerdict = Judge_Vault(Scan, Geo, m_Decision.fApproachDot);
 
 	_float fTotalHeight = m_pBodyProfile->fHeight;
-	const _bool isHighVault = Geo.fObstacleHeight >= fTotalHeight * m_pTuning->Get().Vault.fHighVaultHeightRatio;
+	const _bool isHighVault = Geo.Top.fHeight >= fTotalHeight * m_pTuning->Get().Vault.fHighVaultHeightRatio;
 	const ACTION_VERDICT NoMatch{ false, REJECT_REASON::NO_HEIGHT_MATCH };
 	m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::LOW_VAULT)]  = isHighVault ? NoMatch : VaultVerdict;
 	m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::HIGH_VAULT)] = isHighVault ? VaultVerdict : NoMatch;
@@ -245,10 +245,10 @@ ACTION_VERDICT CParkourDeciderComponent::Judge_Vault(const OBSTACLE_SCAN& Scan, 
 	if (!(Get_ObjectFlagMask(Scan) & ENUM_CLASS(PARKOUR_FLAG::VAULTABLE)))
 		return { false, REJECT_REASON::FLAG_DENIED };
 
-	if (!Geo.isTopReachable)
+	if (!Geo.Top.isReachable)
 		return { false, REJECT_REASON::TOP_UNREACHABLE };
 
-	if (!Geo.hasLandingSpace)
+	if (!Geo.Landing.hasSpace)
 		return { false, REJECT_REASON::NO_LANDING };
 
 	if (fApproachDot <= m_pTuning->Get().Vault.fMinApproachDot)
@@ -267,7 +267,7 @@ ACTION_VERDICT CParkourDeciderComponent::Judge_Mantle(const OBSTACLE_SCAN& Scan,
 	if (!(Get_ObjectFlagMask(Scan) & ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE)))
 		return { false, REJECT_REASON::FLAG_DENIED };
 
-	if (!Geo.isTopReachable)
+	if (!Geo.Top.isReachable)
 		return { false, REJECT_REASON::TOP_UNREACHABLE };
 
 	_float fRadius = m_pBodyProfile->fRadius;
@@ -295,7 +295,7 @@ ACTION_VERDICT CParkourDeciderComponent::Judge_Climb(const OBSTACLE_SCAN& Scan, 
 		return { false, REJECT_REASON::FLAG_DENIED };
 
 	_float fTotalHeight = m_pBodyProfile->fHeight;
-	if (Geo.isTopReachable && Geo.fObstacleHeight > fTotalHeight * m_pTuning->Get().Climb.fMaxHeightRatio)
+	if (Geo.Top.isReachable && Geo.Top.fHeight > fTotalHeight * m_pTuning->Get().Climb.fMaxHeightRatio)
 		return { false, REJECT_REASON::TOO_HIGH };
 
 	return { true, REJECT_REASON::NONE };
@@ -304,25 +304,25 @@ ACTION_VERDICT CParkourDeciderComponent::Judge_Climb(const OBSTACLE_SCAN& Scan, 
 ACTION_VERDICT CParkourDeciderComponent::Judge_Hang(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo) const
 {
 	(void)Geo;
-	if (!Scan.ReachHit.isHit || !Scan.hasReachEdge)
+	if (!Scan.Reach.Hit.isHit || !Scan.Reach.hasEdge)
 		return { false, REJECT_REASON::NO_HEIGHT_MATCH };
 
 	// HANGABLE 명시 필수 — 무태그(END)의 ALL 폴백 불인정. 모든 벽에서 매달리는 것을 방지.
-	const _uint iFlag = ENUM_CLASS(Scan.eReachObjectFlag);
+	const _uint iFlag = ENUM_CLASS(Scan.Reach.eObjectFlag);
 	if (iFlag >= ENUM_CLASS(PARKOUR_FLAG::END) || !(iFlag & ENUM_CLASS(PARKOUR_FLAG::HANGABLE)))
 		return { false, REJECT_REASON::FLAG_DENIED };
 
 	const HANG_TUNING& T = m_pTuning->Get().Hang;
 	const _float fH = m_pBodyProfile->fHeight;
-	if (Scan.fReachEdgeHeight < fH * T.fMinTopHeightMult
-	 || Scan.fReachEdgeHeight > fH * T.fMaxTopHeightMult)
+	if (Scan.Reach.fEdgeHeight < fH * T.fMinTopHeightMult
+	 || Scan.Reach.fEdgeHeight > fH * T.fMaxTopHeightMult)
 		return { false, REJECT_REASON::NO_HEIGHT_MATCH };
 
-	if (fabsf(Scan.ReachHit.vHitNormal.y) > T.fMaxNormalY)
+	if (fabsf(Scan.Reach.Hit.vHitNormal.y) > T.fMaxNormalY)
 		return { false, REJECT_REASON::NOT_VERTICAL };
 
 	_vector vApproach = XMVector3Normalize(XMVectorSetY(XMLoadFloat3(&Scan.vScanDir), 0.f));
-	_vector vFace     = XMVector3Normalize(XMVectorSetY(XMLoadFloat3(&Scan.ReachHit.vHitNormal), 0.f));
+	_vector vFace     = XMVector3Normalize(XMVectorSetY(XMLoadFloat3(&Scan.Reach.Hit.vHitNormal), 0.f));
 	if (XMVectorGetX(XMVector3Dot(vApproach, XMVectorNegate(vFace))) <= T.fMinApproachDot)
 		return { false, REJECT_REASON::BAD_ANGLE };
 
@@ -340,7 +340,7 @@ ACTION_VERDICT CParkourDeciderComponent::Judge_WallRun(const OBSTACLE_SCAN& Scan
 	if (!(Get_ObjectFlagMask(Scan) & ENUM_CLASS(PARKOUR_FLAG::WALLRUNNABLE)))
 		return { false, REJECT_REASON::FLAG_DENIED };
 
-	if (!Geo.hasFront || fabsf(Geo.vFrontNormal.y) > m_pTuning->Get().WallRun.fMaxNormalY)
+	if (!Geo.Front.hasHit || fabsf(Geo.Front.vNormal.y) > m_pTuning->Get().WallRun.fMaxNormalY)
 		return { false, REJECT_REASON::NOT_VERTICAL };
 
 	if (fApproachDot <= m_pTuning->Get().WallRun.fMinApproachDot)

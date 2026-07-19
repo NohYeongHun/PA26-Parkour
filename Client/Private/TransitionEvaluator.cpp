@@ -155,7 +155,7 @@ _bool CTransitionEvaluator::Try_Fire(const BOUND_TRANSITION& Rule, _uint iCurren
 		const _string strTo   = CTraceurStateNames::To_String(Rule.Next);
 		cout << "[Transition] " << strFrom << " -> " << strTo
 		     << "  ObjectFlag=" << ENUM_CLASS(m_pEnvQueryCom->Get_Perception().Scan.eObjectFlag)
-		     << "  ReachFlag=" << ENUM_CLASS(m_pEnvQueryCom->Get_Perception().Scan.eReachObjectFlag) << "\n";
+		     << "  ReachFlag=" << ENUM_CLASS(m_pEnvQueryCom->Get_Perception().Scan.Reach.eObjectFlag) << "\n";
 	}
 #endif
 
