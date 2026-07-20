@@ -558,6 +558,24 @@ namespace Engine
 		_bool*				pIsActive = nullptr;				//로프이펙트가 끝났는지 아닌지 확인할 _bool주소 (true면 이펙트 진행중, false면 끝난것)
 	}ROPE_INFO;
 	//////////////////////
+
+#pragma region IK
+	typedef struct tagIKChangeDesc
+	{
+		_uint iRootBoneIndex, iMidBoneIndex, iEndBoneIndex;
+		_vector vTargetPos;
+		_vector vPoleVector;
+		_float fWeight;
+	}IK_CHAIN_DESC;
+
+
+	typedef struct tagIKResult { 
+		_float fPosError; 
+		_uint iIterations; 
+		_bool isSolved; 
+	}IK_RESULT;
+#pragma endregion
+
 }
 #endif // Engine_Struct_h__
 

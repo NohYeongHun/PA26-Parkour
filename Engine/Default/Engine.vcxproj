@@ -83,6 +83,11 @@
     <ClInclude Include="..\Public\GUIManager.h" />
     <ClInclude Include="..\public\HdrTexture.h" />
     <ClInclude Include="..\Public\HZB.h" />
+    <ClInclude Include="..\Public\IKComponent.h" />
+    <ClInclude Include="..\Public\IKSolver.h" />
+    <ClInclude Include="..\Public\IKSovler_CCD.h" />
+    <ClInclude Include="..\Public\IKSovler_Fabrik.h" />
+    <ClInclude Include="..\Public\IKSovler_TwoBone.h" />
     <ClInclude Include="..\Public\InputController.h" />
     <ClInclude Include="..\Public\Input_Device.h" />
     <ClInclude Include="..\Public\Layer.h" />
@@ -170,6 +175,11 @@
     <ClInclude Include="..\public\VolumetricFog.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Private\IKComponent.cpp" />
+    <ClCompile Include="..\Private\IKSolver.cpp" />
+    <ClCompile Include="..\Private\IKSovler_CCD.cpp" />
+    <ClCompile Include="..\Private\IKSovler_Fabrik.cpp" />
+    <ClCompile Include="..\Private\IKSovler_TwoBone.cpp" />
     <ClCompile Include="..\Public\Tracy\TracyClient.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -327,6 +337,7 @@
     <None Include="..\Bin\ShaderFiles\Engine_Shader_Function.hlsli" />
     <None Include="..\Bin\ShaderFiles\Engine_Shader_State.hlsli" />
     <None Include="..\Bin\ShaderFiles\Engine_Shader_Water.hlsli" />
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Bin\ShaderFiles\Engine_ComputeShader_Blur.hlsl" />

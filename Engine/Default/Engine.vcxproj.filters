@@ -419,6 +419,12 @@
     <Filter Include="01. Utility\95. Fade">
       <UniqueIdentifier>{07c11269-25bc-4e69-bb07-d03ab17546ad}</UniqueIdentifier>
     </Filter>
+    <Filter Include="01. Utility\04. Component\IK">
+      <UniqueIdentifier>{9e642d5b-cc99-4b79-826f-b5789d274311}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Utility\04. Component\IK\Solver">
+      <UniqueIdentifier>{6abe999e-ce43-4a44-b170-8223260d77d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Public\Engine_Define.h">
@@ -873,6 +879,21 @@
       <Filter>01. Utility\95. Fade</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\BoneReadbackProfiler.h" />
+    <ClInclude Include="..\Public\IKComponent.h">
+      <Filter>01. Utility\04. Component\IK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\IKSolver.h">
+      <Filter>01. Utility\04. Component\IK\Solver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\IKSovler_TwoBone.h">
+      <Filter>01. Utility\04. Component\IK\Solver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\IKSovler_CCD.h">
+      <Filter>01. Utility\04. Component\IK\Solver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\IKSovler_Fabrik.h">
+      <Filter>01. Utility\04. Component\IK\Solver</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Public\Tracy\TracyClient.cpp" />
@@ -1304,6 +1325,21 @@
       <Filter>01. Utility\95. Fade</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\BoneReadbackProfiler.cpp" />
+    <ClCompile Include="..\Private\IKComponent.cpp">
+      <Filter>01. Utility\04. Component\IK</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\IKSolver.cpp">
+      <Filter>01. Utility\04. Component\IK\Solver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\IKSovler_TwoBone.cpp">
+      <Filter>01. Utility\04. Component\IK\Solver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\IKSovler_CCD.cpp">
+      <Filter>01. Utility\04. Component\IK\Solver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\IKSovler_Fabrik.cpp">
+      <Filter>01. Utility\04. Component\IK\Solver</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Bin\ShaderFiles\Engine_Shader_Defines.hlsli">
@@ -1327,6 +1363,7 @@
     <None Include="..\Bin\ShaderFiles\Engine_Shader_Light.hlsli">
       <Filter>97. ShaderFiles</Filter>
     </None>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Bin\ShaderFiles\Engine_Shader_Cell.hlsl">
