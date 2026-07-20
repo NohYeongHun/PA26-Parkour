@@ -27,6 +27,8 @@
     <ClCompile Include="..\Private\TraceurAirJump.cpp" />
     <ClCompile Include="..\Private\TraceurClimbEnter.cpp" />
     <ClCompile Include="..\Private\TraceurClimbExit.cpp" />
+    <ClCompile Include="..\Private\TraceurClimbHang.cpp" />
+    <ClCompile Include="..\Private\TraceurClimbHop.cpp" />
     <ClCompile Include="..\Private\TraceurClimbMantle.cpp" />
     <ClCompile Include="..\Private\TraceurClimbMove.cpp" />
     <ClCompile Include="..\Private\TraceurClimbRun.cpp" />
@@ -37,6 +39,8 @@
     <ClCompile Include="..\Private\TraceurState.cpp" />
     <ClCompile Include="..\Private\TraceurStateNames.cpp" />
     <ClCompile Include="..\Private\TransitionTable.cpp" />
+    <ClCompile Include="..\Private\ParkourTuningTable.cpp" />
+    <ClCompile Include="..\Private\ParkourDeciderComponent.cpp" />
     <ClCompile Include="..\Private\GameSystem.cpp" />
     <ClCompile Include="..\Private\Level_Loading.cpp" />
     <ClCompile Include="..\Private\Level_Test.cpp" />
@@ -55,6 +59,10 @@
     <ClCompile Include="..\Private\Traceur.cpp" />
     <ClCompile Include="..\Private\EnvironmentQueryComponent.cpp" />
     <ClCompile Include="..\Private\MotionWarpingComponent.cpp" />
+    <ClCompile Include="..\Private\StateBlackboard.cpp" />
+    <ClCompile Include="..\Private\TagRegistry.cpp" />
+    <ClCompile Include="..\Private\TransitionEvaluator.cpp" />
+    <ClCompile Include="..\Private\ClimbEvaluator.cpp" />
     <ClCompile Include="..\Private\TraceurFactory.cpp" />
     <ClCompile Include="..\Private\Trigger_Box.cpp" />
     <ClCompile Include="Client.cpp" />
@@ -73,6 +81,8 @@
     <ClInclude Include="..\Public\TraceurAirJump.h" />
     <ClInclude Include="..\Public\TraceurClimbEnter.h" />
     <ClInclude Include="..\Public\TraceurClimbExit.h" />
+    <ClInclude Include="..\Public\TraceurClimbHang.h" />
+    <ClInclude Include="..\Public\TraceurClimbHop.h" />
     <ClInclude Include="..\Public\TraceurClimbMantle.h" />
     <ClInclude Include="..\Public\TraceurClimbMove.h" />
     <ClInclude Include="..\Public\TraceurClimbRun.h" />
@@ -83,6 +93,8 @@
     <ClInclude Include="..\Public\TraceurState.h" />
     <ClInclude Include="..\Public\TraceurStateNames.h" />
     <ClInclude Include="..\Public\TransitionTable.h" />
+    <ClInclude Include="..\Public\ParkourTuningTable.h" />
+    <ClInclude Include="..\Public\ParkourDeciderComponent.h" />
     <ClInclude Include="..\Public\Client_CharacterEnum.h" />
     <ClInclude Include="..\Public\Client_Define.h" />
     <ClInclude Include="..\Public\Client_Enum.h" />
@@ -107,6 +119,11 @@
     <ClInclude Include="..\Public\Traceur.h" />
     <ClInclude Include="..\Public\EnvironmentQueryComponent.h" />
     <ClInclude Include="..\Public\MotionWarpingComponent.h" />
+    <ClInclude Include="..\Public\StateBlackboard.h" />
+    <ClInclude Include="..\Public\TagRegistry.h" />
+    <ClInclude Include="..\Public\TransitionEvaluator.h" />
+    <ClInclude Include="..\Public\ClimbEvaluator.h" />
+    <ClInclude Include="..\Public\ParkourMath.h" />
     <ClInclude Include="..\Public\TraceurFactory.h" />
     <ClInclude Include="..\Public\TraceurState_Enum.h" />
     <ClInclude Include="..\Public\Trigger_Box.h" />
@@ -354,7 +371,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRACY_ENABLE;TRACY_IMPORTS;TRACY_ON_DEMAND;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>ClientPch.h</PrecompiledHeaderFile>

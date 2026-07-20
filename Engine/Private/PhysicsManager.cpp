@@ -6,6 +6,7 @@
 
 #include "Rigidbody.h"
 #include "Jolt/Physics/Collision/CollisionCollectorImpl.h"
+#include "Jolt/Physics/Collision/Shape/SphereShape.h"
 #include "GameInstance.h"
 
 CPhysicsManager::CPhysicsManager(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
@@ -376,6 +377,24 @@ _bool CPhysicsManager::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat,
 	OutHit.isHit = isHit;
 
 	return isHit;
+}
+
+_bool CPhysicsManager::Sphere_Cast(const _fvector& vPos, const _fvector& vDir, const _float fDistance, const _float fRadius, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit)
+{
+	RefConst<Shape> pSphere = new SphereShape(fRadius);
+	return Shape_Cast(pSphere, XMQuaternionIdentity(), vPos, vDir, fDistance, iTargetObjectLayer, OutHit);
+}
+
+_bool CPhysicsManager::Get_Body_AABB(const BodyID& ID, _float3& vOutMin, _float3& vOutMax)
+{
+	BodyLockRead Lock(m_pPhysicsSystem->GetBodyLockInterface(), ID);
+	if (!Lock.Succeeded())
+		return false;
+
+	const AABox Bounds = Lock.GetBody().GetWorldSpaceBounds();
+	vOutMin = _float3(Bounds.mMin.GetX(), Bounds.mMin.GetY(), Bounds.mMin.GetZ());
+	vOutMax = _float3(Bounds.mMax.GetX(), Bounds.mMax.GetY(), Bounds.mMax.GetZ());
+	return true;
 }
 
 // 현재 시점을 정확하게 구할려면

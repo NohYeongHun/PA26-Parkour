@@ -1,6 +1,7 @@
 ﻿#include "EnginePch.h"
 #include "AnimMachine.h"
 #include "Model.h"
+#include "Animator.h"
 #include "AnimState.h"
 #include "AnimTransition.h"
 #include "AnimStateFactory.h"
@@ -128,9 +129,12 @@ void CAnimMachine::Update(CModel* pModelCom, CTransform* pTransform, _uint* pSta
 		m_AnimStates[m_strCurrentAnimTag]->Update(this, pModelCom, pState, &m_strCurrentAnimTag, m_fCurrentTrackPositon);
 	}
 
-	// 2. 애니메이션 재생
-	isAnimFinished = pModelCom->Play_Animation_CPU(m_strCurrentAnimTag, fTimeDelata, &m_fCurrentTrackPositon, false, m_isRootMotion, m_isRootMotionRotate, m_isRootMotionTranslate, m_fRootMotionRate);
-	pModelCom->Sync_RootNode(pTransform, fTimeDelata);
+	// 2. 애니메이션 재생 (CAnimator lazy-bound to the passed model)
+	if (nullptr == m_pAnimator)
+		m_pAnimator = CAnimator::Create(pModelCom);
+
+	isAnimFinished = m_pAnimator->Play_Animation_CPU(m_strCurrentAnimTag, fTimeDelata, &m_fCurrentTrackPositon, false, m_isRootMotion, m_isRootMotionRotate, m_isRootMotionTranslate, m_fRootMotionRate);
+	m_pAnimator->Sync_RootNode(pTransform, fTimeDelata);
 
 	// 모델 클래스가 애니메이션 한 트랙이 끝까지 재생되었을 때 true 반환, 이후 모델 내에서 트랙 위치 초기화
 
@@ -170,13 +174,11 @@ void CAnimMachine::Update(CModel* pModelCom, CComputeShader* pComputeShaderCom, 
 	rootMotionDesc.isRotate = m_isRootMotionRotate;
 	rootMotionDesc.isTranslate = m_isRootMotionTranslate;
 
-	isAnimFinished = pModelCom->Play_NonRibAnimation_GPU(pComputeShaderCom, playDesc, rootMotionDesc, fTimeDelta);
-	/*isAnimFinished = pModelCom->Play_Animation_GPU(pComputeShaderCom, m_strCurrentAnimTag, fTimeDelata, 
-		&m_fCurrentTrackPositon, m_isRootMotion, m_isRootMotionRotate, m_isRootMotionTranslate, m_fRootMotionRate);*/
-	//isAnimFinished = pModelCom->Play_Animation_CPU(m_strCurrentAnimTag, fTimeDelata, 
-	//	&m_fCurrentTrackPositon, false, m_isRootMotion, m_fRootMotionRate);
-	
-	pModelCom->Sync_RootNode(pTransform, fTimeDelta);
+	if (nullptr == m_pAnimator)
+		m_pAnimator = CAnimator::Create(pModelCom);
+
+	isAnimFinished = m_pAnimator->Play_NonRibAnimation_GPU(pComputeShaderCom, playDesc, rootMotionDesc, fTimeDelta);
+	m_pAnimator->Sync_RootNode(pTransform, fTimeDelta);
 
 	m_AnimStates[m_strCurrentAnimTag]->Feedback(isAnimFinished, pState, this, pModelCom);
 	if (m_isLoop)
@@ -214,9 +216,12 @@ void CAnimMachine::Update(CModel* pModelCom, CComputeShader* pComputeShaderCom, 
 	rootMotionDesc.isRotate = m_isRootMotionRotate;
 	rootMotionDesc.isTranslate = m_isRootMotionTranslate;
 
-	isAnimFinished = pModelCom->Play_Animation_GPU(pComputeShaderCom, pFacialShaderCom, playDesc, rootMotionDesc, fTimeDelta);
+	if (nullptr == m_pAnimator)
+		m_pAnimator = CAnimator::Create(pModelCom);
 
-	pModelCom->Sync_RootNode(pTransform, fTimeDelta);
+	isAnimFinished = m_pAnimator->Play_Animation_GPU(pComputeShaderCom, pFacialShaderCom, playDesc, rootMotionDesc, fTimeDelta);
+
+	m_pAnimator->Sync_RootNode(pTransform, fTimeDelta);
 
 	m_AnimStates[m_strCurrentAnimTag]->Feedback(isAnimFinished, pState, this, pModelCom);
 	if (m_isLoop)
@@ -352,6 +357,8 @@ void CAnimMachine::Free()
 		Safe_Release(AnyTransit);
 
 	m_AnimStates.clear();
+
+	Safe_Release(m_pAnimator);
 }
 
 #ifdef _DEBUG

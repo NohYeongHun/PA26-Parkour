@@ -35,6 +35,11 @@ public:
 	void Reload_TransitionTable();
 #pragma endregion
 
+#pragma region PARKOUR_TUNING
+	class CParkourTuningTable* Get_ParkourTuning() const { return m_pParkourTuning; }
+	void Reload_ParkourTuning();
+#pragma endregion
+
 #pragma region SONORO_MANAGER
 
 #pragma endregion
@@ -50,6 +55,7 @@ private:
 	class CParser* m_pParser = { nullptr };
 	class CMouseController* m_pMouseController = { nullptr };
 	class CTransitionTable* m_pTransitionTable = { nullptr };
+	class CParkourTuningTable* m_pParkourTuning = { nullptr };
 	unordered_map<_uint, vector<TriggerCallback>> m_TriggerEvents;
 	Mutex m_Mutex;
 

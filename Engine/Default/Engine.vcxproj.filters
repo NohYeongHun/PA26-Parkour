@@ -710,6 +710,12 @@
     <ClInclude Include="..\Public\State.h">
       <Filter>01. Utility\04. Component\State</Filter>
     </ClInclude>
+    <ClInclude Include="..\Public\AnimationController.h">
+      <Filter>01. Utility\04. Component\State</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\Animator.h">
+      <Filter>01. Utility\04. Component\State</Filter>
+    </ClInclude>
     <ClInclude Include="..\Public\StateMachine.h">
       <Filter>01. Utility\04. Component\State</Filter>
     </ClInclude>
@@ -869,6 +875,7 @@
     <ClInclude Include="..\Public\BoneReadbackProfiler.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Public\Tracy\TracyClient.cpp" />
     <ClCompile Include="..\Private\Animation.cpp">
       <Filter>01. Utility\04. Component\Model\Animation</Filter>
     </ClCompile>
@@ -1132,6 +1139,12 @@
     </ClCompile>
     <ClCompile Include="..\Private\InputController.cpp" />
     <ClCompile Include="..\Private\State.cpp">
+      <Filter>01. Utility\04. Component\State</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\AnimationController.cpp">
+      <Filter>01. Utility\04. Component\State</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\Animator.cpp">
       <Filter>01. Utility\04. Component\State</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\StateMachine.cpp">

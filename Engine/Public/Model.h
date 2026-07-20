@@ -61,6 +61,8 @@ typedef struct tagMotionWarpState
 
 class ENGINE_DLL CModel final : public CComponent
 {
+	friend class CAnimator;
+
 public:
 	enum BUFFER
 	{
@@ -99,17 +101,10 @@ private:
 	virtual ~CModel() = default;
 
 public:
-	const _bool	Is_MotionWarping() { return m_WarpState.isActive; }
-
-	const ROOT_MOTION_DELTA&			Get_RootMotionDelta();
-	void Begin_MotionWarp(const _float3& vTargetPos, const _float4* pTargetRot,
-	                      _float fWindowEndTrackPos, _bool bTrans, _bool bRot, _bool isGravity = false);
-	void End_MotionWarp();
 	_uint								Get_NumBones(_uint iMeshIndex);
 	void								Copy_BoneMatrices(_float4x4* pOutMatrices, _uint iMeshIndex);
 	const vector<class CBone*>			Get_Bones() { return m_Bones; }
 	_uint								Get_NumMesh() { return m_iNumMeshes; }
-	void								Sync_RootNode(class CTransform* pOwnerTransform, _float fTimeDelta);
 	const _float4x4* Get_BoneMatrixPtr(const _char* pBoneName);
 	const vector<_uint>& Get_Indices(_uint iIndex);
 	const vector<_float3>& Get_VerticesPos(_uint iIndex);
@@ -123,14 +118,14 @@ public:
 	// 루트모션 궤적을 초 단위로 샘플링해 애니 시작 기준 누적 위치·회전을 반환 (원본 전체 경로, 끝점 포함).
 	vector<TrajectorySample> Get_RootMotionTrajectory(const _string& strAnimName, _float fTimeStepSec);
 	ROOT_MOTION_DELTA Extract_RootMotion(const _string& strAnimName, _float fStartTrackPos, _float fEndTrackPos);
-	ROOT_MOTION_DELTA Extract_RootMotion(_float fStartTrackPos, _float fEndTrackPos);
 
 	_float Get_AnimProgress(const _string& strAnimName);
+	_float Get_Duration(const _string& strAnimName);
 #ifdef _DEBUG
 public:
 	const vector<_string>& Get_AnimationNames() const { return m_AnimationNames; }
 	_float* Get_TrackPositionPtr(const _string& strAnimName);
-	_float								Get_Duration(const _string& strAnimName);
+	
 	
 
 	HRESULT Bind_Bone_to_GUI(_int& iBoneIndex, _fmatrix TransformMatrix);
@@ -173,21 +168,7 @@ public:
 	HRESULT							Bind_MorphedResult(class CShader* pShader, _uint iMeshIndex, const _char* pConstantName); // Mesh의 Morph 연산을 바인딩합니다.
 	HRESULT							Clear_Materials(class CDeferredShader* pShader, const _char* pConstanceName, _uint iMeshIndex, TEXTURETYPE eTextureType, ID3DX11Effect* pEffect);
 
-	_bool	Play_Animation_CPU(const _string& strAnimationName, _float fTimeDelta, _float* pTrackPosition, _bool isBlend = true, _bool isRootMotion = true, _bool IsRootMotionRotate = true, _bool IsRootMotionTranslate = true, _float fRootMotionRate = 0.1f);
-	_bool	Play_Animation_CPU(const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta);
-	_bool	Play_BlendSpace_CPU(const BLENDSPACE_1D_DESC& desc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta);
-	_bool	Play_BlendSpace2D_CPU(const BLENDSPACE_2D_DESC& desc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta);
-
-	// 바로 다음 Play_*_CPU 호출 1회에만 유효한 크로스페이드 시간 강제 (JSON 전환 오버라이드용).
-	// 해당 호출에서 전환이 감지되면 소비되고, 전환이 없으면 폐기된다.
-	void Set_NextBlendOverride(_float fDuration) { m_fBlendOverride = fDuration; }
-	
-	// Compute Shader
-	_bool	Play_Animation_GPU(class CComputeShader* pComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta);
-	_bool	Play_Animation_GPU(class CComputeShader* pComputeShaderCom, class CComputeShader* pMorphComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta);
-	_bool	Play_NonRibAnimation_GPU(class CComputeShader* pComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, _float fTimeDelta);
-	_bool	Play_FlyAnimation_GPU(class CComputeShader* pComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, const GPU_BLEND_INFO& gpuBlendInfo, _float fTimeDelta);
-	_bool	Play_FlyAnimation_GPU(class CComputeShader* pComputeShaderCom, CComputeShader* pMorphComputeShaderCom, const ANIMATION_PLAY_DESC& playDesc, const ROOTMOTION_DESC& rootMotionDesc, const GPU_BLEND_INFO& gpuBlendInfo, _float fTimeDelta);
+	// All playback (CPU + GPU) moved to CAnimator (see Animator.h).
 	void	Clear_Animation(const _string& strAnimationName, _float fTrackPosition = 0.f);
 
 	_uint			 Get_BoneSize() { return  static_cast<_uint>(m_Bones.size()); }
@@ -204,44 +185,14 @@ private:
 
 	_float4x4								m_PreTransformMatrix = {};
 
-	_float4									m_vPreRootRotation = {};
-	_float4									m_vPreRootPosition = {};
-	_matrix									m_RootMatrix = {};
 	_uint									m_iRootBoneIndex = {};
 	vector<class CBone*>					m_Bones;
 
 	_uint									m_iNumAnimations = {};
-	
+
 
 	map<_string, class CAnimation*>			m_Animations;
 	map<_string, _uint>						m_AnimationNameToIndex; // Compute Shader
-
-
-	ROOT_MOTION_DELTA m_RootMotionDelta;
-	ROOT_MOTION_DELTA m_SectionRootMotionDelta;
-
-	MOTION_WARP_STATE m_WarpState{};
-	_float m_fCurRootMotionRate = 1.f; // Compute_RootAnimation이 매 프레임 갱신 — 워프 배율 계산에서 Extract_RootMotion(원본)과 m_RootMatrix(rate 적용)의 단위를 맞추는 용도
-
-	_bool									m_isChangeAnimation = { false };
-
-private:
-	// 현재 재생물 식별 — 매 프레임 각 Play_*_CPU가 갱신 (전환 감지·소스 승격 재료)
-	ETransitionSourceType     m_eCurPlayType = ETransitionSourceType::NONE;
-	_string                   m_strCurPlayKey;        // CLIP: 애님 이름 / BS: 첫 샘플 이름
-	_float                    m_fCurPlayTrackPos = 0.f;
-	_float                    m_fCurPlaySpeed = 1.f;
-	_float                    m_fCurBlendOut = 0.2f;
-	const BLENDSPACE_1D_DESC* m_pCurBS1 = nullptr;    // 상태 소유 desc (주소 안정적) — 승격 시 값 복사
-	const BLENDSPACE_2D_DESC* m_pCurBS2 = nullptr;
-
-	TRANSITION_SOURCE         m_TransitionSource;
-	_float                    m_fBlendOverride = -1.f; // < 0 = 오버라이드 없음
-
-	_string                   m_strPreAnimation;       // 레거시 경로 전용
-
-	// BlendSpace
-	_float                    m_fBlendSpacePhase = 0.f;
 
 private:
 	_float								m_fPreScale = {}; // RootMotionRate에 곱해줄 값.
@@ -279,12 +230,6 @@ private:
 
 #pragma region Compute Shader
 private:
-	void FetchLocalMatrices_FromCompute(class CComputeShader* pComputeShaderCom, _float fTrackPosition, const _string& strAnimationName);
-	void FetchLocalMatrices_FromComputeFly(class CComputeShader* pComputeShaderCom, _float fTrackPosition, const _string& strAnimationName, const GPU_BLEND_INFO& gpuBlendInfo);
-	void FetchLocalMatrices_FromComputeNonRib(class CComputeShader* pComputeShaderCom, _float fTrackPosition, const _string& strAnimationName);
-
-
-private:
 	vector<ID3D11Buffer*> m_Buffers = {};
 	vector<ID3D11ShaderResourceView*> m_SRVs = {};
 	vector<ID3D11UnorderedAccessView*> m_UAVs = {};
@@ -296,28 +241,6 @@ private:
 
 private:
 	CAnimation*						Get_AnimationOrNull(const string& name);
-	void							Compute_RootAnimation(_float fRootMotionRate, _bool IsRootMotionRotation = true, _bool IsRootMotionTranslate = true, _bool IsRootMotionEnable = true);
-	void							HandleAnimationChange(const _string& strAnimationName);
-	void							Update_MorphAnimation(CAnimation* pAnimation, CComputeShader* pMorphComputeShaderCom, _float fTimeDelta, _bool isFacial);
-	_bool							Update_TrackPosition(CAnimation* pAnimation, _float* pTrackPosition,  _float fTimeDelta);
-
-	_matrix Compute_MotionWarpMatrix(CTransform* pOwnerTransform, _float fTimeDelta);
-	// 현재 본 로컬 포즈를 스냅샷해 전환 소스를 FROZEN으로 전환
-	void   Freeze_TransitionSource();
-	// 전환 감지 + 직전 재생물의 소스 승격. 모든 Play_*_CPU 진입부에서 호출.
-	void   Handle_PlaybackChange(ETransitionSourceType eNewType, const _string& strNewKey, _float fNewBlendIn);
-	// 소스 포즈를 본에 기록(가중치 1)하고 진행. 반환: 들어오는 쪽 가중치 w (1.f = 크로스페이드 없음/종료)
-	_float Update_TransitionSource(_float fTimeDelta);
-	// 블렌드스페이스 포즈를 fLayerWeight로 본에 합성 (1.f = 덮어쓰기). fPhase는 참조로 진행.
-	void   Layer_BlendSpace1D(const BLENDSPACE_1D_DESC& desc, _float fParam, _float& fPhase, _float fLayerWeight, _float fTimeDelta);
-	void   Layer_BlendSpace2D(const BLENDSPACE_2D_DESC& desc, _float fParamX, _float fParamY, _float& fPhase, _float fLayerWeight, _float fTimeDelta);
-
-	void							Update_NonRibAnimConstantBuffer(const _string& strAnimationName, _float fTrackPosition);
-	void 							Update_AnimConstantBuffer(const _string& strAnimationName, _float fTrackPosition);
-	void 							Update_FlyAnimConstantBuffer(const GPU_BLEND_INFO& gpuBlendInfo, const _string& strAnimationName, _float fTrackPosition);
-	void							Bind_AnimationResource(CComputeShader* pComputeShaderCom);
-	void							Bind_FlyAnimationResource(CComputeShader* pComputeShaderCom);
-	void							Readback_BoneMatrices();
 	_uint							GetSafeIndex(const _string& strAnimName);
 
 private:

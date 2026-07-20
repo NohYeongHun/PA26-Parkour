@@ -118,19 +118,19 @@ _bool CTraceurGroundVault::Ready_Enter()
 void CTraceurGroundVault::Build_Curve()
 {
 	const OBSTACLE_GEOMETRY& Geo = m_EnvQueryResult.Geometry;
-	if (!Geo.isTopReachable)
+	if (!Geo.Top.isReachable)
 		return;
 
 	_float fColliderRadius = m_pColliderCom->Get_Radius();
-	_float fObstacleHeight = Geo.fObstacleHeight;
-	_float fHorizonDistance = Geo.fFrontDistance;
+	_float fObstacleHeight = Geo.Top.fHeight;
+	_float fHorizonDistance = Geo.Front.fDistance;
 	_vector vFace = XMVector3Normalize(XMLoadFloat3(&Geo.vTraversalDir)); // 장애물 방향.
 	_vector vP0 = m_pTransformCom->Get_State(Engine::STATE::POSITION);
 
 	// P0이 너무 가깝다면? => Radius 길이 + 보정치 보다 길이가 짧다면? 
-	if (Geo.fFrontDistance <= (fColliderRadius + FHORIZON_MARGIN))
+	if (Geo.Front.fDistance <= (fColliderRadius + FHORIZON_MARGIN))
 	{
-		_float fOffset = fColliderRadius + FHORIZON_MARGIN - Geo.fFrontDistance;
+		_float fOffset = fColliderRadius + FHORIZON_MARGIN - Geo.Front.fDistance;
 		vP0 -= vFace * fOffset; // 장애물 반대방향 이동.
 		fHorizonDistance = fColliderRadius + FHORIZON_MARGIN;
 

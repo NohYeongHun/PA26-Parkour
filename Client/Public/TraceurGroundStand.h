@@ -17,9 +17,6 @@ public:
 private:
 	void Update_Animations(_float fTimeDelta) override;
 
-private:
-	virtual void SetUp_Animations() override;
-
 public:
 	static CTraceurGroundStand* Create(class CTraceur* pOwner);
 	virtual void Free() override;

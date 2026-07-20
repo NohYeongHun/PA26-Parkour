@@ -1,6 +1,7 @@
 ﻿#include "EditorPch.h"
 #include "AnimationActor.h"
 #include "Model.h"
+#include "Animator.h"
 
 #include "SpringCamera_Edit.h"
 #include "EditorPropWeapon.h"
@@ -92,7 +93,10 @@ HRESULT CAnimationActor::Initialize_Clone(void* pArg)
 	rootMotionDesc.isRotate = true;
 	rootMotionDesc.isTranslate = true;
 
-    m_pModelCom->Play_Animation_GPU(m_pComputeShaderCom, playDesc, rootMotionDesc, m_fTimeDelta);
+    if (nullptr == m_pAnimator)
+        m_pAnimator = CAnimator::Create(m_pModelCom);
+
+    m_pAnimator->Play_Animation_GPU(m_pComputeShaderCom, playDesc, rootMotionDesc, m_fTimeDelta);
 
 #ifdef _DEBUG
 	XMStoreFloat4x4(&m_StartMatrix, m_pTransformCom->Get_WorldMatrix());
@@ -162,8 +166,10 @@ void CAnimationActor::Update(_float fTimeDelta)
 		{
 			playDesc.isFacial = true;
 
-			
-			IsAnimationEnd = m_pModelCom->Play_Animation_GPU(m_pComputeShaderCom, m_pMorphComputeShaderCom, playDesc, rootMotionDesc, fTimeDelta);
+			if (nullptr == m_pAnimator)
+				m_pAnimator = CAnimator::Create(m_pModelCom);
+
+			IsAnimationEnd = m_pAnimator->Play_Animation_GPU(m_pComputeShaderCom, m_pMorphComputeShaderCom, playDesc, rootMotionDesc, fTimeDelta);
 		}
 		else
 		{
@@ -177,11 +183,13 @@ void CAnimationActor::Update(_float fTimeDelta)
 				IsAnimationEnd = m_pModelCom->Play_Animation_CPU(m_strCurrentAnimation, fTimeDelta * m_fAnimationSpeed, &m_fTrackPosition, false, true, false, true, 1.f);
 			}*/
 			
-			//IsAnimationEnd = m_pModelCom->Play_Animation_CPU(m_strCurrentAnimation, fTimeDelta * m_fAnimationSpeed, &m_fTrackPosition, false, true, false, true, 1.f);
-			IsAnimationEnd = m_pModelCom->Play_Animation_CPU(playDesc, rootMotionDesc, fTimeDelta);
+			if (nullptr == m_pAnimator)
+				m_pAnimator = CAnimator::Create(m_pModelCom);
+
+			IsAnimationEnd = m_pAnimator->Play_Animation_CPU(playDesc, rootMotionDesc, fTimeDelta);
 		}
 
-        m_pModelCom->Sync_RootNode(m_pTransformCom, fTimeDelta);
+		m_pAnimator->Sync_RootNode(m_pTransformCom, fTimeDelta);
     }
 
 #ifdef _DEBUG
@@ -372,7 +380,10 @@ void CAnimationActor::Set_TrackPosition(_float fTrackPosition)
 
         // 4. fTimeDelta = 0.f로 GPU 업데이트를 1회 실행합니다.
         //    (기존 주석 코드를 GPU 버전으로 변경)
-		m_pModelCom->Play_Animation_CPU(playDesc, rootMotionDesc, m_fTimeDelta);
+		if (nullptr == m_pAnimator)
+			m_pAnimator = CAnimator::Create(m_pModelCom);
+
+		m_pAnimator->Play_Animation_CPU(playDesc, rootMotionDesc, m_fTimeDelta);
         /*m_pModelCom->Play_Animation_GPU(m_pComputeShaderCom,
 			playDesc, rootMotionDesc, 0.f);*/
 
@@ -866,6 +877,7 @@ CAnimationActor* CAnimationActor::Create(ID3D11Device* pDevice, ID3D11DeviceCont
 void CAnimationActor::Free()
 {
     CContainerObject::Free();
+    Safe_Release(m_pAnimator);
     Safe_Release(m_pModelCom);
     Safe_Release(m_pShaderCom);
     Safe_Release(m_pComputeShaderCom);

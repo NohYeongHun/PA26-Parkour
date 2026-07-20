@@ -3,6 +3,7 @@
 #include "Parser.h"
 #include "MouseController.h"
 #include "TransitionTable.h"
+#include "ParkourTuningTable.h"
 
 
 
@@ -22,6 +23,9 @@ void CGameSystem::Ready_GameSystem(ID3D11Device* pDevice, ID3D11DeviceContext* p
 
 	m_pTransitionTable = CTransitionTable::Create("../../Client/Bin/Data/TraceurTransitions.json");
 	ASSERT_CRASH(m_pTransitionTable);
+
+	m_pParkourTuning = CParkourTuningTable::Create("../../Client/Bin/Data/ParkourTuning.json");
+	ASSERT_CRASH(m_pParkourTuning);
 }
 
 void CGameSystem::Update(_float fTimeDelta)
@@ -62,6 +66,12 @@ void CGameSystem::Reload_TransitionTable()
 		m_pTransitionTable->Reload();
 }
 
+void CGameSystem::Reload_ParkourTuning()
+{
+	if (m_pParkourTuning)
+		m_pParkourTuning->Reload();
+}
+
 #pragma region SONORO_MANAGER
 
 #pragma endregion
@@ -79,6 +89,7 @@ void CGameSystem::Release_System()
 	Safe_Release(m_pParser);
 	Safe_Release(m_pMouseController);
 	Safe_Release(m_pTransitionTable);
+	Safe_Release(m_pParkourTuning);
 	Release();
 }
 

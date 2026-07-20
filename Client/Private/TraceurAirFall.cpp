@@ -10,11 +10,6 @@ HRESULT CTraceurAirFall::Initialize(CTraceur* pOwner)
 	if (FAILED(__super::Initialize(pOwner)))
 		return E_FAIL;
 
-	Register_Flag("Land");
-
-	SetUp_Animations();
-	m_iCurrentAnimIdx = ENUM_CLASS(ETraceurAirFall::FallingIdle);
-
 	return S_OK;
 }
 
@@ -41,26 +36,6 @@ void CTraceurAirFall::Update_Animations(_float fTimeDelta)
 	m_pMoveCom->Move(vWorldDir, fTimeDelta, 0.2f);
 	//_vector vDown = XMVectorSet(0.f, -1.f, 0.f, 0.f);
 	//m_pTransformCom->Go_Dir(vDown, fTimeDelta * 0.2f);
-}
-
-void CTraceurAirFall::Check_State()
-{
-	_float3 vGroundN{};
-	_bool isSupported = m_pColliderCom->IsLand(&vGroundN);
-	_bool isLand = isSupported && vGroundN.y >= cosf(XMConvertToRadians(50.f));
-	Set_Flag("Land", isLand);
-}
-
-void CTraceurAirFall::SetUp_Animations()
-{
-	CState::Add_Animations(ENUM_CLASS(ETraceurAirFall::FallingIdle),
-		{ &m_fTrackPosition, "FallingIdle", 1.f, 0.05f, 0.2f, 0.f, false }, { 1.f, true, true, true });
-
-	CState::Add_Animations(ENUM_CLASS(ETraceurAirFall::FallALoop),
-		{ &m_fTrackPosition, "FallALoop", 1.f, 0.1f, 0.2f, 0.f, false }, { 1.f, true, true, true });
-
-	CState::Add_Animations(ENUM_CLASS(ETraceurAirFall::JumpFromWall),
-		{ &m_fTrackPosition, "JumpFromWall", 1.f, 0.05f, 0.2f, 0.f, false }, { 1.f, true, true, true });
 }
 
 CTraceurAirFall* CTraceurAirFall::Create(CTraceur* pOwner)

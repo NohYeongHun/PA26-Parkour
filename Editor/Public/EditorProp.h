@@ -53,6 +53,7 @@ protected:
 	class CComputeShader* m_pComputeShaderCom = { nullptr };
 	class CShader* m_pShaderCom = { nullptr };
 	class CModel* m_pModelCom = { nullptr };
+	class CAnimator* m_pAnimator = { nullptr };   // lazy-bound pose evaluator
 	class CRigidbody* m_pRigidbodyCom = { nullptr };
 	class CTransform* m_pParentTransform = { nullptr };
 	WEAPONTYPE m_eWeaponType = { WEAPONTYPE::END };

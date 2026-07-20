@@ -17,12 +17,6 @@ public:
 private:
 	void Update_Animations(_float fTimeDelta) override;
 
-private:
-	void Check_State() override;
-
-private:
-	virtual void SetUp_Animations() override;
-
 public:
 	static CTraceurAirFall* Create(class CTraceur* pOwner);
 	virtual void Free() override;

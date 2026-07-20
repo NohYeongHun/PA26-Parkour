@@ -18,6 +18,8 @@
 #include "TraceurClimbMove.h"
 #include "TraceurClimbExit.h"
 #include "TraceurClimbRun.h"
+#include "TraceurClimbHang.h"
+#include "TraceurClimbHop.h"
 
 // Air State
 #include "TraceurAirFall.h"
@@ -93,6 +95,8 @@ void CTraceurFactory::Register_States(CStateMachine* pStateMachineCom, CTraceur*
 	AddState(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Move),  CTraceurClimbMove::Create(pCharacter));
 	AddState(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Exit),  CTraceurClimbExit::Create(pCharacter));
 	AddState(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Run),   CTraceurClimbRun::Create(pCharacter));
+	AddState(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Hang),  CTraceurClimbHang::Create(pCharacter));
+	AddState(ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Hop),   CTraceurClimbHop::Create(pCharacter));
 
 	AddState(ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Fall), CTraceurAirFall::Create(pCharacter));
 	AddState(ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Jump), CTraceurAirJump::Create(pCharacter));

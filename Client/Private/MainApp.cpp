@@ -8,7 +8,12 @@
 #include "MovementComponent.h"
 #include "MeshAlignComponent.h"
 #include "EnvironmentQueryComponent.h"
+#include "ParkourDeciderComponent.h"
 #include "MotionWarpingComponent.h"
+#include "AnimationController.h"
+#include "StateBlackboard.h"
+#include "TransitionEvaluator.h"
+#include "ClimbEvaluator.h"
 
 #include "Level_Loading.h"
 #include "Level_Test.h"
@@ -241,6 +246,10 @@ void CMainApp::Ready_Prototype_ForStatic()
 		CEnvironmentQueryComponent::Create(m_pDevice, m_pContext))))
 		CRASH("Faild to Add Prototype MovementComponent");
 
+	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_ParkourDecider"),
+		CParkourDeciderComponent::Create(m_pDevice, m_pContext))))
+		CRASH("Failed to Add Prototype ParkourDeciderComponent");
+
 	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_MotionWarp"),
 		CMotionWarpingComponent::Create(m_pDevice, m_pContext))))
 		CRASH("Faild to Add Prototype MotionWarpingComponent");
@@ -248,6 +257,22 @@ void CMainApp::Ready_Prototype_ForStatic()
 	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_StateMachine"),
 		CStateMachine::Create(m_pDevice, m_pContext))))
 		CRASH("Faild to Add Prototype StateMachine");
+
+	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_StateBlackboard"),
+		CStateBlackboard::Create(m_pDevice, m_pContext))))
+		CRASH("Failed to Add Prototype StateBlackboard");
+
+	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_TransitionEvaluator"),
+		CTransitionEvaluator::Create(m_pDevice, m_pContext))))
+		CRASH("Failed to Add Prototype TransitionEvaluator");
+
+	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_ClimbEvaluator"),
+		CClimbEvaluator::Create(m_pDevice, m_pContext))))
+		CRASH("Failed to Add Prototype ClimbEvaluator");
+
+	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_AnimController"),
+		CAnimationController::Create(m_pDevice, m_pContext))))
+		CRASH("Failed to Add Prototype AnimationController");
 #pragma endregion
 
 

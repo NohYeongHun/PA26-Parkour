@@ -5,6 +5,7 @@
 #include "framework.h"
 #include "Client.h"
 #include "MainApp.h"
+#include "Engine_Profile.h"
 
 #define MAX_LOADSTRING 100
 
@@ -102,6 +103,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			pMainApp->Post_Update();
 			pMainApp->Update(pGameInstance->Get_TimeDelta(TEXT("Timer_60")));
 			pMainApp->Render();
+
+			PROFILE_FRAME();
 
 			fTimeAcc = 0.f;
 		}

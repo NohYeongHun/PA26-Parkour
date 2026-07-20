@@ -32,6 +32,8 @@ enum class ETraceurClimbState : _uint
 	Mantle,   // 탈출 상태.
 	Exit,     // 벽에서 이탈
 	Run,      // 수직 월런 — 벽을 달려 올라감
+	Hang,     // 난간 매달림 대기 (BracedHangHopIdle 루프)
+	Hop,      // 난간 간 이동 (BracedHangHop* 4종)
 	ClimbEnd
 };
 #pragma endregion
@@ -123,6 +125,21 @@ enum class ETraceurClimbRun : _uint
 	Move = 0,
 	WallRunUp,
 	RunEnd
+};
+
+enum class ETraceurClimbHang : _uint
+{
+	HopIdle = 0, // BracedHangHopIdle — 매달림 대기 루프 (loop)
+	HangEnd
+};
+
+enum class ETraceurClimbHop : _uint
+{
+	HopLeft = 0, 
+	HopRight,    
+	HopUp,       
+	HopDrop,     
+	HopEnd
 };
 
 #pragma endregion

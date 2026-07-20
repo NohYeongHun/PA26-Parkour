@@ -1,8 +1,9 @@
 ﻿#pragma once
 #include "Component.h"
 
+namespace Engine { class CAnimator; }
+
 NS_BEGIN(Client)
-// 이름↔월드좌표 매핑 + 엔진 워프 위임. EnvQuery 목표점을 상태가 이름표 붙여 등록한다.
 class CMotionWarpingComponent final : public Engine::CComponent
 {
 public:
@@ -27,6 +28,17 @@ public:
 	void On_WarpNotify(const _string& strName, _bool isStart,
 	                   _float fWindowEndTrackPos, _bool bTrans, _bool bRot);
 
+	// 루트모션 워프 직접 시작 — 노티파이 없이 상태 코드가 창 전체를 지정
+	void Begin_RootWarp(const _float3& vTargetPos, const _float4* pTargetRot,
+	                    _float fWindowEndTrackPos, _bool bTrans, _bool bRot);
+	void End_RootWarp();
+
+	void Begin_CurveWarp(_fvector vStart, _fvector vEnd, _float fApexOffsetY,
+	                     _fvector vLookStart, _fvector vLookTarget);
+	void Update_CurveWarp(_float fCurveT);
+	void End_CurveWarp() { m_isCurveWarping = false; }
+	_bool Is_CurveWarping() const { return m_isCurveWarping; }
+
 #ifdef _DEBUG
 	void Update_DebugTrail();
 	void Reset_DebugTrail();
@@ -34,12 +46,18 @@ public:
 
 private:
 	map<_string, WARP_TARGET> m_WarpTargets;
-	class CModel* m_pOwnerModelCom = { nullptr };
+	Engine::CAnimator* m_pAnimator          = { nullptr };
+	class CTransform*  m_pOwnerTransformCom = { nullptr };
+	class CCollider*  m_pOwnerColliderCom  = { nullptr };
+
+	_float3 m_vCurveP0 = {}, m_vCurveP1 = {}, m_vCurveP2 = {};
+	_float3 m_vLookStart = {}, m_vLookTarget = {};
+	_bool   m_isCurveWarping = false;
 
 #ifdef _DEBUG
-	void Draw_DebugTrail();                                  
-	class CTransform* m_pOwnerTransformCom = { nullptr };   
-	vector<_float3>   m_DebugTrail;                        
+	void Draw_DebugTrail();
+	void Draw_DebugCurveWarp();
+	vector<_float3>   m_DebugTrail;
 #endif
 
 public:

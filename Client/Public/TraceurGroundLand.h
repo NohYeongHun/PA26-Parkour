@@ -18,9 +18,6 @@ private:
 	void Update_Animations(_float fTimeDelta) override;
 	virtual void Check_State() override;
 
-private:
-	virtual void SetUp_Animations() override;
-	
 
 public:
 	static CTraceurGroundLand* Create(class CTraceur* pOwner);

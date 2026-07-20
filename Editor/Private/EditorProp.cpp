@@ -1,5 +1,6 @@
 ﻿#include "EditorPch.h"
 #include "EditorProp.h"
+#include "Animator.h"
 
 CEditorProp::CEditorProp(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
     : CPartObject{ pDevice, pContext }
@@ -75,11 +76,12 @@ void CEditorProp::Play_Animation(const _string& strAnimName, _float fTimeDelta, 
 {
     ASSERT_CRASH(m_pModelCom);
 
-    //m_IsAnimationEnd = m_pModelCom->Play_Animation_GPU(
-    //    m_pComputeShaderCom, strAnimName, fTimeDelta, &m_fTrackPosition, IsRootMotion, IsRootMotionRotate, IsRootMotionTranslate, fRootMotionRate);
-    m_IsAnimationEnd = m_pModelCom->Play_Animation_CPU(
+    if (nullptr == m_pAnimator)
+        m_pAnimator = CAnimator::Create(m_pModelCom);
+
+    m_IsAnimationEnd = m_pAnimator->Play_Animation_CPU(
         strAnimName, fTimeDelta, &m_fTrackPosition, false, IsRootMotion, fRootMotionRate);
-    m_pModelCom->Sync_RootNode(m_pTransformCom, fTimeDelta);
+    m_pAnimator->Sync_RootNode(m_pTransformCom, fTimeDelta);
 }
 
 void CEditorProp::Clear_Animation(const _string& strAnimName)
@@ -138,6 +140,7 @@ void CEditorProp::Free()
     CPartObject::Free();
     Safe_Release(m_pShaderCom);
     Safe_Release(m_pComputeShaderCom);
+    Safe_Release(m_pAnimator);
     Safe_Release(m_pModelCom);
     Safe_Release(m_pRigidbodyCom);
     m_pParentTransform = { nullptr };

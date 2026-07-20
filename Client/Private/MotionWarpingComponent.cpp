@@ -1,7 +1,9 @@
 ﻿#include "ClientPch.h"
 #include "MotionWarpingComponent.h"
-#include "Model.h"
+#include "Animator.h"
+#include "AnimationController.h"
 #include "Transform.h"
+#include "Collider.h"
 
 CMotionWarpingComponent::CMotionWarpingComponent(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	: CComponent{ pDevice, pContext }
@@ -27,15 +29,20 @@ HRESULT CMotionWarpingComponent::Initialize_Clone(void* pArg)
 	if (nullptr == m_pOwner)
 		return E_FAIL;
 
-	m_pOwnerModelCom = dynamic_cast<CModel*>(m_pOwner->Get_Component(TEXT("Com_Model")));
-	if (nullptr == m_pOwnerModelCom)
+	CAnimationController* pAnimCtrl = dynamic_cast<CAnimationController*>(m_pOwner->Get_Component(TEXT("Com_AnimController")));
+	if (nullptr == pAnimCtrl)
+		return E_FAIL;
+	m_pAnimator = pAnimCtrl->Get_Animator();
+	if (nullptr == m_pAnimator)
 		return E_FAIL;
 
-#ifdef _DEBUG
 	m_pOwnerTransformCom = dynamic_cast<CTransform*>(m_pOwner->Get_Component(TEXT("Com_Transform")));
 	if (nullptr == m_pOwnerTransformCom)
 		return E_FAIL;
-#endif
+
+	m_pOwnerColliderCom = dynamic_cast<CCollider*>(m_pOwner->Get_Component(TEXT("Com_Collider")));
+	if (nullptr == m_pOwnerColliderCom)
+		return E_FAIL;
 
 	return S_OK;
 }
@@ -66,20 +73,20 @@ void CMotionWarpingComponent::Clear_WarpTargets()
 
 void CMotionWarpingComponent::Abort_Warp()
 {
-	if (m_pOwnerModelCom)
-		m_pOwnerModelCom->End_MotionWarp();
+	if (m_pAnimator)
+		m_pAnimator->End_MotionWarp();
 	Clear_WarpTargets();
 }
 
 void CMotionWarpingComponent::On_WarpNotify(const _string& strName, _bool isStart,
                                             _float fWindowEndTrackPos, _bool bTrans, _bool bRot)
 {
-	if (nullptr == m_pOwnerModelCom)
+	if (nullptr == m_pAnimator)
 		return;
 
 	if (!isStart)
 	{
-		m_pOwnerModelCom->End_MotionWarp();
+		m_pAnimator->End_MotionWarp();
 		return;
 	}
 
@@ -88,20 +95,34 @@ void CMotionWarpingComponent::On_WarpNotify(const _string& strName, _bool isStar
 		return;
 
 	const WARP_TARGET& T = it->second;
-	m_pOwnerModelCom->Begin_MotionWarp(
+	m_pAnimator->Begin_MotionWarp(
 		T.vPosition, T.hasRotation ? &T.qRotation : nullptr,
 		fWindowEndTrackPos, bTrans, bRot);
 
 	
 }
 
+void CMotionWarpingComponent::Begin_RootWarp(const _float3& vTargetPos, const _float4* pTargetRot,
+	_float fWindowEndTrackPos, _bool bTrans, _bool bRot)
+{
+	if (nullptr == m_pAnimator)
+		return;
+	m_pAnimator->Begin_MotionWarp(vTargetPos, pTargetRot, fWindowEndTrackPos, bTrans, bRot);
+}
+
+void CMotionWarpingComponent::End_RootWarp()
+{
+	if (m_pAnimator)
+		m_pAnimator->End_MotionWarp();
+}
+
 #ifdef _DEBUG
 void CMotionWarpingComponent::Update_DebugTrail()
 {
-	if (nullptr == m_pOwnerModelCom || nullptr == m_pOwnerTransformCom)
+	if (nullptr == m_pAnimator || nullptr == m_pOwnerTransformCom)
 		return;
 
-	if (m_pOwnerModelCom->Is_MotionWarping())
+	if (m_pAnimator->Is_MotionWarping())
 	{
 		_float3 vPos{};
 		XMStoreFloat3(&vPos, m_pOwnerTransformCom->Get_State(STATE::POSITION));
@@ -144,6 +165,60 @@ void CMotionWarpingComponent::Reset_DebugTrail()
 }
 #endif
 
+void CMotionWarpingComponent::Begin_CurveWarp(_fvector vStart, _fvector vEnd, _float fApexOffsetY,
+	_fvector vLookStart, _fvector vLookTarget)
+{
+	_vector vP1 = (vStart + vEnd) * 0.5f;
+	vP1 = XMVectorSetY(vP1, XMVectorGetY(vStart) + fApexOffsetY);
+
+	XMStoreFloat3(&m_vCurveP0, vStart);
+	XMStoreFloat3(&m_vCurveP1, vP1);
+	XMStoreFloat3(&m_vCurveP2, vEnd);
+	XMStoreFloat3(&m_vLookStart, vLookStart);
+	XMStoreFloat3(&m_vLookTarget, vLookTarget);
+	m_isCurveWarping = true;
+}
+
+void CMotionWarpingComponent::Update_CurveWarp(_float fCurveT)
+{
+	if (!m_isCurveWarping)
+		return;
+
+	fCurveT = min(fCurveT, 1.f);
+	_float  fSmoothT = fCurveT * fCurveT * (3.0f - 2.0f * fCurveT);
+	_vector vPos = XMVectorSetW(QuadraticCurve(m_vCurveP0, m_vCurveP1, m_vCurveP2, fSmoothT), 1.f);
+	m_pOwnerTransformCom->Set_State(Engine::STATE::POSITION, vPos);
+
+	_vector vLookLerp = XMVectorLerp(
+		XMVector3Normalize(XMLoadFloat3(&m_vLookStart)),
+		XMVector3Normalize(XMLoadFloat3(&m_vLookTarget)), fSmoothT);
+	m_pOwnerTransformCom->LookDir(vLookLerp);
+
+	m_pOwnerColliderCom->Set_Position(vPos);
+
+#ifdef _DEBUG
+	Draw_DebugCurveWarp();
+#endif
+}
+
+#ifdef _DEBUG
+void CMotionWarpingComponent::Draw_DebugCurveWarp()
+{
+	CGameInstance* pGI = CGameInstance::GetInstance();
+	_vector vPrev = QuadraticCurve(m_vCurveP0, m_vCurveP1, m_vCurveP2, 0.f);
+	for (_uint i = 1; i <= 20; ++i)
+	{
+		_vector vCur = QuadraticCurve(m_vCurveP0, m_vCurveP1, m_vCurveP2,
+			static_cast<_float>(i) / 20.f);
+		pGI->Add_DebugLine(vPrev, vCur, JPH::Color(0.f, 255.f, 0.f, 1.f));
+		vPrev = vCur;
+	}
+	pGI->Add_DebugSphere(XMLoadFloat3(&m_vCurveP0), 0.1f, JPH::Color(0.f, 255.f, 255.f, 1.f));
+	pGI->Add_DebugSphere(XMLoadFloat3(&m_vCurveP1), 0.1f, JPH::Color(255.f, 0.f, 255.f, 1.f));
+	pGI->Add_DebugSphere(XMLoadFloat3(&m_vCurveP2), 0.1f, JPH::Color(255.f, 255.f, 255.f, 1.f));
+}
+#endif
+
 CMotionWarpingComponent* CMotionWarpingComponent::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 {
 	CMotionWarpingComponent* pInstance = new CMotionWarpingComponent(pDevice, pContext);
@@ -169,11 +244,10 @@ Engine::CComponent* CMotionWarpingComponent::Clone(void* pArg)
 void CMotionWarpingComponent::Free()
 {
 	__super::Free();
-	m_pOwnerModelCom = nullptr;
+	m_pAnimator = nullptr;
 	m_WarpTargets.clear();
 
 #ifdef _DEBUG
-	m_pOwnerTransformCom = nullptr;
 	m_DebugTrail.clear();
 #endif
 }

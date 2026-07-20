@@ -44,6 +44,7 @@ protected:
 	class CModel* m_pModelCom = { nullptr };
 	class CShader* m_pShaderCom = { nullptr };
 	class CMovementComponent* m_pMoveCom = { nullptr };
+	class CAnimationController* m_pAnimControllerCom = { nullptr };
 
 protected:
 	

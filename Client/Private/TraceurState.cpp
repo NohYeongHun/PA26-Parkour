@@ -1,16 +1,20 @@
 ﻿#include "ClientPch.h"
 #include "TraceurState.h"
+#include "AnimationController.h"
 #include "Traceur.h"
 #include "Model.h"
 #include "Collider.h"
 #include "MovementComponent.h"
 #include "MeshAlignComponent.h"
 #include "EnvironmentQueryComponent.h"
+#include "ParkourDeciderComponent.h"
 #include "MotionWarpingComponent.h"
 #include "TraceurState_Enum.h"
 #include "GameSystem.h"
 #include "TransitionTable.h"
 #include "TraceurStateNames.h"
+#include "StateBlackboard.h"
+#include "ClimbEvaluator.h"
 
 
 HRESULT CTraceurState::Initialize(CTraceur* pOwner)
@@ -47,6 +51,10 @@ HRESULT CTraceurState::Initialize(CTraceur* pOwner)
 	if (nullptr == m_pEnvQueryCom)
 		return E_FAIL;
 
+	m_pDeciderCom = dynamic_cast<CParkourDeciderComponent*>(m_pOwner->Get_Component(TEXT("Com_ParkourDecider")));
+	if (nullptr == m_pDeciderCom)
+		return E_FAIL;
+
 	m_pMotionWarpCom = dynamic_cast<CMotionWarpingComponent*>(m_pOwner->Get_Component(TEXT("Com_MotionWarp")));
 	if (nullptr == m_pMotionWarpCom)
 		return E_FAIL;
@@ -55,12 +63,22 @@ HRESULT CTraceurState::Initialize(CTraceur* pOwner)
 	if (nullptr == m_pMoveCom)
 		return E_FAIL;
 
+	m_pAnimCtrlCom = dynamic_cast<CAnimationController*>(m_pOwner->Get_Component(TEXT("Com_AnimController")));
+	if (nullptr == m_pAnimCtrlCom)
+		return E_FAIL;
+
+	m_pBlackboardCom = dynamic_cast<CStateBlackboard*>(m_pOwner->Get_Component(TEXT("Com_StateBlackboard")));
+	if (nullptr == m_pBlackboardCom)
+		return E_FAIL;
+
+	m_pClimbEvalCom = dynamic_cast<CClimbEvaluator*>(m_pOwner->Get_Component(TEXT("Com_ClimbEvaluator")));
+	if (nullptr == m_pClimbEvalCom)
+		return E_FAIL;
+
 	m_iMoveKey |= static_cast<_uint>(KEYINPUT::W);
 	m_iMoveKey |= static_cast<_uint>(KEYINPUT::A);
 	m_iMoveKey |= static_cast<_uint>(KEYINPUT::S);
 	m_iMoveKey |= static_cast<_uint>(KEYINPUT::D);
-
-	Register_Flag("AnimEnd"); // 내장 플래그 — 매 프레임 m_IsAnimationEnd 반영, 모든 상태 공용
 
 	return S_OK;
 }
@@ -68,14 +86,19 @@ HRESULT CTraceurState::Initialize(CTraceur* pOwner)
 void CTraceurState::OnEnter(void* pArg)
 {
 	CState::OnEnter(pArg);
+
+	_uint iReqAnim = 0;
 	if (pArg)
 	{
 		auto* pDesc = static_cast<STATE_ENTER_DESC*>(pArg);
 		if (pDesc->iAnimIndex != UINT_MAX)
-			m_iCurrentAnimIdx = pDesc->iAnimIndex;
+			iReqAnim = pDesc->iAnimIndex;
 	}
+
+	Request_Anim(iReqAnim);
+
 	Clear_Flags();
-	m_NotifyLatch.clear(); // 상태 재진입 시 탈출 창 등 노티파이 래치 초기화
+	m_pBlackboardCom->Clear_Notifies();
 
 #ifdef _DEBUG
 	// 시작 위치 저장
@@ -89,9 +112,10 @@ void CTraceurState::OnUpdate(_float fTimeDelta)
 #ifdef _DEBUG
 	if (m_pOwner->Show_DebugTrajectory())
 	{
-		const _string& strAnimName = m_Animations[m_iCurrentAnimIdx].AnimPlayDesc.strAnimationName;
-		const ROOTMOTION_DESC& RootMotionDesc = m_Animations[m_iCurrentAnimIdx].RootMotionDesc;
-		m_pModelCom->Debug_RootMotionDraw(strAnimName, XMLoadFloat4x4(&m_StartMatrix), 0.1f, RootMotionDesc);
+		const CState::ANIM_DATA* pData = m_pAnimCtrlCom->Get_CurrentAnimData();
+		if (pData)
+			m_pModelCom->Debug_RootMotionDraw(pData->AnimPlayDesc.strAnimationName,
+				XMLoadFloat4x4(&m_StartMatrix), 0.1f, pData->RootMotionDesc);
 	}
 #endif // _DEBUG
 
@@ -101,14 +125,7 @@ void CTraceurState::OnUpdate(_float fTimeDelta)
 	Update_Animations(fTimeDelta);
 	Late_Anim_Update(fTimeDelta);
 	Check_Physics(fTimeDelta);
-	Set_Flag("AnimEnd", m_IsAnimationEnd);
-
-	for (const auto& Pair : m_NotifyLatch)
-		if (m_FlagSlots.find(Pair.first) != m_FlagSlots.end())
-			Set_Flag(Pair.first, Pair.second);
-
-	Evaluate_Transitions();
-	Clear_Flags();
+	Set_Flag("Anim.End", m_pAnimCtrlCom->IsAnimEnd());
 }
 
 void CTraceurState::OnExit()
@@ -125,165 +142,63 @@ _bool CTraceurState::IsVault() const
 
 _bool CTraceurState::Play_Animation(_float fTimeDelta)
 {
-	const auto& iter = m_Animations.find(m_iCurrentAnimIdx);
-	if (iter == m_Animations.end())
-		return false;
-
-	if (iter->second.eType == EAnimSlotType::BLENDSPACE_1D)
-	{
-		m_pModelCom->Play_BlendSpace_CPU(iter->second.BlendSpaceDesc, iter->second.RootMotionDesc, fTimeDelta);
-		m_IsAnimationEnd = false;
-	}
-	else if (iter->second.eType == EAnimSlotType::BLENDSPACE_2D)
-	{
-		m_pModelCom->Play_BlendSpace2D_CPU(iter->second.BlendSpace2Desc, iter->second.RootMotionDesc, fTimeDelta);
-		m_IsAnimationEnd = false;
-	}
-	else
-	{
-		m_IsAnimationEnd = m_pModelCom->Play_Animation_CPU(iter->second.AnimPlayDesc, iter->second.RootMotionDesc, fTimeDelta);
-	}
-
-	m_pModelCom->Sync_RootNode(m_pTransformCom, fTimeDelta);
-
+	m_pAnimCtrlCom->Tick(fTimeDelta);
 	return true;
 }
 
-void CTraceurState::Register_Flag(const _string& strName)
-{
-	if (m_FlagSlots.find(strName) != m_FlagSlots.end())
-		return;
-	m_FlagSlots.emplace(strName, static_cast<_uint>(m_FlagValues.size()));
-	m_FlagValues.push_back(false);
-}
-
-// 플래그는 Initialize의 Register_Flag로 선언된 것만 사용 가능 (오타 = 즉시 크래시).
-// 데이터(JSON) 쪽 미등록 플래그는 Bind_Rules가 비활성화로 처리하므로 크래시하지 않는다.
 void CTraceurState::Set_Flag(const _string& strName, _bool isOn)
 {
-	const auto it = m_FlagSlots.find(strName);
-	ASSERT_CRASH(it != m_FlagSlots.end());
-	m_FlagValues[it->second] = isOn;
+	m_pBlackboardCom->Set(strName, isOn);
 }
 
 _bool CTraceurState::Get_Flag(const _string& strName) const
 {
-	const auto it = m_FlagSlots.find(strName);
-	ASSERT_CRASH(it != m_FlagSlots.end());
-	return m_FlagValues[it->second];
+	return m_pBlackboardCom->Get(strName);
 }
 
 void CTraceurState::Clear_Flags()
 {
-	fill(m_FlagValues.begin(), m_FlagValues.end(), false);
-}
-
-void CTraceurState::Bind_Rules(const CTransitionTable* pTable)
-{
-	m_BoundRules.clear();
-	m_iBoundVersion = pTable->Get_Version();
-
-	const vector<TRANSITION_RULE_DATA>* pRules = pTable->Get_Rules(m_SelfKey);
-	if (nullptr == pRules)
-		return;
-
-	_string strWarnings;
-
-	for (const TRANSITION_RULE_DATA& Data : *pRules)
-	{
-		BOUND_TRANSITION Bound{};
-		Bound.iAnimGuard    = Data.iAnimGuard;
-		Bound.Next          = Data.Next;
-		Bound.iNextAnim     = Data.iNextAnim;
-		Bound.fBlendOverride = Data.fBlendOverride;
-
-		auto ResolveSlots = [this, &Bound, &strWarnings](const vector<_string>& Names, vector<_uint>& OutSlots)
-		{
-			for (const _string& strName : Names)
-			{
-				const auto it = m_FlagSlots.find(strName);
-				if (it == m_FlagSlots.end())
-				{
-					strWarnings += "등록되지 않은 플래그 \"" + strName + "\" — 해당 규칙 비활성화\n";
-					Bound.isDisabled = true;
-					return;
-				}
-				OutSlots.push_back(it->second);
-			}
-		};
-
-		ResolveSlots(Data.WhenFlags, Bound.WhenSlots);
-		if (!Bound.isDisabled)
-			ResolveSlots(Data.WhenNotFlags, Bound.WhenNotSlots);
-
-		if (!Bound.isDisabled)
-			m_BoundRules.push_back(move(Bound));
-	}
-
-	if (!strWarnings.empty())
-	{
-		const _string strMsg = CTraceurStateNames::To_String(m_SelfKey) + " 상태 규칙 바인딩 경고:\n" + strWarnings;
-		MessageBoxA(nullptr, strMsg.c_str(), "TransitionTable Bind", MB_OK);
-	}
-}
-
-void CTraceurState::Evaluate_Transitions()
-{
-	CTransitionTable* pTable = CGameSystem::GetInstance()->Get_TransitionTable();
-	if (nullptr == pTable)
-		return;
-
-	if (m_iBoundVersion != pTable->Get_Version())
-		Bind_Rules(pTable);
-
-	for (const BOUND_TRANSITION& Rule : m_BoundRules)
-	{
-		if (Rule.isDisabled)
-			continue;
-		if (Rule.iAnimGuard != UINT_MAX && m_iCurrentAnimIdx != Rule.iAnimGuard)
-			continue;
-
-		_bool isMatch = true;
-		for (_uint iSlot : Rule.WhenSlots)
-			if (!m_FlagValues[iSlot]) { isMatch = false; break; }
-		if (isMatch)
-			for (_uint iSlot : Rule.WhenNotSlots)
-				if (m_FlagValues[iSlot]) { isMatch = false; break; }
-		if (!isMatch)
-			continue;
-
-		// JSON 전환별 블렌드 오버라이드: 새 상태의 첫 Play_* 호출에서 CModel이 1회 소비
-		if (Rule.fBlendOverride >= 0.f)
-			m_pModelCom->Set_NextBlendOverride(Rule.fBlendOverride);
-
-		if (Rule.iNextAnim != UINT_MAX)
-		{
-			STATE_ENTER_DESC Desc{ Rule.iNextAnim };
-			m_pStateMachinCom->Change_State(Rule.Next.iCategory, Rule.Next.iSubState, &Desc);
-		}
-		else
-		{
-			m_pStateMachinCom->Change_State(Rule.Next.iCategory, Rule.Next.iSubState);
-		}
-		return;
-	}
+	m_pBlackboardCom->Clear_Bools();
 }
 
 #ifdef _DEBUG
 void CTraceurState::Debug_PrintFlag()
 {
-	for (auto& Pair : m_FlagSlots)
-	{
-		const _string& strFlagName = Pair.first;
-		if (m_FlagValues[Pair.second])
-		{
-			cout << "[ " << strFlagName << " ] Slot On " << endl;
-		}
-	}
+	// Blackboard에서 값을 읽어 출력
+	cout << "[Blackboard Flags]" << endl;
 }
 #endif // _DEBUG
 
+const ENV_PERCEPTION& CTraceurState::Enter_Perception(void* pArg) const
+{
+	auto* pDesc = static_cast<STATE_ENTER_DESC*>(pArg);
+	if (pDesc && pDesc->hasEnvSnapshot)
+		return pDesc->Perception;
+	return m_pEnvQueryCom->Get_Perception();
+}
 
+const PARKOUR_DECISION& CTraceurState::Enter_Decision(void* pArg) const
+{
+	auto* pDesc = static_cast<STATE_ENTER_DESC*>(pArg);
+	if (pDesc && pDesc->hasEnvSnapshot)
+		return pDesc->Decision;
+	return m_pDeciderCom->Get_Decision();
+}
+
+void CTraceurState::Request_Anim(_uint iAnimId)
+{
+	m_pAnimCtrlCom->Request(m_SelfKey, iAnimId);
+}
+
+_uint CTraceurState::Get_CurrentAnim() const
+{
+	return m_pAnimCtrlCom->Get_CurrentAnimId();
+}
+
+_uint CTraceurState::Get_CurrentAnimIndex()
+{
+	return m_pAnimCtrlCom->Get_CurrentAnimId();
+}
 
 void CTraceurState::Free()
 {

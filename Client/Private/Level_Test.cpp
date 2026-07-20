@@ -171,7 +171,7 @@ void CLevel_Test::Ready_Layer_Player()
 	_float3 vScale{}, vRotation{}, vPosition{};
 	vScale = { 1.f, 1.f, 1.f };
 	vRotation = { 0.f, 0.f, 0.f };
-	vPosition = { 3.f, 1.f, 3.f };
+	vPosition = { 2.f, 1.f, 0.f };   // 튜토리얼 코스 시작 (F0 위, +X 전진)
 
 	CCharacter::CHARACTER_DESC Desc{};
 	Desc.eCurLevel = m_eCurLevel;

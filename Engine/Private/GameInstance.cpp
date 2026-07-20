@@ -802,6 +802,16 @@ _bool CGameInstance::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat, c
 	return m_pPhysicsManager->Shape_Cast(pShape, vQuat, vPos, vDir, fDistance, iObjectLayer, OutHit);
 }
 
+_bool CGameInstance::Sphere_Cast(const _fvector& vPos, const _fvector& vDir, _float fDistance, _float fRadius, uint16 iObjectLayer, SHAPE_CAST_HIT& OutHit)
+{
+	return m_pPhysicsManager->Sphere_Cast(vPos, vDir, fDistance, fRadius, iObjectLayer, OutHit);
+}
+
+_bool CGameInstance::Get_Body_AABB(const BodyID& ID, _float3& vOutMin, _float3& vOutMax)
+{
+	return m_pPhysicsManager->Get_Body_AABB(ID, vOutMin, vOutMax);
+}
+
 #ifdef _DEBUG
 void CGameInstance::DrawShape(const Shape* pShape, RMat44 Matrix, Color BodyColor)
 {

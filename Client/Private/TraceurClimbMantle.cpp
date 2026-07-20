@@ -10,9 +10,6 @@ HRESULT CTraceurClimbMantle::Initialize(CTraceur* pOwner)
 	if (FAILED(__super::Initialize(pOwner)))
 		return E_FAIL;
 
-	SetUp_Animations();
-	m_iCurrentAnimIdx = 0;
-
 	return S_OK;
 }
 
@@ -31,10 +28,6 @@ void CTraceurClimbMantle::OnExit()
 void CTraceurClimbMantle::Update_Animations(_float fTimeDelta)
 {
 	CTraceurState::Play_Animation(fTimeDelta);
-}
-
-void CTraceurClimbMantle::SetUp_Animations()
-{
 }
 
 CTraceurClimbMantle* CTraceurClimbMantle::Create(CTraceur* pOwner)

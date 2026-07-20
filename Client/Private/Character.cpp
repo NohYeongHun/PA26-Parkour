@@ -2,6 +2,7 @@
 #include "Character.h"
 #include "MovementComponent.h"
 #include "InputController.h"
+#include "AnimationController.h"
 
 CCharacter::CCharacter(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	: CGameObject(pDevice, pContext)
@@ -27,6 +28,7 @@ HRESULT CCharacter::Initialize_Clone(void* pArg)
 	CHARACTER_DESC* pDesc = static_cast<CHARACTER_DESC*>(pArg);
 	
 	m_eCurLevel = pDesc->eCurLevel;
+	
 
 	if (FAILED(CGameObject::Initialize_Clone(pDesc)))
 		return E_FAIL;
@@ -74,6 +76,12 @@ HRESULT CCharacter::Ready_Components(const CHARACTER_DESC* pDesc)
 
 	if (FAILED(Ready_MovementComponents(pDesc)))
 		return E_FAIL;
+
+	CAnimationController::COMPONENT_DESC AnimCompDesc{};
+	AnimCompDesc.pOwner = this;
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_AnimController"),
+		TEXT("Com_AnimController"), reinterpret_cast<CComponent**>(&m_pAnimControllerCom), &AnimCompDesc)))
+		CRASH("AnimController");
 
 	return S_OK;
 }
