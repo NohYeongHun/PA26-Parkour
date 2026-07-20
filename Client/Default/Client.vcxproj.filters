@@ -91,6 +91,9 @@
     <Filter Include="04. Component\State\Transition">
       <UniqueIdentifier>{832b8e6b-3112-4b84-82bf-d1217841fab8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="04. Component\IK">
+      <UniqueIdentifier>{04f46c70-8317-4454-ac40-b99d89c82803}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">

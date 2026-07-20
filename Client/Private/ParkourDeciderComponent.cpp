@@ -268,9 +268,6 @@ ACTION_VERDICT CParkourDeciderComponent::Judge_Vault(const OBSTACLE_SCAN& Scan, 
 	if (!Geo.Landing.hasSpace) // Landing Space가 없다면?
 		return { false, REJECT_REASON::NO_LANDING };
 
-	if (Geo.Landing.isBlocked) // 착지 지점에 캡슐 공간 없음 (끼임 위험)
-		return { false, REJECT_REASON::LANDING_BLOCKED };
-
 	if (Geo.Landing.isElevated) // 착지면이 다른 장애물 상단
 		return { false, REJECT_REASON::LANDING_ELEVATED };
 
