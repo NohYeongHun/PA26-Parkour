@@ -152,7 +152,6 @@ _bool CTraceurClimbHop::Find_HangTarget(ETraceurClimbHop eDir, HANG_TARGET& Out)
 	m_isDebugProbeHit = false;
 #endif
 
-	// 탐지 셰이프: 플레이어 캡슐 대신 작은 스피어 — 얇은 판 뒤 벽/바닥 오검출 방지 (probe)
 	SHAPE_CAST_HIT Hit{};
 	const _bool isProbeHit = pGI->Sphere_Cast(vStart, vDir, fDist, T.fHopProbeRadius,
 			ENUM_CLASS(COLLISIONLAYER::PARKOUR), Hit);

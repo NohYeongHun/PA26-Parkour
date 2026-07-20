@@ -25,6 +25,7 @@ namespace
 				{ "Sprint", ENUM_CLASS(ETraceurGroundState::Sprint) },
 				{ "Land",   ENUM_CLASS(ETraceurGroundState::Land) },
 				{ "Vault",  ENUM_CLASS(ETraceurGroundState::Vault) },
+				{ "Mantle", ENUM_CLASS(ETraceurGroundState::Mantle) },
 			}},
 			{ ENUM_CLASS(EStateCategory::AIR), {
 				{ "Jump", ENUM_CLASS(ETraceurAirState::Jump) },
@@ -55,7 +56,12 @@ namespace
 			}},
 
 			{ { ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Vault) }, {
-				{ "LowerVault", ENUM_CLASS(ETraceurGroundVault::LowerVault) },
+				{ "LowVault", ENUM_CLASS(ETraceurGroundVault::LowVault) },
+				{ "LowVaultJump", ENUM_CLASS(ETraceurGroundVault::LowVaultJump) },
+			}},
+			{ { ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Mantle) }, {
+				{ "SprintToWallClimb", ENUM_CLASS(ETraceurGroundMantle::SprintToWallClimb) },
+				{ "RunningLowMantle", ENUM_CLASS(ETraceurGroundMantle::RunningLowMantle) },
 			}},
 			{ { ENUM_CLASS(EStateCategory::GROUND), ENUM_CLASS(ETraceurGroundState::Land) }, {
 				{ "Landing",        ENUM_CLASS(ETraceurGroundLand::Landing) },

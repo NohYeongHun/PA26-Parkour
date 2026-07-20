@@ -92,6 +92,7 @@ _bool CEnvironmentQueryComponent::Detect_Obstacle()
 	m_Perception.Scan.isObstacleDetected = isHit;
 	if (isHit && (nullptr != ShapeHit.pDesc))
 	{
+		m_Perception.Scan.HitBodyID = ShapeHit.HitBodyID;
 		m_Perception.Scan.eObjectFlag = static_cast<CALLBACK_CLIENT*>(ShapeHit.pDesc)->eObjectParkourFlag;
 
 #ifdef _DEBUG
@@ -136,6 +137,7 @@ LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray(const _fvector& vStart, cons
 
 LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray_WithMapFallback(const _fvector& vStart, const _fvector& vEnd, RAY_KIND eKind)
 {
+	// Land 구간을 찾으므로, Parkour Layer, Map Layer를 둘다 찾습니다.
 	LINE_TRACE_HIT Hit = Cast_Ray(vStart, vEnd, ENUM_CLASS(m_eTargetLayer), eKind);
 	if (!Hit.isHit)
 		Hit = Cast_Ray(vStart, vEnd, ENUM_CLASS(COLLISIONLAYER::MAP), eKind);
@@ -237,6 +239,15 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 	Measure_Depth(Frame);
 	Measure_StandPos(Frame);
 	Measure_Landing(Frame);
+
+	// Vault 후보(무릎 히트·머리 미스)일 때만 경로·착지 클리어런스 측정 — 프레임당 캡슐 캐스트 최대 2회
+	const _uint iFlag = m_Perception.Scan.iHeightFlag;
+	if ((iFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE)) && !(iFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD))
+	 && m_Perception.Geometry.Top.isReachable && m_Perception.Geometry.hasDepth)
+	{
+		Measure_PathClearance(Frame);
+		Measure_LandingClearance(Frame);
+	}
 }
 
 CEnvironmentQueryComponent::MEASURE_FRAME CEnvironmentQueryComponent::Make_MeasureFrame() const
@@ -339,7 +350,7 @@ void CEnvironmentQueryComponent::Measure_Depth(const MEASURE_FRAME& Frame)
 {
 	OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
 
-	const _float fInset = Frame.fRadius * 0.5f;
+	const _float fInset = Frame.fRadius * 0.5f; // 침투 깊이
 	const _float fSampleStep = Frame.fRadius;
 
 	_float fLastHit   = 0.f;
@@ -434,6 +445,77 @@ void CEnvironmentQueryComponent::Measure_Landing(const MEASURE_FRAME& Frame)
 			break;
 		}
 	}
+}
+
+_bool CEnvironmentQueryComponent::Sweep_BodyCapsule(const _fvector& vCenter, const _fvector& vDir, _float fDist, SHAPE_CAST_HIT& OutHit)
+{
+	// Client는 Jolt 셰이프를 직접 생성할 수 없으므로 엔진이 만든 소유자 바디 캡슐(Get_Shape)을 재사용한다.
+	SHAPE_CAST_HIT HitA{}, HitB{};
+	const _bool isHitA = m_pGameInstance->Shape_Cast(m_pOwnerColliderCom->Get_Shape(), XMQuaternionIdentity(), vCenter, vDir, fDist, ENUM_CLASS(m_eTargetLayer), HitA);
+	const _bool isHitB = m_pGameInstance->Shape_Cast(m_pOwnerColliderCom->Get_Shape(), XMQuaternionIdentity(), vCenter, vDir, fDist, ENUM_CLASS(COLLISIONLAYER::MAP), HitB);
+
+	if (isHitA && isHitB) OutHit = (HitA.fFraction <= HitB.fFraction) ? HitA : HitB;
+	else if (isHitA)      OutHit = HitA;
+	else if (isHitB)      OutHit = HitB;
+	return isHitA || isHitB;
+}
+
+// 통과 경로 검사
+void CEnvironmentQueryComponent::Measure_PathClearance(const MEASURE_FRAME& Frame)
+{
+	OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
+
+	const _float fHalfExtent = Frame.fTotalHeight * 0.5f;
+	const _float fCenterY = Frame.fTopSurfaceY + FCLEAR_EPS + fHalfExtent;
+	const _float fDist    = Geo.Front.fDistance + Geo.fDepth + Frame.fRadius * 2.f; 
+
+	_vector vStart = XMVectorSetY(Frame.vBottom, fCenterY);
+	_vector vStandXZ  = XMVectorSetY(XMLoadFloat3(&Geo.Top.vStandPos), fCenterY);
+	_float  fStandDist = XMVectorGetX(XMVector3Dot(vStandXZ - vStart, Frame.vTraversal));
+
+	SHAPE_CAST_HIT Hit{};
+	const _bool isHit = Sweep_BodyCapsule(vStart, Frame.vTraversal, fDist, Hit);
+
+	// 설 자리 발판 반경
+	const _float fStandGate = fStandDist;
+	Geo.isPathBlocked  = isHit; // Vault 금지 => 캐릭터~착지 통로 어디든 걸림
+	Geo.isStandBlocked = isHit && (Hit.fFraction * fDist <= fStandGate); // Mantle 금지 => 발판 앞에서 걸림
+
+	if (Geo.isPathBlocked || Geo.isStandBlocked)
+		Geo.Landing.isBlocked = true;
+
+#ifdef _DEBUG
+	if (m_pGameInstance->IsParkourDebug())
+	{
+		const JPH::Color Color = Geo.isPathBlocked ? JPH::Color(255.f, 0.f, 0.f, 1.f) : JPH::Color(0.f, 255.f, 0.f, 1.f);
+
+		// 충돌지점
+		m_pGameInstance->Add_DebugSphere(Frame.vBottom, 0.1f, JPH::Color(0.F, 0.F, 255.F, 1.F));
+
+		// 시작 위치?
+		m_pGameInstance->Add_DebugSphere(Frame.vBottom, 0.1f, JPH::Color(0.F, 0.F, 255.F, 1.F));
+		m_pGameInstance->Add_DebugLine(vStart, vStart + Frame.vTraversal * fDist, Color);
+		m_pGameInstance->Add_DebugSphere(XMVectorSetW(XMLoadFloat3(&Geo.Top.vStandPos), 1.f), 0.1f, JPH::Color(0.F, 0.F, 255.F, 1.F));
+		m_pGameInstance->Add_DebugSphere(XMVectorSetW(XMLoadFloat3(&Geo.Landing.vPos), 1.f), 0.2f, JPH::Color(0.F, 0.F, 0.F, 1.F));
+		if (isHit)
+			m_pGameInstance->Add_DebugSphere(XMVectorSetW(XMLoadFloat4(&Hit.vHitPoint), 1.f), 0.1f, JPH::Color(0.F, 0.F, 255.F, 1.F));
+	}
+#endif
+}
+
+void CEnvironmentQueryComponent::Measure_LandingClearance(const MEASURE_FRAME& Frame)
+{
+	OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;
+	if (!Geo.Landing.hasSpace)
+		return; // 착지 지점 자체가 없음(낭떠러지)
+
+	Geo.Landing.isElevated = (Geo.Landing.vPos.y - XMVectorGetY(Frame.vBottom)) > FLANDING_ELEVATED_THRESHOLD;
+
+	const _float fHalfExtent    = Frame.fTotalHeight * 0.5f;
+	const _float fStartBottomY  = Frame.fTopSurfaceY + FCLEAR_EPS;
+	const _float fSweepDist     = fStartBottomY - Geo.Landing.vPos.y;
+	if (fSweepDist <= 0.f)
+		return; // 착지면이 상단면보다 높은 이상 케이스
 }
 
 

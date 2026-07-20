@@ -81,7 +81,7 @@ public:
 	// 스피어 스윕
 	_bool				Sphere_Cast(const _fvector& vPos, const _fvector& vDir, const _float fDistance, const _float fRadius, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit);
 	_bool				Get_Body_AABB(const BodyID& ID, _float3& vOutMin, _float3& vOutMax);
-	
+	RefConst<Shape> Get_SphereShape(_float fRadius);
 	
 
 private:
@@ -122,7 +122,9 @@ private:
 	_bool m_isParkourDebug = { false };
 	_uint m_iHighlightLayer = {};
 	vector<pair<_float3, _float3>>	m_RayPoint;
-	
+
+	unordered_map<_float, RefConst<Shape>> m_SphereShapeCache;
+
 
 	struct BOX_CAST_DEBUG
 	{

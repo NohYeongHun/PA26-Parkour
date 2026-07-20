@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Component.h"
 #include "Client_Struct.h"
 #include "StateMachine.h"
@@ -36,7 +36,8 @@ public:
 private:
 	void Judge(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo);
 	ACTION_VERDICT Judge_Vault(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const;
-	ACTION_VERDICT Judge_Mantle(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const;
+	ACTION_VERDICT Judge_HighMantle(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const;
+	ACTION_VERDICT Judge_LowMantle(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const;
 	ACTION_VERDICT Judge_Climb(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo) const;
 	ACTION_VERDICT Judge_Hang(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo) const;
 	ACTION_VERDICT Judge_WallRun(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const;

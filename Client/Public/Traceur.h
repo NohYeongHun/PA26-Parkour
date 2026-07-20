@@ -99,10 +99,11 @@ private:
 		_uint Move = UINT_MAX, Run = UINT_MAX, Jump = UINT_MAX,
 		      Forward = UINT_MAX, Down = UINT_MAX,
 		      Left = UINT_MAX, Right = UINT_MAX, JumpPress = UINT_MAX;
-		_uint CmdLowVault = UINT_MAX, CmdHighVault = UINT_MAX, CmdMantle = UINT_MAX,
-		      CmdClimb = UINT_MAX, CmdHang = UINT_MAX, CmdWallRun = UINT_MAX;
+		_uint CmdLowVault = UINT_MAX, CmdHighVault = UINT_MAX, CmdHighMantle = UINT_MAX,
+			  CmdLowMantle = UINT_MAX, CmdClimb = UINT_MAX, CmdHang = UINT_MAX,
+			  CmdWallRun = UINT_MAX;
 		_uint EvalFall = UINT_MAX, EvalLand = UINT_MAX, EvalArrive = UINT_MAX,
-		      EvalMantle = UINT_MAX, EvalKneeHit = UINT_MAX;
+		      EvalClimbMantle = UINT_MAX, EvalKneeHit = UINT_MAX;
 	} m_CollectSlots;
 
 private:

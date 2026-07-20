@@ -103,6 +103,7 @@ void CTraceurState::OnEnter(void* pArg)
 #ifdef _DEBUG
 	// 시작 위치 저장
 	XMStoreFloat4x4(&m_StartMatrix, m_pTransformCom->Get_WorldMatrix());
+	m_pMotionWarpCom->Reset_DebugTrail();
 #endif // _DEBUG
 }
 

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Component.h"
 #include "Client_Struct.h"
 
@@ -16,10 +16,13 @@ public:
 	}ENV_QUERY_DESC;
 
 private:
-	// 두께 탐지
 	static constexpr _uint  FDEPTH_SAMPLE_COUNT    = 3;
 	static constexpr _uint  FEDGE_REFINE_ITERATIONS = 4;
 	static constexpr _float FLANDING_MAX_HEIGHT_DIFF = 0.3f;
+
+	static constexpr _float FCLEAR_EPS                  = 0.05f; 
+	static constexpr _float FLANDING_ELEVATED_THRESHOLD = 0.3f;  
+	static constexpr _float FLANDING_BLOCK_EPS          = 0.1f;  
 
 	// 디버그 레이 색 분류
 	enum class RAY_KIND { SCAN, MEASURE, REFINE };
@@ -70,6 +73,11 @@ private:
 	_float Refine_DepthEdge(const MEASURE_FRAME& Frame, _float fLo, _float fHi);
 	void   Measure_StandPos(const MEASURE_FRAME& Frame);
 	void   Measure_Landing(const MEASURE_FRAME& Frame);
+	void   Measure_PathClearance(const MEASURE_FRAME& Frame);
+	void   Measure_LandingClearance(const MEASURE_FRAME& Frame);
+
+	// 소유자 바디 캡슐을 vCenter에서 vDir로 스윕
+	_bool  Sweep_BodyCapsule(const _fvector& vCenter, const _fvector& vDir, _float fDist, SHAPE_CAST_HIT& OutHit);
 
 private:
 	LINE_TRACE_HIT Cast_Ray(const _fvector& vStart, const _fvector& vEnd, _uint iLayer, RAY_KIND eKind);

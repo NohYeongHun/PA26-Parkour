@@ -10,7 +10,14 @@ struct VAULT_TUNING
 	_float fHighVaultHeightRatio = 0.8f;
 };
 
-struct MANTLE_TUNING
+struct HIGH_MANTLE_TUNING
+{
+	_float fMinDepthMult   = 1.0f;
+	_float fMinWidthMult   = 2.0f;
+	_float fMinApproachDot = 0.5f;
+};
+
+struct LOW_MANTLE_TUNING
 {
 	_float fMinDepthMult   = 1.0f;
 	_float fMinWidthMult   = 2.0f;
@@ -57,7 +64,8 @@ struct HANG_TUNING
 struct PARKOUR_TUNING
 {
 	VAULT_TUNING   Vault;
-	MANTLE_TUNING  Mantle;
+	HIGH_MANTLE_TUNING  HIGH_MANTLE;
+	LOW_MANTLE_TUNING   LOW_MANTLE;
 	CLIMB_TUNING   Climb;
 	WALLRUN_TUNING WallRun;
 	HANG_TUNING    Hang;

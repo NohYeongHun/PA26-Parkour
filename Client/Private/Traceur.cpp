@@ -113,16 +113,23 @@ void CTraceur::Update(_float fTimeDelta)
 	// 1. StateMachine => 이동량, 회전량 생성 (State는 플래그를 쓰기만 하고 전환하지 않음)
 	m_pStateMachineCom->Update(fTimeDelta);
 
+	// 2. Transition Rule 체크 => 조건에 맞는다면 상태 전환
 	if (!m_pTransitionEvalCom->Evaluate())
 		m_pStateBlackboardCom->Clear_Bools();
 
+	// 3. 특수한 동작에서 캐릭터의 회전이나 이동값에 대한 행렬을 담당함.
 	m_pMeshAlignCom->Update(fTimeDelta);
 
+	// 4. 물리 업데이트
 	Update_Physics(fTimeDelta);
 
+	// 5. 환경 평가
 	Update_EnvQuery(fTimeDelta);
 
+	// 6. 카메라가 플레이어 Transform을 따라다니게 Update Target을 설정.
 	Sync_Camera(fTimeDelta);
+
+	
 }
 
 void CTraceur::Bind_CollectSlots()
@@ -150,14 +157,15 @@ void CTraceur::Bind_CollectSlots()
 	m_CollectSlots.JumpPress    = Bind("Intent.JumpPress");
 	m_CollectSlots.CmdLowVault  = Bind("Cmd.LowVault");
 	m_CollectSlots.CmdHighVault = Bind("Cmd.HighVault");
-	m_CollectSlots.CmdMantle    = Bind("Cmd.Mantle");
+	m_CollectSlots.CmdHighMantle= Bind("Cmd.HighMantle");
+	m_CollectSlots.CmdLowMantle = Bind("Cmd.LowMantle");
 	m_CollectSlots.CmdClimb     = Bind("Cmd.Climb");
 	m_CollectSlots.CmdHang      = Bind("Cmd.Hang");
 	m_CollectSlots.CmdWallRun   = Bind("Cmd.WallRun");
 	m_CollectSlots.EvalFall     = Bind("Eval.Climb.Fall");
 	m_CollectSlots.EvalLand     = Bind("Eval.Climb.Land");
 	m_CollectSlots.EvalArrive   = Bind("Eval.Climb.Arrive");
-	m_CollectSlots.EvalMantle   = Bind("Eval.Climb.Mantle");
+	m_CollectSlots.EvalClimbMantle = Bind("Eval.Climb.Mantle");
 	m_CollectSlots.EvalKneeHit  = Bind("Eval.Climb.KneeHit");
 }
 
@@ -180,19 +188,20 @@ void CTraceur::Collect_StateFlags()
 	pBB->Set(m_CollectSlots.JumpPress,    D.wantsJumpPress);
 	pBB->Set(m_CollectSlots.CmdLowVault,  D.eCommand == PARKOUR_ACTION::LOW_VAULT);
 	pBB->Set(m_CollectSlots.CmdHighVault, D.eCommand == PARKOUR_ACTION::HIGH_VAULT);
-	pBB->Set(m_CollectSlots.CmdMantle,    D.eCommand == PARKOUR_ACTION::MANTLE);
+	pBB->Set(m_CollectSlots.CmdHighMantle,D.eCommand == PARKOUR_ACTION::HIGH_MANTLE);
+	pBB->Set(m_CollectSlots.CmdLowMantle, D.eCommand == PARKOUR_ACTION::LOW_MANTLE);
 	pBB->Set(m_CollectSlots.CmdClimb,     D.eCommand == PARKOUR_ACTION::CLIMB);
 	pBB->Set(m_CollectSlots.CmdHang,      D.eCommand == PARKOUR_ACTION::HANG);
 	pBB->Set(m_CollectSlots.CmdWallRun,   D.eCommand == PARKOUR_ACTION::WALL_RUN);
 
-	// Climb 도메인 플래그 — CLIMB 카테고리에서만 유효
+	// Climb 도메인 플래그
 	if (m_pStateMachineCom->Get_CurrentCategory() == ENUM_CLASS(EStateCategory::CLIMB))
 	{
 		const CLIMB_EVAL& E = m_pClimbEvalCom->Get_Eval();
 		pBB->Set(m_CollectSlots.EvalFall,    E.shouldFall);
 		pBB->Set(m_CollectSlots.EvalLand,    E.isLanded);
 		pBB->Set(m_CollectSlots.EvalArrive,  E.isArrived);
-		pBB->Set(m_CollectSlots.EvalMantle,  E.canMantle);
+		pBB->Set(m_CollectSlots.EvalClimbMantle,  E.canMantle);
 		pBB->Set(m_CollectSlots.EvalKneeHit, E.kneeHit);
 	}
 }
@@ -202,6 +211,9 @@ void CTraceur::Late_Update(_float fTimeDelta)
 	__super::Late_Update(fTimeDelta);
 	// 1. 물리 반영된 위치로 지정
 	Sync_Transform();
+
+	// 2. IK 적용 예정 => 모든 물리 로직으로 인한 위치 보정이 끝난 시점이 IK를 적용할 시점.
+
 	Ready_Render();
 
 #ifdef _DEBUG
@@ -326,9 +338,11 @@ void CTraceur::Update_EnvQuery(_float fTimeDelta)
 
 	if (nullptr != m_pStateMachineCom)
 	{
+		// 실행 중 EnvQuery/Decide를 멈춘다.
 		const auto& Key = m_pStateMachineCom->Get_CurrentStateKey();
 		if (Key.iCategory == ENUM_CLASS(EStateCategory::GROUND)
-			&& Key.iSubState == ENUM_CLASS(ETraceurGroundState::Vault))
+			&& (Key.iSubState == ENUM_CLASS(ETraceurGroundState::Vault)
+			 || Key.iSubState == ENUM_CLASS(ETraceurGroundState::Mantle)))
 			return;
 	}
 

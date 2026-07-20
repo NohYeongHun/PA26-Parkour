@@ -14,6 +14,7 @@ enum class ETraceurGroundState : _uint
 	Sprint,			// 전력질주
 	Land,			// 착지
 	Vault,			// 장애물 넘기
+	Mantle,			// 착지 실패 폴백 — 장애물 위로 올라서기 (LOW_MANTLE)
 	GroundEnd
 };
 
@@ -29,7 +30,7 @@ enum class ETraceurClimbState : _uint
 {
 	Enter = 0, // 등반 매달리기 => 시작
 	Move,	  // 등반 이동 => 5개 모션 섞을 예정 (L, U, R, D, Idle)
-	Mantle,   // 탈출 상태.
+	Mantle,
 	Exit,     // 벽에서 이탈
 	Run,      // 수직 월런 — 벽을 달려 올라감
 	Hang,     // 난간 매달림 대기 (BracedHangHopIdle 루프)
@@ -50,8 +51,16 @@ enum class ETraceurGroundMove : _uint
 
 enum class ETraceurGroundVault : _uint
 {
-	LowerVault = 0, // 애니메이션 명
+	LowVault = 0, // 애니메이션 명
+	LowVaultJump,
 	VaultEnd
+};
+
+enum class ETraceurGroundMantle : _uint
+{
+	SprintToWallClimb = 0, // 애니메이션 명
+	RunningLowMantle,
+	MantleEnd
 };
 
 enum class ETraceurGroundLand : _uint
@@ -107,13 +116,13 @@ enum class ETraceurClimbMove : _uint // 2D Blend Space 예정
 enum class ETraceurClimbMantle : _uint // 암벽 등반을 끝까지 올라갔을 때.
 {
 	Mantle = 0,
-	Mantle_End
+	MantleEnd
 };
 
 enum class ETraceurClimbExit : _uint
 {
 	JumpFromWall = 0,
-	Climbing, // Mantle
+	Climbing, // HIGH_MANTLE
 	BracedHangToCrouch,
 	BracedHangDrop,
 	ClimbingToTop,

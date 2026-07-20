@@ -12,6 +12,7 @@ HRESULT CGroundState::Initialize(CTraceur* pOwner)
 void CGroundState::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
+
 }
 
 void CGroundState::OnUpdate(_float fTimeDelta)

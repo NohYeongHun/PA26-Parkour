@@ -36,6 +36,7 @@
     <ClCompile Include="..\Private\TraceurGroundMove.cpp" />
     <ClCompile Include="..\Private\TraceurGroundStand.cpp" />
     <ClCompile Include="..\Private\TraceurGroundVault.cpp" />
+    <ClCompile Include="..\Private\TraceurGroundMantle.cpp" />
     <ClCompile Include="..\Private\TraceurState.cpp" />
     <ClCompile Include="..\Private\TraceurStateNames.cpp" />
     <ClCompile Include="..\Private\TransitionTable.cpp" />
@@ -90,6 +91,7 @@
     <ClInclude Include="..\Public\TraceurGroundMove.h" />
     <ClInclude Include="..\Public\TraceurGroundStand.h" />
     <ClInclude Include="..\Public\TraceurGroundVault.h" />
+    <ClInclude Include="..\Public\TraceurGroundMantle.h" />
     <ClInclude Include="..\Public\TraceurState.h" />
     <ClInclude Include="..\Public\TraceurStateNames.h" />
     <ClInclude Include="..\Public\TransitionTable.h" />

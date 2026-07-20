@@ -1,4 +1,4 @@
-#include "ClientPch.h"
+﻿#include "ClientPch.h"
 #include "ParkourTuningTable.h"
 #include <fstream>
 
@@ -37,8 +37,9 @@ HRESULT CParkourTuningTable::Parse(const _string& strFilePath, PARKOUR_TUNING& O
 {
 	OutTuning.Priority = {
 		PARKOUR_ACTION::LOW_VAULT, PARKOUR_ACTION::HIGH_VAULT,
-		PARKOUR_ACTION::MANTLE,    PARKOUR_ACTION::WALL_RUN,
-		PARKOUR_ACTION::CLIMB,     PARKOUR_ACTION::HANG };
+		PARKOUR_ACTION::LOW_MANTLE, PARKOUR_ACTION::HIGH_MANTLE,
+		PARKOUR_ACTION::WALL_RUN, PARKOUR_ACTION::CLIMB,
+		PARKOUR_ACTION::HANG };
 
 	try
 	{
@@ -54,10 +55,15 @@ HRESULT CParkourTuningTable::Parse(const _string& strFilePath, PARKOUR_TUNING& O
 			OutTuning.Vault.fMinApproachDot       = GetF(Root["vault"], "minApproachDot", OutTuning.Vault.fMinApproachDot);
 			OutTuning.Vault.fHighVaultHeightRatio = GetF(Root["vault"], "highVaultHeightRatio", OutTuning.Vault.fHighVaultHeightRatio);
 		}
-		if (Root.contains("mantle")) {
-			OutTuning.Mantle.fMinDepthMult   = GetF(Root["mantle"], "minDepthMult", OutTuning.Mantle.fMinDepthMult);
-			OutTuning.Mantle.fMinWidthMult   = GetF(Root["mantle"], "minWidthMult", OutTuning.Mantle.fMinWidthMult);
-			OutTuning.Mantle.fMinApproachDot = GetF(Root["mantle"], "minApproachDot", OutTuning.Mantle.fMinApproachDot);
+		if (Root.contains("HIGH_MANTLE")) {
+			OutTuning.HIGH_MANTLE.fMinDepthMult   = GetF(Root["HIGH_MANTLE"], "minDepthMult", OutTuning.HIGH_MANTLE.fMinDepthMult);
+			OutTuning.HIGH_MANTLE.fMinWidthMult   = GetF(Root["HIGH_MANTLE"], "minWidthMult", OutTuning.HIGH_MANTLE.fMinWidthMult);
+			OutTuning.HIGH_MANTLE.fMinApproachDot = GetF(Root["HIGH_MANTLE"], "minApproachDot", OutTuning.HIGH_MANTLE.fMinApproachDot);
+		}
+		if (Root.contains("LOW_MANTLE")) {
+			OutTuning.LOW_MANTLE.fMinDepthMult   = GetF(Root["LOW_MANTLE"], "minDepthMult", OutTuning.LOW_MANTLE.fMinDepthMult);
+			OutTuning.LOW_MANTLE.fMinWidthMult   = GetF(Root["LOW_MANTLE"], "minWidthMult", OutTuning.LOW_MANTLE.fMinWidthMult);
+			OutTuning.LOW_MANTLE.fMinApproachDot = GetF(Root["LOW_MANTLE"], "minApproachDot", OutTuning.LOW_MANTLE.fMinApproachDot);
 		}
 		if (Root.contains("climb"))
 			OutTuning.Climb.fMaxHeightRatio = GetF(Root["climb"], "maxHeightRatio", OutTuning.Climb.fMaxHeightRatio);
@@ -91,7 +97,8 @@ HRESULT CParkourTuningTable::Parse(const _string& strFilePath, PARKOUR_TUNING& O
 			static const map<_string, PARKOUR_ACTION> NameMap = {
 				{"LOW_VAULT",  PARKOUR_ACTION::LOW_VAULT},
 				{"HIGH_VAULT", PARKOUR_ACTION::HIGH_VAULT},
-				{"MANTLE",     PARKOUR_ACTION::MANTLE},
+				{"HIGH_MANTLE",PARKOUR_ACTION::HIGH_MANTLE},
+				{"LOW_MANTLE", PARKOUR_ACTION::LOW_MANTLE},
 				{"CLIMB",      PARKOUR_ACTION::CLIMB},
 				{"HANG",       PARKOUR_ACTION::HANG},
 				{"WALL_RUN",   PARKOUR_ACTION::WALL_RUN} };

@@ -56,23 +56,27 @@ _bool CTraceurGroundVault::Ready_Enter(void* pArg)
 	if (!Select_Animation())
 		return false;
 
-	const OBSTACLE_GEOMETRY& Geo = Enter_Perception(pArg).Geometry;
+	m_pColliderCom->Set_Gravity(false);
+
+	const OBSTACLE_GEOMETRY& Geo = Enter_Perception(pArg).Geometry; // 판정 당시의 상태를 가져오기 위함.
 	m_pMotionWarpCom->Clear_WarpTargets();
 	if (Geo.Top.isReachable)
-		m_pMotionWarpCom->Set_WarpTarget("VaultTop", Geo.Top.vEdgePos);
+	{
+		_float3 vPos = Geo.Top.vStandPos;
+		/*_float3 vOffset{};
+		XMStoreFloat3(&vOffset, m_pColliderCom->Get_Offset());
+		vPos.y += vOffset.y;*/
+		m_pMotionWarpCom->Set_WarpTarget("VaultTop", vPos);
+	}
+		
 	if (Geo.Landing.hasSpace)
 		m_pMotionWarpCom->Set_WarpTarget("VaultLand", Geo.Landing.vPos);
-
-#ifdef _DEBUG
-	m_pMotionWarpCom->Reset_DebugTrail();   // 새 Vault 시작 → 이전 궤적 리셋
-#endif
 
 	return true;
 }
 
 _bool CTraceurGroundVault::Select_Animation()
 {
-	Request_Anim(ENUM_CLASS(ETraceurGroundVault::LowerVault));
 	return true;
 }
 
@@ -82,8 +86,14 @@ void CTraceurGroundVault::Draw_Debug()
 	const OBSTACLE_GEOMETRY& Geo = m_pEnvQueryCom->Get_Perception().Geometry;
 	CGameInstance* pGI = CGameInstance::GetInstance();
 
-	pGI->Add_DebugSphere(XMLoadFloat3(&Geo.Top.vEdgePos), 0.3f, JPH::Color(0.f, 255.f, 255.f, 1.f));
-	//pGI->Add_DebugSphere(XMLoadFloat3(&Geo.vLandingPos), 0.3f, JPH::Color(255.f, 255.f, 255.f, 1.f));
+	_float3 vPos = Geo.Top.vStandPos;
+	//_float3 vOffset{};
+	//XMStoreFloat3(&vOffset, m_pColliderCom->Get_Offset());
+	//vPos.y += vOffset.y;
+
+	//pGI->Add_DebugSphere(XMLoadFloat3(&Geo.Top.vEdgePos), 0.3f, JPH::Color(0.f, 255.f, 255.f, 1.f));
+	pGI->Add_DebugSphere(XMLoadFloat3(&vPos), 0.3f, JPH::Color(0.f, 255.f, 255.f, 1.f));
+	pGI->Add_DebugSphere(XMLoadFloat3(&Geo.Landing.vPos), 0.3f, JPH::Color(255.f, 255.f, 255.f, 1.f));
 }
 #endif // _DEBUG
 

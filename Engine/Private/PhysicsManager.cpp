@@ -361,8 +361,6 @@ _bool CPhysicsManager::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat,
 
 	}
 
-	
-
 #ifdef _DEBUG
 	{
 		SHAPE_CAST_DEBUG Debug{};
@@ -381,7 +379,7 @@ _bool CPhysicsManager::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat,
 
 _bool CPhysicsManager::Sphere_Cast(const _fvector& vPos, const _fvector& vDir, const _float fDistance, const _float fRadius, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit)
 {
-	RefConst<Shape> pSphere = new SphereShape(fRadius);
+	RefConst<Shape> pSphere = Get_SphereShape(fRadius);
 	return Shape_Cast(pSphere, XMQuaternionIdentity(), vPos, vDir, fDistance, iTargetObjectLayer, OutHit);
 }
 
@@ -395,6 +393,18 @@ _bool CPhysicsManager::Get_Body_AABB(const BodyID& ID, _float3& vOutMin, _float3
 	vOutMin = _float3(Bounds.mMin.GetX(), Bounds.mMin.GetY(), Bounds.mMin.GetZ());
 	vOutMax = _float3(Bounds.mMax.GetX(), Bounds.mMax.GetY(), Bounds.mMax.GetZ());
 	return true;
+}
+
+RefConst<Shape> CPhysicsManager::Get_SphereShape(_float fRadius)
+{
+	_float fKey = std::round(fRadius * 1000.f) / 1000.f;
+	auto iter = m_SphereShapeCache.find(fKey);
+	if (iter != m_SphereShapeCache.end())
+		return iter->second;
+
+	RefConst<Shape> pNewShape = new SphereShape(fKey);
+	m_SphereShapeCache.emplace(fKey, pNewShape);
+	return pNewShape;
 }
 
 // 현재 시점을 정확하게 구할려면
@@ -562,7 +572,7 @@ void CPhysicsManager::Free()
 	__super::Free();
 
 	Safe_Delete_Array(m_Virtuals);
-
+	
 	Safe_Delete(m_pBPLayer);
 	Safe_Delete(m_pObjectLayerFilter);
 	Safe_Delete(m_pObjectVsBPFilter);
@@ -571,6 +581,8 @@ void CPhysicsManager::Free()
 #ifdef _DEBUG
 	Safe_Delete(m_pDebugRenderer);
 #endif
+	m_SphereShapeCache.clear();
+
 	Safe_Delete(m_pPhysicsSystem);
 	Safe_Delete(m_pCharacterContactListener);
 	Safe_Delete(m_pContactListener);
@@ -581,4 +593,6 @@ void CPhysicsManager::Free()
 	Safe_Release(m_pDevice);
 	Safe_Release(m_pContext);
 	Safe_Release(m_pGameInstance);
+
+
 }

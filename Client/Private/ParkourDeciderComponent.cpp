@@ -154,6 +154,11 @@ void CParkourDeciderComponent::Arbitrate()
 			 && m_Decision.wantsRun && m_Decision.isGrounded)
 				{ m_Decision.eCommand = eAction; return; }
 			break;
+		case PARKOUR_ACTION::LOW_MANTLE:
+			if (m_Decision.eBestEnvAction == PARKOUR_ACTION::LOW_MANTLE
+			 && m_Decision.wantsRun && m_Decision.isGrounded)
+				{ m_Decision.eCommand = eAction; return; }
+			break;
 		case PARKOUR_ACTION::WALL_RUN:
 			if (m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::WALL_RUN)].isPossible
 			 && m_Decision.wantsRun && m_fWallRunCooldown <= 0.f)
@@ -190,15 +195,18 @@ void CParkourDeciderComponent::Judge(const OBSTACLE_SCAN& Scan, const OBSTACLE_G
 	const ACTION_VERDICT NoMatch{ false, REJECT_REASON::NO_HEIGHT_MATCH };
 	m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::LOW_VAULT)]  = isHighVault ? NoMatch : VaultVerdict;
 	m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::HIGH_VAULT)] = isHighVault ? VaultVerdict : NoMatch;
-	m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::MANTLE)] = Judge_Mantle(Scan, Geo, m_Decision.fApproachDot);
+	m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::HIGH_MANTLE)] = Judge_HighMantle(Scan, Geo, m_Decision.fApproachDot);
+	m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::LOW_MANTLE)]  = Judge_LowMantle(Scan, Geo, m_Decision.fApproachDot);
 	m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::CLIMB)]  = Judge_Climb(Scan, Geo);
 	m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::WALL_RUN)] = Judge_WallRun(Scan, Geo, m_Decision.fApproachDot);
 
 	m_Decision.iCandidateFlag = 0;
 	if (VaultVerdict.isPossible)
 		m_Decision.iCandidateFlag |= ENUM_CLASS(PARKOUR_FLAG::VAULTABLE);
-	if (m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::MANTLE)].isPossible)
-		m_Decision.iCandidateFlag |= ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE);
+	if (m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::HIGH_MANTLE)].isPossible)
+		m_Decision.iCandidateFlag |= ENUM_CLASS(PARKOUR_FLAG::HIGH_MANTLEABLE);
+	if (m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::LOW_MANTLE)].isPossible)
+		m_Decision.iCandidateFlag |= ENUM_CLASS(PARKOUR_FLAG::LOW_MANTLEABLE);
 	if (m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::CLIMB)].isPossible)
 		m_Decision.iCandidateFlag |= ENUM_CLASS(PARKOUR_FLAG::CLIMBABLE);
 
@@ -212,9 +220,14 @@ void CParkourDeciderComponent::Judge(const OBSTACLE_SCAN& Scan, const OBSTACLE_G
 		m_Decision.eBestEnvAction = isHighVault ? PARKOUR_ACTION::HIGH_VAULT : PARKOUR_ACTION::LOW_VAULT;
 		m_Decision.isValid = true;
 	}
-	else if (m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::MANTLE)].isPossible)
+	else if (m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::LOW_MANTLE)].isPossible)
 	{
-		m_Decision.eBestEnvAction = PARKOUR_ACTION::MANTLE;
+		m_Decision.eBestEnvAction = PARKOUR_ACTION::LOW_MANTLE;
+		m_Decision.isValid = true;
+	}
+	else if (m_Decision.Verdicts[ENUM_CLASS(PARKOUR_ACTION::HIGH_MANTLE)].isPossible)
+	{
+		m_Decision.eBestEnvAction = PARKOUR_ACTION::HIGH_MANTLE;
 		m_Decision.isValid = true;
 	}
 
@@ -245,11 +258,21 @@ ACTION_VERDICT CParkourDeciderComponent::Judge_Vault(const OBSTACLE_SCAN& Scan, 
 	if (!(Get_ObjectFlagMask(Scan) & ENUM_CLASS(PARKOUR_FLAG::VAULTABLE)))
 		return { false, REJECT_REASON::FLAG_DENIED };
 
-	if (!Geo.Top.isReachable)
+	if (!Geo.Top.isReachable) // Top Down Lay에서 Reachable이 아니라면?
 		return { false, REJECT_REASON::TOP_UNREACHABLE };
 
-	if (!Geo.Landing.hasSpace)
+
+	if (Geo.isPathBlocked || Geo.Landing.isBlocked) // 넘어가는 경로에 다른 장애물 (낮은 천장, 뒤 벽 등) — 경로 막힘이 착지보다 우선
+		return { false, REJECT_REASON::PATH_BLOCKED };
+
+	if (!Geo.Landing.hasSpace) // Landing Space가 없다면?
 		return { false, REJECT_REASON::NO_LANDING };
+
+	if (Geo.Landing.isBlocked) // 착지 지점에 캡슐 공간 없음 (끼임 위험)
+		return { false, REJECT_REASON::LANDING_BLOCKED };
+
+	if (Geo.Landing.isElevated) // 착지면이 다른 장애물 상단
+		return { false, REJECT_REASON::LANDING_ELEVATED };
 
 	if (fApproachDot <= m_pTuning->Get().Vault.fMinApproachDot)
 		return { false, REJECT_REASON::BAD_ANGLE };
@@ -257,27 +280,65 @@ ACTION_VERDICT CParkourDeciderComponent::Judge_Vault(const OBSTACLE_SCAN& Scan, 
 	return { true, REJECT_REASON::NONE };
 }
 
-ACTION_VERDICT CParkourDeciderComponent::Judge_Mantle(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const
+// Vault의 착지 실패에서만 성립하는 폴백 — 첫 장애물 위로 올라선다
+ACTION_VERDICT CParkourDeciderComponent::Judge_LowMantle(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const
 {
 	const _bool bKnee = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE)) != 0;
 	const _bool bHead = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD)) != 0;
 	if (!bKnee || bHead)
 		return { false, REJECT_REASON::NO_HEIGHT_MATCH };
 
-	if (!(Get_ObjectFlagMask(Scan) & ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE)))
+	if (!(Get_ObjectFlagMask(Scan) & ENUM_CLASS(PARKOUR_FLAG::LOW_MANTLEABLE)))
 		return { false, REJECT_REASON::FLAG_DENIED };
 
 	if (!Geo.Top.isReachable)
 		return { false, REJECT_REASON::TOP_UNREACHABLE };
 
-	_float fRadius = m_pBodyProfile->fRadius;
-	if (Geo.fDepth < fRadius * m_pTuning->Get().Mantle.fMinDepthMult)
+	if (Geo.isStandBlocked) 
+		return { false, REJECT_REASON::STAND_BLOCKED };
+
+	const _bool isLandingPossible = Geo.Landing.hasSpace && !Geo.Landing.isBlocked && !Geo.Landing.isElevated;
+	if (isLandingPossible) // Vault 가능 상황 — LOW_MANTLE 후보 아님
+		return { false, REJECT_REASON::NONE };
+
+	const LOW_MANTLE_TUNING& T = m_pTuning->Get().LOW_MANTLE;
+	const _float fRadius = m_pBodyProfile->fRadius;
+	if (Geo.fDepth < fRadius * T.fMinDepthMult) // 상단이 서기에 너무 얇음
 		return { false, REJECT_REASON::TOO_THIN };
 
-	if (Geo.fTopWidth < fRadius * m_pTuning->Get().Mantle.fMinWidthMult)
+	if (Geo.fTopWidth < fRadius * T.fMinWidthMult)
 		return { false, REJECT_REASON::TOO_NARROW };
 
-	if (fApproachDot <= m_pTuning->Get().Mantle.fMinApproachDot)
+	if (fApproachDot <= T.fMinApproachDot)
+		return { false, REJECT_REASON::BAD_ANGLE };
+
+	return { true, REJECT_REASON::NONE };
+}
+
+ACTION_VERDICT CParkourDeciderComponent::Judge_HighMantle(const OBSTACLE_SCAN& Scan, const OBSTACLE_GEOMETRY& Geo, _float fApproachDot) const
+{
+	const _bool bKnee = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE)) != 0;
+	const _bool bHead = (Scan.iHeightFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD)) != 0;
+	if (!bKnee || bHead)
+		return { false, REJECT_REASON::NO_HEIGHT_MATCH };
+
+	if (!(Get_ObjectFlagMask(Scan) & ENUM_CLASS(PARKOUR_FLAG::HIGH_MANTLEABLE)))
+		return { false, REJECT_REASON::FLAG_DENIED };
+
+	if (!Geo.Top.isReachable)
+		return { false, REJECT_REASON::TOP_UNREACHABLE };
+
+	if (Geo.isStandBlocked)
+		return { false, REJECT_REASON::STAND_BLOCKED };
+
+	_float fRadius = m_pBodyProfile->fRadius;
+	if (Geo.fDepth < fRadius * m_pTuning->Get().HIGH_MANTLE.fMinDepthMult)
+		return { false, REJECT_REASON::TOO_THIN };
+
+	if (Geo.fTopWidth < fRadius * m_pTuning->Get().HIGH_MANTLE.fMinWidthMult)
+		return { false, REJECT_REASON::TOO_NARROW };
+
+	if (fApproachDot <= m_pTuning->Get().HIGH_MANTLE.fMinApproachDot)
 		return { false, REJECT_REASON::BAD_ANGLE };
 
 	return { true, REJECT_REASON::NONE };

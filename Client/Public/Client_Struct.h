@@ -94,6 +94,7 @@ namespace Client
 	typedef struct tagObstacleScan {
 		_bool          isObstacleDetected = false;
 		PARKOUR_FLAG   eObjectFlag = PARKOUR_FLAG::END;
+		BodyID         HitBodyID{}; // 기본 장애물 Hit Id
 		_float3        vScanDir{};
 		LINE_TRACE_HIT KneeHit;
 		LINE_TRACE_HIT ChestHit;
@@ -147,6 +148,8 @@ namespace Client
 
 	typedef struct tagGeoLanding {
 		_bool   hasSpace = false;
+		_bool   isBlocked  = false;
+		_bool   isElevated = false;
 		_float3 vPos{};
 	}GEO_LANDING;
 
@@ -157,6 +160,8 @@ namespace Client
 		_bool       hasDepth = false;
 		_float      fDepth = 0.f;
 		_float      fTopWidth = 0.f;
+		_bool       isPathBlocked  = false;
+		_bool       isStandBlocked = false;
 		GEO_LANDING Landing;
 	}OBSTACLE_GEOMETRY;
 
@@ -189,7 +194,7 @@ namespace Client
 		_bool   isValid = false;
 		_float3 vGrabEdgePos{};
 		_float3 vWallNormal{};
-		BodyID  GrabBodyID{};  // 지금 잡고 있는 장애물의 물리 바디 — Hop 탐색 앵커 (anchor)
+		BodyID  GrabBodyID{};  // 지금 잡고 있는 장애물의 물리 바디
 		void Reset() { isValid = false; GrabBodyID = BodyID{}; }
 	}HANG_CONTEXT;
 #pragma endregion
