@@ -1,5 +1,6 @@
 ﻿#include "EnginePch.h"
 #include "Pooling_Manager.h"
+#include "Engine_Profile.h"
 
 #include "GameInstance.h"
 #include "GameObject.h"
@@ -23,8 +24,8 @@ HRESULT CPooling_Manager::Initialize()
 
 	for (_uint i = 0; i < m_iNumThread; ++i)
 	{
-		m_Threads.emplace_back([this]() { this->Work_Thread(); });
-		m_RenderThreads.emplace_back([this]() { this->Render_Thread(); });
+		m_Threads.emplace_back([this, i]() { this->Work_Thread(i); });
+		m_RenderThreads.emplace_back([this, i]() { this->Render_Thread(i); });
 	}
 
 	return S_OK;
@@ -201,8 +202,12 @@ void CPooling_Manager::Drain_Works()
 	}
 }
 
-void CPooling_Manager::Work_Thread()
+void CPooling_Manager::Work_Thread(_uint iIndex)
 {
+	static thread_local _char szThreadName[16];
+	sprintf_s(szThreadName, "Worker %u", iIndex);
+	PROFILE_THREAD(szThreadName);
+
 	while (true)
 	{
 		unique_lock<mutex> lock(m_Mutex);
@@ -217,14 +222,21 @@ void CPooling_Manager::Work_Thread()
 		lock.unlock();
 
 		m_iLiveWork.fetch_add(1, memory_order_release);
-		Work();
+		{
+			PROFILE_ZONE_N("Pool_Work");
+			Work();
+		}
 		m_iLiveWork.fetch_sub(1, memory_order_release);
 		m_iRemainWork.fetch_sub(1, memory_order_release);
 	}
 }
 
-void CPooling_Manager::Render_Thread()
+void CPooling_Manager::Render_Thread(_uint iIndex)
 {
+	static thread_local _char szThreadName[16];
+	sprintf_s(szThreadName, "Render %u", iIndex);
+	PROFILE_THREAD(szThreadName);
+
 	while (true)
 	{
 		unique_lock<mutex> lock(m_RenderMutex);
@@ -236,7 +248,10 @@ void CPooling_Manager::Render_Thread()
 		function<void()> RenderWork = move(m_RenderWorks.front());
 		m_RenderWorks.pop();
 		lock.unlock();
-		RenderWork();
+		{
+			PROFILE_ZONE_N("Render_Work");
+			RenderWork();
+		}
 	}
 }
 
