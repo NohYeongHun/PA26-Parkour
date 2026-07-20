@@ -16,15 +16,16 @@ namespace Editor
 	/*
 	* VAULT : 넘을 수 있는지
 	* CLIMBABLE : 벽을 탈 수 있는지 (높아서?)
-	* MANTLEABLE : 벽을 매달릴 수 있는지?
+	* HIGH_MANTLEABLE : 벽을 매달릴 수 있는지?
 	*/
 	enum class PARKOUR_FLAG {
 		VAULTABLE	= 1 << 0, // 1
 		CLIMBABLE	= 1 << 1, // 2
 		HANGABLE	= 1 << 2, // 4
-		MANTLEABLE	= 1 << 3, // 8 => 매달려 있는 상태에서 전환동작
+		HIGH_MANTLEABLE	= 1 << 3, // 8 => 매달려 있는 상태에서 전환동작
 		WALLRUNNABLE = 1 << 4, // 16
-		ALL = 0x1F, // 31
+		LOW_MANTLEABLE = 1 << 5, // 32
+		ALL = 0x3F, // 63
 		END
 	};
 }

@@ -889,8 +889,9 @@ void CEdit_MapObject::About_Parkour()
 	ImGui::CheckboxFlags("Vaultable", pFlag, ENUM_CLASS(PARKOUR_FLAG::VAULTABLE));
 	ImGui::CheckboxFlags("Climbable", pFlag, ENUM_CLASS(PARKOUR_FLAG::CLIMBABLE));
 	ImGui::CheckboxFlags("Hangable", pFlag, ENUM_CLASS(PARKOUR_FLAG::HANGABLE));
-	ImGui::CheckboxFlags("Mantleable", pFlag, ENUM_CLASS(PARKOUR_FLAG::MANTLEABLE));
+	ImGui::CheckboxFlags("HighMantleable", pFlag, ENUM_CLASS(PARKOUR_FLAG::HIGH_MANTLEABLE));
 	ImGui::CheckboxFlags("Wallrunnable", pFlag, ENUM_CLASS(PARKOUR_FLAG::WALLRUNNABLE));
+	ImGui::CheckboxFlags("LowMantleable", pFlag, ENUM_CLASS(PARKOUR_FLAG::LOW_MANTLEABLE));
 }
 
 void CEdit_MapObject::About_Texture()
@@ -1219,6 +1220,7 @@ void CEdit_MapObject::Copy_MapObject(_bool IsChild, CEdit_MapObject* pParent)
 	Desc.pCopyObject = this;
 	Desc.IsChild = IsChild;
 	Desc.eObjectType = m_eObjectType;
+	Desc.eParkourFlag = m_eParkourFlag;
 
 	if (Desc.IsChild)
 		Desc.pParent = pParent;
