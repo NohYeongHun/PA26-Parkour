@@ -32,6 +32,7 @@ HRESULT CIKSovler_TwoBone::Render()
 
 IK_RESULT CIKSovler_TwoBone::Solve(_float fTimeDelta)
 {
+	return IK_RESULT{};
 }
 
 const _char* CIKSovler_TwoBone::Get_Name() const

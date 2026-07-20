@@ -32,6 +32,7 @@ HRESULT CIKSovler_Fabrik::Render()
 
 IK_RESULT CIKSovler_Fabrik::Solve(_float fTimeDelta)
 {
+	return IK_RESULT{};
 }
 
 const _char* CIKSovler_Fabrik::Get_Name() const

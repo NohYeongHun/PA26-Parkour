@@ -62,13 +62,12 @@ private:
 	class CTransitionEvaluator* m_pTransitionEvalCom = { nullptr };
 	class CClimbEvaluator*      m_pClimbEvalCom = { nullptr };
 
+	class CIKComponent*			m_pIKCom = { nullptr };
+
 private:
 	BODY_PROFILE m_BodyProfile{};
 	HANG_CONTEXT m_HangCtx{};
 
-private:
-	// 임시 Variables
-	_float m_fTrackPosition;
 
 #ifdef _DEBUG
 	// 루트모션 궤적 디버그

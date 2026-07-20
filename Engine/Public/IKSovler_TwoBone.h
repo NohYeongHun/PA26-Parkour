@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "IKSolver.h"
 NS_BEGIN(Engine)
-class ENGINE_DLL CIKSovler_TwoBone final : public CIKSolver
+class CIKSovler_TwoBone final : public CIKSolver
 {
 private:
 	explicit CIKSovler_TwoBone(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);

@@ -32,6 +32,7 @@ HRESULT CIKSovler_CCD::Render()
 
 IK_RESULT CIKSovler_CCD::Solve(_float fTimeDelta)
 {
+	return IK_RESULT{};
 }
 
 const _char* CIKSovler_CCD::Get_Name() const

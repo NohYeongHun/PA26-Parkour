@@ -2,6 +2,7 @@
 #include "Base.h"
 
 // [Component]
+#include "IKComponent.h"
 #include "Shader.h"
 #include "DeferredShader.h"
 #include "ComputeShader.h"

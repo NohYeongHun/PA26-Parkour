@@ -11,6 +11,8 @@
 #include "ParkourDeciderComponent.h"
 #include "MotionWarpingComponent.h"
 #include "AnimationController.h"
+#include "IKComponent.h"
+
 #include "StateBlackboard.h"
 #include "TransitionEvaluator.h"
 #include "ClimbEvaluator.h"
@@ -273,6 +275,11 @@ void CMainApp::Ready_Prototype_ForStatic()
 	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_AnimController"),
 		CAnimationController::Create(m_pDevice, m_pContext))))
 		CRASH("Failed to Add Prototype AnimationController");
+	
+	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_IK"),
+		CIKComponent::Create(m_pDevice, m_pContext))))
+		CRASH("Failed to Add Prototype IKComponent");
+
 #pragma endregion
 
 

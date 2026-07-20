@@ -16,6 +16,7 @@
 #include "TraceurState.h"
 #include "TraceurStateNames.h"
 #include "AnimationController.h"
+#include "IKComponent.h"
 #include "StateBlackboard.h"
 #include "TagRegistry.h"
 #include "TransitionEvaluator.h"
@@ -218,7 +219,6 @@ void CTraceur::Late_Update(_float fTimeDelta)
 	Sync_Transform();
 
 	// 2. IK 적용 예정 => 모든 물리 로직으로 인한 위치 보정이 끝난 시점이 IK를 적용할 시점.
-
 	Ready_Render();
 
 #ifdef _DEBUG
@@ -398,8 +398,6 @@ HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 		TEXT("Com_StateMachine"), reinterpret_cast<CComponent**>(&m_pStateMachineCom), nullptr)))
 		CRASH("StateMachine");
 
-
-
 	m_vColliderOffSet = { 0.f, 0.8f, 0.f };
 	m_fColliderRadius = 0.4f;
 	m_fColliderHeight = 0.8f;
@@ -429,6 +427,15 @@ HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 
 	if (FAILED(Ready_EnvQueryComponents(pDesc)))
 		return E_FAIL;
+
+	CIKComponent::IKCOMPONENT_DESC IKDesc{};
+	IKDesc.pOwner = this;
+	IKDesc.pOwnerModelCom = m_pModelCom;
+	IKDesc.pOwnerTransformCom = m_pTransformCom;
+
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_IK"),
+		TEXT("Com_IK"), reinterpret_cast<CComponent**>(&m_pIKCom), &IKDesc)))
+		CRASH("IK");
 
 	return S_OK;
 }
@@ -555,4 +562,5 @@ void CTraceur::Free()
 	Safe_Release(m_pStateBlackboardCom);
 	Safe_Release(m_pTransitionEvalCom);
 	Safe_Release(m_pClimbEvalCom);
+	Safe_Release(m_pIKCom);
 }

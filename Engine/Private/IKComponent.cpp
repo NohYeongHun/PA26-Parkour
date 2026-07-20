@@ -5,6 +5,7 @@
 #include "IKSovler_CCD.h"
 #include "IKSovler_Fabrik.h"
 #include "IKSovler_TwoBone.h"
+#include "Bone.h"
 
 CIKComponent::CIKComponent(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	: CComponent{ pDevice, pContext }
@@ -17,6 +18,33 @@ CIKComponent::CIKComponent(const CIKComponent& Prototype)
 {
 	for (auto& pSovler : m_Solvers)
 		Safe_AddRef(pSovler);
+}
+
+_uint CIKComponent::Register_Goal(const _string& strName, EIKSOLVER_TYPE eSolver, const vector<_string>& BoneNames)
+{
+	// 1. 중복 방지.
+	auto it = m_GoalHandles.find(strName);
+	if (it != m_GoalHandles.end())
+		return it->second;
+
+	// 2. 본 이름을 통한 인덱스 찾기.
+	IK_GOAL goal{};
+	goal.strName = strName;
+	goal.eSolver = eSolver;
+
+	for (auto& name : BoneNames)
+	{
+		_uint iBoneIndex = Find_BoneIndex(name.c_str());
+		ASSERT_CRASH(iBoneIndex != UINT_MAX);
+		goal.Chain.BoneChain.push_back(iBoneIndex);
+	}
+
+	// 3. push한 위치가 handle값
+	_uint iGoal = static_cast<_uint>(m_Goals.size());
+	m_Goals.push_back(goal);
+
+	// 4. Map 등록
+	m_GoalHandles.emplace(strName, iGoal);
 }
 
 // Solver 생성.
@@ -47,7 +75,20 @@ HRESULT CIKComponent::Initialize_Clone(void* pArg)
 
 HRESULT CIKComponent::Render()
 {
+	m_pModelCom->Get_Bones();
 	return S_OK;
+}
+
+_uint CIKComponent::Find_BoneIndex(const char* pBoneName)
+{
+	const vector<CBone*>& Bones = m_pModelCom->Get_Bones();
+	for (_uint idx = 0; idx < static_cast<_uint>(Bones.size()); ++idx)
+	{
+		if (0 == strcmp(pBoneName, Bones[idx]->Get_Name()))
+			return idx;
+	}
+
+	return UINT_MAX;
 }
 
 CIKComponent* CIKComponent::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)

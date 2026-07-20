@@ -562,11 +562,23 @@ namespace Engine
 #pragma region IK
 	typedef struct tagIKChangeDesc
 	{
-		_uint iRootBoneIndex, iMidBoneIndex, iEndBoneIndex;
-		_vector vTargetPos;
+		std::vector<_uint> BoneChain; // Index를 담습니다. root -> end 순서로 이동합니다.
+		_vector vTargetPos;	 // 목표 위치
+		_vector vTargetRot; // 목표 회전
 		_vector vPoleVector;
-		_float fWeight;
+		_float fPosWeight; // 가중치
+		_float fRotWeight; // 가중치
 	}IK_CHAIN_DESC;
+
+	typedef struct tagIKGoal
+	{
+		_string          strName;
+		EIKSOLVER_TYPE   eSolver;        
+		IK_CHAIN_DESC    Chain;          
+		_bool            isEnable;
+		_float           fCurWeight;
+		_vector			 vCurTargetPos;
+	} IK_GOAL;
 
 
 	typedef struct tagIKResult { 

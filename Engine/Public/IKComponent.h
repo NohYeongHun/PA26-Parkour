@@ -19,6 +19,9 @@ private:
 	virtual ~CIKComponent() = default;
 
 public:
+	_uint Register_Goal(const _string& strName, EIKSOLVER_TYPE eSolver, const vector<_string>& BoneNames);
+
+public:
 	virtual HRESULT		Initialize_Prototype() override;
 	virtual HRESULT		Initialize_Clone(void* pArg) override;
 	virtual HRESULT		Render() override;
@@ -31,8 +34,15 @@ private:
 
 
 private:
+	// 모든 Goal이 공유할 알고리즘 클래스이므로 state-less
 	vector<class CIKSolver*> m_Solvers{};
+	// 부위 마다 1개를 가집니다.
+	vector<IK_GOAL> m_Goals{};
+	
+	unordered_map<_string, _uint> m_GoalHandles;
 
+private:
+	_uint Find_BoneIndex(const char* pBoneName);
 
 public:
 	static CIKComponent* Create(ID3D11Device * pDevice, ID3D11DeviceContext * pContext);
