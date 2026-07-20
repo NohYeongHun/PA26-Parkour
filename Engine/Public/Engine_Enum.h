@@ -10,6 +10,9 @@ namespace Engine
 	enum class POINTS { A, B, C, END};
 	enum class LINE { AB, BC, CA, END };
 
+	// IK
+	enum class EIKSOLVER_TYPE : unsigned int { TWO_BONE = 0, CCD, FABRIK, END };
+
 	// Fade
 	enum class FADE { FADE_OUT, FADE_IN };
 
