@@ -21,6 +21,8 @@
 #include "TransitionEvaluator.h"
 #include "ClimbEvaluator.h"
 
+#include "Engine_Profile.h"
+
 
 CTraceur::CTraceur(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	: CCharacter{ pDevice, pContext }
@@ -97,6 +99,7 @@ HRESULT CTraceur::Initialize_Clone(void* pArg)
 
 void CTraceur::Priority_Update(_float fTimeDelta)
 {
+	PROFILE_ZONE();
 	__super::Priority_Update(fTimeDelta);
 	PreUpdate_Input(fTimeDelta);
 	Save_PreviousPosition();
@@ -105,6 +108,7 @@ void CTraceur::Priority_Update(_float fTimeDelta)
 
 void CTraceur::Update(_float fTimeDelta)
 {
+	PROFILE_ZONE();
 	__super::Update(fTimeDelta);
 
 	// 0. 수집 — 지난 프레임 Decider 결정을 Blackboard 플래그로 (舊 각 State의 Apply_DecisionFlags와 동일 시점/데이터)
@@ -208,6 +212,7 @@ void CTraceur::Collect_StateFlags()
 
 void CTraceur::Late_Update(_float fTimeDelta)
 {
+	PROFILE_ZONE();
 	__super::Late_Update(fTimeDelta);
 	// 1. 물리 반영된 위치로 지정
 	Sync_Transform();

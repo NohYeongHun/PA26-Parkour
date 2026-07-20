@@ -211,11 +211,11 @@ public:
 	void					Add_Virtual(CharacterVirtual* pVirtual, _uint iObjectLayer);
 	void					Register_Virtual(CharacterVirtual* pVirtual);
 	void					Remove_Virtual(CharacterVirtual* pVirtual);
-	_bool					Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, _float4* pOut);	// pOut->w = 0 반환함에 주의.
-	_bool					Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer, _float4* pOut);
-	RAY_CAST_HIT			Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer);
-	_bool					Shape_Cast(RefConst<Shape> pShape,  const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, SHAPE_CAST_HIT& OutHit);
-	_bool					Sphere_Cast(const _fvector& vPos, const _fvector& vDir, _float fDistance, _float fRadius, uint16 iObjectLayer, SHAPE_CAST_HIT& OutHit);
+	_bool					Ray_Cast(_fvector vStartPos, _fvector vEndPos, _float4* pOut);	// pOut->w = 0 반환함에 주의.
+	_bool					Ray_Cast(_fvector vStartPos, _fvector vEndPos, const uint16 iTargetObjectLayer, _float4* pOut);
+	RAY_CAST_HIT			Ray_Cast(_fvector vStartPos, _fvector vEndPos, const uint16 iTargetObjectLayer);
+	_bool					Shape_Cast(RefConst<Shape> pShape,  _fvector vQuat, _fvector vPos, _fvector vDir, _float fDistance, uint16 iObjectLayer, SHAPE_CAST_HIT& OutHit);
+	_bool					Sphere_Cast(_fvector vPos, _fvector vDir, _float fDistance, _float fRadius, uint16 iObjectLayer, SHAPE_CAST_HIT& OutHit);
 	_bool					Get_Body_AABB(const BodyID& ID, _float3& vOutMin, _float3& vOutMax);
 
 #ifdef _DEBUG

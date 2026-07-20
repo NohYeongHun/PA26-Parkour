@@ -76,8 +76,8 @@ private:
 	atomic<_int>					m_iRemainWork = {};
 
 private:
-	void									Work_Thread();
-	void									Render_Thread();
+	void									Work_Thread(_uint iIndex);
+	void									Render_Thread(_uint iIndex);
 
 public:
 	static		CPooling_Manager*	Create();

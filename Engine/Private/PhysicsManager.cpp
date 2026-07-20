@@ -178,7 +178,7 @@ void CPhysicsManager::Late_Update()
 	m_pContactListener->Remove_Update();
 }
 
-_bool CPhysicsManager::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, _float4* pOut)
+_bool CPhysicsManager::Ray_Cast(_fvector vStartPos, _fvector vEndPos, _float4* pOut)
 {
 	RVec3 StartPos = LoadVec3(vStartPos);
 	RVec3 EndPos = LoadVec3(vEndPos);
@@ -209,7 +209,7 @@ _bool CPhysicsManager::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndP
 	return fOriginFraction > result.mFraction && result.mFraction > 0.f ? true : false;
 }
 
-_bool CPhysicsManager::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer, _float4* pOut)
+_bool CPhysicsManager::Ray_Cast(_fvector vStartPos, _fvector vEndPos, const uint16 iTargetObjectLayer, _float4* pOut)
 {
 	RVec3 StartPos = LoadVec3(vStartPos);
 	RVec3 EndPos = LoadVec3(vEndPos);
@@ -242,7 +242,7 @@ _bool CPhysicsManager::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndP
 	return fOriginFraction > result.mFraction && result.mFraction > 0.f ? true : false;
 }
 
-RAY_CAST_HIT CPhysicsManager::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer)
+RAY_CAST_HIT CPhysicsManager::Ray_Cast(_fvector vStartPos, _fvector vEndPos, const uint16 iTargetObjectLayer)
 {
 	RAY_CAST_HIT RayCastHit{};
 
@@ -303,11 +303,13 @@ RAY_CAST_HIT CPhysicsManager::Ray_Cast(const _fvector& vStartPos, const _fvector
 }
 
 
-_bool CPhysicsManager::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, const _float fDistance, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit)
+_bool CPhysicsManager::Shape_Cast(RefConst<Shape> pShape, _fvector vQuat, _fvector vPos, _fvector vDir, const _float fDistance, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit)
 {
 	// 1. 제약 조건
 	if (nullptr == pShape)
+	{
 		return false;
+	}
 
 	// 2. 현재 시점의 Rot, Translation
 	JPH::RVec3 startPos = LoadVec3(vPos);
@@ -377,7 +379,7 @@ _bool CPhysicsManager::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat,
 	return isHit;
 }
 
-_bool CPhysicsManager::Sphere_Cast(const _fvector& vPos, const _fvector& vDir, const _float fDistance, const _float fRadius, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit)
+_bool CPhysicsManager::Sphere_Cast(_fvector vPos, _fvector vDir, const _float fDistance, const _float fRadius, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit)
 {
 	RefConst<Shape> pSphere = Get_SphereShape(fRadius);
 	return Shape_Cast(pSphere, XMQuaternionIdentity(), vPos, vDir, fDistance, iTargetObjectLayer, OutHit);
@@ -456,13 +458,13 @@ void CPhysicsManager::DrawShape(const Shape* pShape, RMat44 Matrix, Color BodyCo
 	pShape->Draw(m_pDebugRenderer, Matrix, Vec3(1.f, 1.f, 1.f), BodyColor, false, true);
 	static_cast<CDebugRender*>(m_pDebugRenderer)->End();
 }
-void CPhysicsManager::DrawRay(const _fvector& vStartPos, const _fvector& vEndPos)
+void CPhysicsManager::DrawRay(_fvector vStartPos, _fvector vEndPos)
 {
 	static_cast<CDebugRender*>(m_pDebugRenderer)->Begin();
 	m_pDebugRenderer->DrawLine(LoadVec3(vStartPos), LoadVec3(vEndPos), Color(255.f, 0.f, 0.f, 1.f));
 	static_cast<CDebugRender*>(m_pDebugRenderer)->End();
 }
-void CPhysicsManager::Add_DebugSphere(const _fvector& vCenter, _float fRadius, const Color& color)
+void CPhysicsManager::Add_DebugSphere(_fvector vCenter, _float fRadius, const Color& color)
 {
 	DEBUG_SPHERE Sphere;
 	XMStoreFloat3(&Sphere.vCenter, vCenter);
@@ -470,7 +472,7 @@ void CPhysicsManager::Add_DebugSphere(const _fvector& vCenter, _float fRadius, c
 	Sphere.color = color;
 	m_DebugSpheres.push_back(Sphere);
 }
-void CPhysicsManager::Add_DebugLine(const _fvector& vStart, const _fvector& vEnd, const Color& color)
+void CPhysicsManager::Add_DebugLine(_fvector vStart, _fvector vEnd, const Color& color)
 {
 	DEBUG_LINE Line;
 	XMStoreFloat3(&Line.vStart, vStart);
