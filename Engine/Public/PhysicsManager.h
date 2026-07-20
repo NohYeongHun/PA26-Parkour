@@ -62,24 +62,24 @@ public:
 #ifdef _DEBUG
 	void				Render();
 	void				DrawShape(const Shape* pShape, RMat44 Matrix, Color BodyColor = Color(0.f, 255.f, 0.f, 1.f));
-	void				DrawRay(const _fvector& vStartPos, const _fvector& vEndPos);
+	void				DrawRay(_fvector vStartPos, _fvector vEndPos);
 	void				DrawBoxCast(const Shape* pShape, const RMat44& StartMatrix, const RMat44& EndMatrix, _bool isHit, const vector<_float3>& HitPoints);
 
 	void				DrawShapeCast(const Shape* pShape, const RMat44& StartMatrix, const RMat44& EndMatrix, _bool isHit, const vector<_float3>& HitPoints);
 	_bool				IsParkourDebug() { return m_isParkourDebug; }
 
 	// 지정한 지점에 와이어 스피어
-	void				Add_DebugSphere(const _fvector& vCenter, _float fRadius, const Color& color = Color(0.f, 255.f, 255.f, 1.f));
+	void				Add_DebugSphere(_fvector vCenter, _float fRadius, const Color& color = Color(0.f, 255.f, 255.f, 1.f));
 	// 지정한 두 지점 사이의 라인
-	void				Add_DebugLine(const _fvector& vStart, const _fvector& vEnd, const Color& color = Color(0.f, 255.f, 0.f, 1.f));
+	void				Add_DebugLine(_fvector vStart, _fvector vEnd, const Color& color = Color(0.f, 255.f, 0.f, 1.f));
 #endif
 
-	_bool				Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, _float4* pOut);
-	_bool				Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer, _float4* pOut);
-	RAY_CAST_HIT		Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer);
-	_bool				Shape_Cast(RefConst<Shape> pShape,  const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, const _float fDistance, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit);
+	_bool				Ray_Cast(_fvector vStartPos, _fvector vEndPos, _float4* pOut);
+	_bool				Ray_Cast(_fvector vStartPos, _fvector vEndPos, const uint16 iTargetObjectLayer, _float4* pOut);
+	RAY_CAST_HIT		Ray_Cast(_fvector vStartPos, _fvector vEndPos, const uint16 iTargetObjectLayer);
+	_bool				Shape_Cast(RefConst<Shape> pShape,  _fvector vQuat, _fvector vPos, _fvector vDir, const _float fDistance, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit);
 	// 스피어 스윕
-	_bool				Sphere_Cast(const _fvector& vPos, const _fvector& vDir, const _float fDistance, const _float fRadius, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit);
+	_bool				Sphere_Cast(_fvector vPos, _fvector vDir, const _float fDistance, const _float fRadius, const uint16 iTargetObjectLayer, SHAPE_CAST_HIT& OutHit);
 	_bool				Get_Body_AABB(const BodyID& ID, _float3& vOutMin, _float3& vOutMax);
 	RefConst<Shape> Get_SphereShape(_float fRadius);
 	
@@ -115,6 +115,7 @@ private:
 	vector<CharacterVirtual*>*				m_Virtuals = { nullptr };
 	_uint		m_iNumObjectLayer = {};
 
+	unordered_map<_float, RefConst<Shape>> m_SphereShapeCache;
 #ifdef _DEBUG
 	DebugRenderer*	m_pDebugRenderer = { nullptr };
 	BodyManager::DrawSettings m_DrawSetting;
@@ -123,7 +124,7 @@ private:
 	_uint m_iHighlightLayer = {};
 	vector<pair<_float3, _float3>>	m_RayPoint;
 
-	unordered_map<_float, RefConst<Shape>> m_SphereShapeCache;
+	
 
 
 	struct BOX_CAST_DEBUG

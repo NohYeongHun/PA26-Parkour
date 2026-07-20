@@ -1,5 +1,6 @@
 ﻿#include "ClientPch.h"
 #include "EnvironmentQueryComponent.h"
+#include "Engine_Profile.h"
 
 
 CEnvironmentQueryComponent::CEnvironmentQueryComponent(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
@@ -66,6 +67,7 @@ _vector CEnvironmentQueryComponent::Get_ScanDir() const
 
 void CEnvironmentQueryComponent::Execute()
 {
+	PROFILE_ZONE();
 	m_Perception = {};
 
 	Scan_Reach();
@@ -84,10 +86,18 @@ void CEnvironmentQueryComponent::Execute()
 _bool CEnvironmentQueryComponent::Detect_Obstacle()
 {
 	SHAPE_CAST_HIT ShapeHit{};
+
+	_vector vScanDir{};
+	if (m_hasScanDirOverride)
+		vScanDir = XMLoadFloat3(&m_vScanDirOverride);
+	else
+		vScanDir = m_pOwnerTransformCom->Get_State(STATE::LOOK);
+
 	const _vector vCastQuat = m_hasScanDirOverride ? XMQuaternionIdentity() : m_pOwnerTransformCom->Get_Quaternion();
+	const _vector vCastPos = m_pOwnerTransformCom->Get_State(STATE::POSITION)
+		+ m_pOwnerColliderCom->Get_Offset();
 	_bool isHit = m_pGameInstance->Shape_Cast(m_pOwnerColliderCom->Get_Shape(), vCastQuat,
-			m_pOwnerTransformCom->Get_State(STATE::POSITION) + m_pOwnerColliderCom->Get_Offset(),
-			Get_ScanDir(), m_fShapeTraceDistance, ENUM_CLASS(m_eTargetLayer), ShapeHit);
+			vCastPos, vScanDir, m_fShapeTraceDistance, ENUM_CLASS(m_eTargetLayer), ShapeHit);
 
 	m_Perception.Scan.isObstacleDetected = isHit;
 	if (isHit && (nullptr != ShapeHit.pDesc))
@@ -103,7 +113,7 @@ _bool CEnvironmentQueryComponent::Detect_Obstacle()
 	return isHit;
 }
 
-LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray(const _fvector& vStart, const _fvector& vEnd, _uint iLayer, RAY_KIND eKind)
+LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray(_fvector vStart, _fvector vEnd, _uint iLayer, RAY_KIND eKind)
 {
 	LINE_TRACE_HIT lineTrace;
 	RAY_CAST_HIT RayCastHit = m_pGameInstance->Ray_Cast(vStart, vEnd, iLayer);
@@ -135,7 +145,7 @@ LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray(const _fvector& vStart, cons
 	return lineTrace;
 }
 
-LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray_WithMapFallback(const _fvector& vStart, const _fvector& vEnd, RAY_KIND eKind)
+LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray_WithMapFallback(_fvector vStart, _fvector vEnd, RAY_KIND eKind)
 {
 	// Land 구간을 찾으므로, Parkour Layer, Map Layer를 둘다 찾습니다.
 	LINE_TRACE_HIT Hit = Cast_Ray(vStart, vEnd, ENUM_CLASS(m_eTargetLayer), eKind);
@@ -172,7 +182,7 @@ void CEnvironmentQueryComponent::Scan_Obstacle()
 	if (Scan.HeadHit.isHit)  Scan.iHeightFlag |= ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD);
 }
 
-// 손 뻗기 대역(머리~최대 리치) 전방 스피어 캐스트
+// 손 뻗기 대역(머리~최대 리치) 전방 캡슐 캐스트
 void CEnvironmentQueryComponent::Scan_Reach()
 {
 	OBSTACLE_SCAN& Scan = m_Perception.Scan;
@@ -186,10 +196,12 @@ void CEnvironmentQueryComponent::Scan_Reach()
 	_vector vStart = vBottom + XMVectorSet(0.f, fBandCenterY, 0.f, 0.f);
 
 	SHAPE_CAST_HIT Hit{};
+	OutputDebugStringA("[EQDBG-SRC] Scan_Reach\n");
 	if (!m_pGameInstance->Shape_Cast(m_pOwnerColliderCom->Get_Shape(), XMQuaternionIdentity(),
 			vStart, vLook, m_fLineTraceDistance, ENUM_CLASS(m_eTargetLayer), Hit))
 		return;
 
+	Scan.isObstacleDetected		   = true;
 	Scan.Reach.Hit.isHit           = true;
 	Scan.Reach.Hit.vHitPosition    = _float3(Hit.vHitPoint.x, Hit.vHitPoint.y, Hit.vHitPoint.z);
 	Scan.Reach.Hit.vHitNormal      = _float3(Hit.vHitNormal.x, Hit.vHitNormal.y, Hit.vHitNormal.z);
@@ -199,17 +211,18 @@ void CEnvironmentQueryComponent::Scan_Reach()
 	if (Hit.pDesc)
 		Scan.Reach.eObjectFlag = static_cast<CALLBACK_CLIENT*>(Hit.pDesc)->eObjectParkourFlag;
 
+
 	Probe_ReachEdge(vBottom);
 }
 
-void CEnvironmentQueryComponent::Probe_ReachEdge(const _fvector& vBottom)
+void CEnvironmentQueryComponent::Probe_ReachEdge(_fvector vBottom)
 {
 	OBSTACLE_SCAN& Scan = m_Perception.Scan;
 
 	_vector vLook = Get_ScanDir();
 	_vector vNormalXZ = XMVectorSetY(XMLoadFloat3(&Scan.Reach.Hit.vHitNormal), 0.f);
 	_vector vInward = XMVectorGetX(XMVector3LengthSq(vNormalXZ)) > 1e-4f
-		? -XMVector3Normalize(vNormalXZ) : vLook;
+		? -XMVector3Normalize(vNormalXZ) : vLook; // 벽 Normal의 반대 방향 Vector를 얻는데, 너무 값이 작을 경우 Look벡터를 사용한다.
 	_vector vProbeXZ = XMLoadFloat3(&Scan.Reach.Hit.vHitPosition) + vInward * (m_pBodyProfile->fRadius * 0.5f);
 	const _float fTopY = XMVectorGetY(vBottom) + m_pBodyProfile->fMaxReach + m_pBodyProfile->fRadius;
 	_vector vDownStart = XMVectorSetY(vProbeXZ, fTopY);
@@ -240,7 +253,7 @@ void CEnvironmentQueryComponent::Measure_Geometry()
 	Measure_StandPos(Frame);
 	Measure_Landing(Frame);
 
-	// Vault 후보(무릎 히트·머리 미스)일 때만 경로·착지 클리어런스 측정 — 프레임당 캡슐 캐스트 최대 2회
+	// Vault 후보(무릎 히트·머리 미스)일 때만 경로·착지 클리어런스 측정
 	const _uint iFlag = m_Perception.Scan.iHeightFlag;
 	if ((iFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::KNEE)) && !(iFlag & ENUM_CLASS(HEIGHT_HIT_FLAG::HEAD))
 	 && m_Perception.Geometry.Top.isReachable && m_Perception.Geometry.hasDepth)
@@ -447,10 +460,11 @@ void CEnvironmentQueryComponent::Measure_Landing(const MEASURE_FRAME& Frame)
 	}
 }
 
-_bool CEnvironmentQueryComponent::Sweep_BodyCapsule(const _fvector& vCenter, const _fvector& vDir, _float fDist, SHAPE_CAST_HIT& OutHit)
+_bool CEnvironmentQueryComponent::Sweep_BodyCapsule(_fvector vCenter, _fvector vDir, _float fDist, SHAPE_CAST_HIT& OutHit)
 {
 	// Client는 Jolt 셰이프를 직접 생성할 수 없으므로 엔진이 만든 소유자 바디 캡슐(Get_Shape)을 재사용한다.
 	SHAPE_CAST_HIT HitA{}, HitB{};
+	OutputDebugStringA("[EQDBG-SRC] Sweep_BodyCapsule\n");
 	const _bool isHitA = m_pGameInstance->Shape_Cast(m_pOwnerColliderCom->Get_Shape(), XMQuaternionIdentity(), vCenter, vDir, fDist, ENUM_CLASS(m_eTargetLayer), HitA);
 	const _bool isHitB = m_pGameInstance->Shape_Cast(m_pOwnerColliderCom->Get_Shape(), XMQuaternionIdentity(), vCenter, vDir, fDist, ENUM_CLASS(COLLISIONLAYER::MAP), HitB);
 
@@ -566,7 +580,7 @@ void CEnvironmentQueryComponent::Print_Debug()
 }
 #endif // _DEBUG
 
-_bool CEnvironmentQueryComponent::Find_Ground(const _fvector& vProbePos, _float fUpOffset, _float fMaxDrop, _float3& vOutGroundPos)
+_bool CEnvironmentQueryComponent::Find_Ground(_fvector vProbePos, _float fUpOffset, _float fMaxDrop, _float3& vOutGroundPos)
 {
 	_vector vStart = vProbePos + XMVectorSet(0.f, fUpOffset, 0.f, 0.f);
 	_vector vEnd   = vProbePos - XMVectorSet(0.f, fMaxDrop,  0.f, 0.f);

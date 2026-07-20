@@ -24,7 +24,7 @@ private:
 
 public:
 	const Shape*						Get_Shape() const { return m_pShape; }
-	const _fvector&						Get_Offset() const;
+	const _vector						Get_Offset() const;
 	const _float						Get_Height() const { return m_fHeight; }
 	const _float						Get_Radius() const { return m_fRadius; }
 	// Data (void*)

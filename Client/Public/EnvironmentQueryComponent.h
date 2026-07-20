@@ -55,13 +55,13 @@ public:
 
 public:
 	void Execute();
-	_bool Find_Ground(const _fvector& vProbePos, _float fUpOffset, _float fMaxDrop, _float3& vOutGroundPos);
+	_bool Find_Ground(_fvector vProbePos, _float fUpOffset, _float fMaxDrop, _float3& vOutGroundPos);
 
 private:
 	_bool Detect_Obstacle();
 	void  Scan_Obstacle();
 	void  Scan_Reach();
-	void  Probe_ReachEdge(const _fvector& vBottom);
+	void  Probe_ReachEdge(_fvector vBottom);
 
 private:
 	void   Measure_Geometry();
@@ -77,11 +77,11 @@ private:
 	void   Measure_LandingClearance(const MEASURE_FRAME& Frame);
 
 	// 소유자 바디 캡슐을 vCenter에서 vDir로 스윕
-	_bool  Sweep_BodyCapsule(const _fvector& vCenter, const _fvector& vDir, _float fDist, SHAPE_CAST_HIT& OutHit);
+	_bool  Sweep_BodyCapsule(_fvector vCenter, _fvector vDir, _float fDist, SHAPE_CAST_HIT& OutHit);
 
 private:
-	LINE_TRACE_HIT Cast_Ray(const _fvector& vStart, const _fvector& vEnd, _uint iLayer, RAY_KIND eKind);
-	LINE_TRACE_HIT Cast_Ray_WithMapFallback(const _fvector& vStart, const _fvector& vEnd, RAY_KIND eKind);
+	LINE_TRACE_HIT Cast_Ray(_fvector vStart, _fvector vEnd, _uint iLayer, RAY_KIND eKind);
+	LINE_TRACE_HIT Cast_Ray_WithMapFallback(_fvector vStart, _fvector vEnd, RAY_KIND eKind);
 	_vector Get_ScanDir() const;
 
 #ifdef _DEBUG

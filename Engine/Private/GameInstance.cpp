@@ -781,28 +781,28 @@ void CGameInstance::Remove_Virtual(CharacterVirtual* pVirtual)
 {
 	m_pPhysicsManager->Remove_Virtual(pVirtual);
 }
-_bool CGameInstance::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, _float4* pOut)
+_bool CGameInstance::Ray_Cast(_fvector vStartPos, _fvector vEndPos, _float4* pOut)
 {
 	return m_pPhysicsManager->Ray_Cast(vStartPos, vEndPos, pOut);
 }
 
-_bool CGameInstance::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer, _float4* pOut)
+_bool CGameInstance::Ray_Cast(_fvector vStartPos, _fvector vEndPos, const uint16 iTargetObjectLayer, _float4* pOut)
 {
 	return m_pPhysicsManager->Ray_Cast(vStartPos, vEndPos, iTargetObjectLayer, pOut);
 }
 
-RAY_CAST_HIT CGameInstance::Ray_Cast(const _fvector& vStartPos, const _fvector& vEndPos, const uint16 iTargetObjectLayer)
+RAY_CAST_HIT CGameInstance::Ray_Cast(_fvector vStartPos, _fvector vEndPos, const uint16 iTargetObjectLayer)
 {
 	return m_pPhysicsManager->Ray_Cast(vStartPos, vEndPos, iTargetObjectLayer);
 }
 
 
-_bool CGameInstance::Shape_Cast(RefConst<Shape> pShape, const _fvector& vQuat, const _fvector& vPos, const _fvector& vDir, _float fDistance, uint16 iObjectLayer, SHAPE_CAST_HIT& OutHit)
+_bool CGameInstance::Shape_Cast(RefConst<Shape> pShape, _fvector vQuat, _fvector vPos, _fvector vDir, _float fDistance, uint16 iObjectLayer, SHAPE_CAST_HIT& OutHit)
 {
 	return m_pPhysicsManager->Shape_Cast(pShape, vQuat, vPos, vDir, fDistance, iObjectLayer, OutHit);
 }
 
-_bool CGameInstance::Sphere_Cast(const _fvector& vPos, const _fvector& vDir, _float fDistance, _float fRadius, uint16 iObjectLayer, SHAPE_CAST_HIT& OutHit)
+_bool CGameInstance::Sphere_Cast(_fvector vPos, _fvector vDir, _float fDistance, _float fRadius, uint16 iObjectLayer, SHAPE_CAST_HIT& OutHit)
 {
 	return m_pPhysicsManager->Sphere_Cast(vPos, vDir, fDistance, fRadius, iObjectLayer, OutHit);
 }
