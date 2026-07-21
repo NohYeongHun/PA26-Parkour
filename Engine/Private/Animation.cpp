@@ -8,9 +8,9 @@
 #include "ColliderNotify.h"
 #include "EffectNotify.h"
 #include "ObjectFuncNotify.h"
-#include "StateFlagNotify.h"
-#include "MotionWarpNotify.h"
-#include "IKNotify.h"
+#include "StateFlagNotifyState.h"
+#include "MotionWarpNotifyState.h"
+#include "IKNotifyState.h"
 
 CAnimation::CAnimation()
 {
@@ -41,10 +41,12 @@ CAnimation::CAnimation(const CAnimation& Prototype)
 
 void CAnimation::Set_CurrentTrackPosition(_float fTrackPos)
 {
-	m_fCurrentTrackPosition = fTrackPos; 
+	m_fCurrentTrackPosition = fTrackPos;
 	m_iNotifyIndex = 0;
 	while(m_iNotifyIndex < m_AnimNotifies.size() && m_fCurrentTrackPosition > m_AnimNotifies[m_iNotifyIndex]->Get_TrackPosition())
 		m_iNotifyIndex++;
+
+	Force_EndNotifyStates();
 }
 
 void CAnimation::Release_Channels()
@@ -76,6 +78,10 @@ void CAnimation::Clear_AnimNotifies()
 		Safe_Release(pNotify);
 	m_AnimNotifies.clear();
 
+	for (auto& pNotifyState : m_AnimNotifyStates)
+		Safe_Release(pNotifyState);
+	m_AnimNotifyStates.clear();
+
 	m_iNotifyIndex = 0;
 }
 #endif // _DEBUG
@@ -98,9 +104,35 @@ void CAnimation::Load_Notify(const json& notifyJson
 	for (const auto& notifyObject : notifyJson)
 	{
 		string type = notifyObject["NotifyType"].get<string>();
+
+		if (type == "StateFlag")
+		{
+			CStateFlagNotifyState* pState = CStateFlagNotifyState::From_Json(notifyObject);
+			pState->Set_StateFlagCallback(StateFlagCallback);
+			m_AnimNotifyStates.emplace_back(pState);
+			continue;
+		}
+		if (type == "MotionWarp")
+		{
+			json warpJson = notifyObject;
+			if (warpJson.contains("EndTrackPosition") && warpJson["EndTrackPosition"].get<_float>() < 0.f)
+				warpJson["EndTrackPosition"] = m_fDuration;
+
+			CMotionWarpNotifyState* pState = CMotionWarpNotifyState::From_Json(warpJson);
+			pState->Set_WarpCallback(WarpCallback);
+			m_AnimNotifyStates.emplace_back(pState);
+			continue;
+		}
+		if (type == "IK")
+		{
+			CIKNotifyState* pState = CIKNotifyState::From_Json(notifyObject);
+			pState->Set_IKCallback(IKCallback);
+			m_AnimNotifyStates.emplace_back(pState);
+			continue;
+		}
+
 		CAnimNotify* pAnimNotify = { nullptr };
 
-		// 1.
 		if (type == "Sound")
 			pAnimNotify = CSoundNotify::From_Json(notifyObject);
 		else if (type == "Collider")
@@ -110,65 +142,14 @@ void CAnimation::Load_Notify(const json& notifyJson
 		}
 		else if (type == "Effect")
 		{
-			// EffectNotify
 			pAnimNotify = CEffectNotify::From_Json(notifyObject);
 			pAnimNotify->Set_EffectCallback(EffectCallback);
 		}
 		else if (type == "Object")
 		{
-			// ObjectNotify
 			CObjectFuncNotify* pObjectNotify = CObjectFuncNotify::From_Json(notifyObject);
 			pObjectNotify->Set_ObjectCallback(ObjectCallback);
 			pAnimNotify = pObjectNotify;
-		}
-		else if (type == "StateFlag")
-		{
-			// StateFlagNotify — 구간(EndTrackPosition)이 있으면 시작(on)/끝(off) 2개의 점으로 분해
-			CStateFlagNotify* pStateFlag = CStateFlagNotify::From_Json(notifyObject);
-			pStateFlag->Set_StateFlagCallback(StateFlagCallback);
-			pAnimNotify = pStateFlag;
-
-			if (notifyObject.contains("EndTrackPosition"))
-			{
-				CStateFlagNotify* pEndNotify = new CStateFlagNotify(
-					notifyObject["EndTrackPosition"],
-					notifyObject["FlagName"],
-					false); 
-				pEndNotify->Set_StateFlagCallback(StateFlagCallback);
-				m_AnimNotifies.emplace_back(pEndNotify);
-			}
-		}
-		else if (type == "MotionWarp")
-		{
-			json warpJson = notifyObject;
-			if (warpJson.contains("EndTrackPosition") && warpJson["EndTrackPosition"].get<_float>() < 0.f)
-				warpJson["EndTrackPosition"] = m_fDuration;
-
-			CMotionWarpNotify* pStart = CMotionWarpNotify::From_Json(warpJson);
-			pStart->Set_WarpCallback(WarpCallback);
-			pAnimNotify = pStart;
-
-			if (warpJson.contains("EndTrackPosition"))
-			{
-				CMotionWarpNotify* pEnd = new CMotionWarpNotify(
-					warpJson["EndTrackPosition"], warpJson.value("TargetName", string("")),
-					false, warpJson["EndTrackPosition"],
-					warpJson.value("WarpTranslation", true), warpJson.value("WarpRotation", false));
-				pEnd->Set_WarpCallback(WarpCallback);
-				m_AnimNotifies.emplace_back(pEnd);
-			}
-		}
-		else if (type == "IK")
-		{
-			CIKNotify* pBegin = CIKNotify::From_Json(notifyObject, true);
-			pBegin->Set_IKCallback(IKCallback);
-			pAnimNotify = pBegin;
-
-			if (notifyObject.contains("EndTrackPosition")) {
-				CIKNotify* pEnd = CIKNotify::From_Json(notifyObject, false);
-				pEnd->Set_IKCallback(IKCallback);
-				m_AnimNotifies.emplace_back(pEnd);
-			}
 		}
 		ASSERT_CRASH(pAnimNotify);
 
@@ -189,12 +170,40 @@ void CAnimation::Sort_Notify()
 
 void CAnimation::Sort_AnimNotify()
 {
-	if (0 == m_AnimNotifies.size())
-		return;
+	if (0 < m_AnimNotifies.size())
+	{
+		sort(m_AnimNotifies.begin(), m_AnimNotifies.end(), [](CAnimNotify* pSrc, CAnimNotify* pDst)->_bool{
+			return pSrc->Get_TrackPosition() < pDst->Get_TrackPosition();
+		});
+	}
 
-	sort(m_AnimNotifies.begin(), m_AnimNotifies.end(), [](CAnimNotify* pSrc, CAnimNotify* pDst)->_bool{
-		return pSrc->Get_TrackPosition() < pDst->Get_TrackPosition();
-	});
+	if (0 < m_AnimNotifyStates.size())
+	{
+		sort(m_AnimNotifyStates.begin(), m_AnimNotifyStates.end(), [](CAnimNotifyState* pSrc, CAnimNotifyState* pDst)->_bool {
+			return pSrc->Get_BeginTrackPos() < pDst->Get_BeginTrackPos();
+		});
+	}
+}
+
+void CAnimation::Update_NotifyStates()
+{
+	const _float t = m_fCurrentTrackPosition;
+	for (auto& pState : m_AnimNotifyStates)
+	{
+		if (false == pState->Is_Active() && t >= pState->Get_BeginTrackPos() && t < pState->Get_EndTrackPos())
+			pState->Notify_Begin();
+		else if (pState->Is_Active() && t >= pState->Get_EndTrackPos())
+			pState->Notify_End();
+	}
+}
+
+void CAnimation::Force_EndNotifyStates()
+{
+	for (auto& pState : m_AnimNotifyStates)
+	{
+		if (pState->Is_Active())
+			pState->Notify_End();
+	}
 }
 
 
@@ -250,28 +259,6 @@ _bool CAnimation::Update_TransformationMatrices(_float fTimeDelta, const vector<
 	return false;
 }
 
-//_bool CAnimation::Update_RibTransformationMatrices(_float fTimeDelta, const vector<class CBone*>& Bones, _float* pTrackPosition)
-//{
-//	if (nullptr != pTrackPosition)
-//		*pTrackPosition = m_fCurrentTrackPosition;
-//
-//	if (m_fCurrentTrackPosition > m_fDuration)
-//	{
-//		m_fCurrentTrackPosition = 0.f;
-//		return true;
-//	}
-//
-//
-//	for (size_t i = 0; i < m_iNumChannels; ++i)
-//	{
-//		m_Channels[i]->Update_RibTransformationMatrix(m_fCurrentTrackPosition, Bones, &m_CurrentFrameIndices[i]);
-//	}
-//
-//	m_fCurrentTrackPosition += m_fTickPerSecond * fTimeDelta;
-//
-//	return false;
-//}
-
 _bool CAnimation::Update_RibTransformationMatrices(_float fTrackPosition, const vector<class CBone*>& Bones, _float* pTrackPosition)
 {
 	m_fCurrentTrackPosition = fTrackPosition;
@@ -298,23 +285,16 @@ _bool CAnimation::Update_TransformationMatrices_All(_float fTimeDelta, const vec
 
 	if (m_fCurrentTrackPosition > m_fDuration)
 	{
+		Force_EndNotifyStates();
 		m_fCurrentTrackPosition = 0.f;
 		m_iNotifyIndex = 0;
 		return true;
 	}
 
-	
-	//while (m_iNotifyIndex < m_Notifies.size() && m_fCurrentTrackPosition >= m_Notifies[m_iNotifyIndex].fTrackPosition)
-	//	m_Notifies[m_iNotifyIndex++].Func();
-
-//#ifdef _DEBUG
-//	while (m_iNotifyIndex > 0 && m_fCurrentTrackPosition < m_AnimNotifies[m_iNotifyIndex]->Get_TrackPosition())
-//		m_AnimNotifies[m_iNotifyIndex--]->Execute();
-//#endif // _DEBUG
-
-
 	while (m_iNotifyIndex < m_AnimNotifies.size() && m_fCurrentTrackPosition >= m_AnimNotifies[m_iNotifyIndex]->Get_TrackPosition())
 		m_AnimNotifies[m_iNotifyIndex++]->Execute();
+
+	Update_NotifyStates();
 
 
 
@@ -329,23 +309,6 @@ _bool CAnimation::Update_TransformationMatrices_All(_float fTimeDelta, const vec
 
 	return false;
 }
-
-//_bool CAnimation::Blend_TransformationMatrices(_float fTimeDelta, const vector<class CBone*>& Bones, _float fTrackLength)
-//{
-//	if (m_fCurrentTrackPosition > fTrackLength)
-//	{
-//		m_fCurrentTrackPosition = 0.f;
-//		return true;
-//	}
-//
-//	for (size_t i = 0; i < m_iNumChannels; ++i)
-//	{
-//		m_Channels[i]->Blend_TransformationMatrix(m_fCurrentTrackPosition, Bones, fTrackLength);
-//	}
-//
-//	m_fCurrentTrackPosition += m_fTickPerSecond * fTimeDelta;
-//	return false;
-//}
 
 /*
 	1. 현재 fWeight가 1.f를 넘으면 멈춥니다.
@@ -397,18 +360,18 @@ _bool CAnimation::Update_TrackPosition(_float fTimeDelta, _float* pTrackPosition
 
 	if (m_fCurrentTrackPosition > m_fDuration)
 	{
+		Force_EndNotifyStates();	
 		m_fCurrentTrackPosition = 0.f;
 		m_iNotifyIndex = 0;
 		return true;
 	}
 
-	// Notify State 추가 예정.
 	while (m_iNotifyIndex < m_AnimNotifies.size() && m_fCurrentTrackPosition >= m_AnimNotifies[m_iNotifyIndex]->Get_TrackPosition())
 		m_AnimNotifies[m_iNotifyIndex++]->Execute();
 
- 	m_fCurrentTrackPosition += m_fTickPerSecond * fTimeDelta;
+	Update_NotifyStates();
 
-	
+ 	m_fCurrentTrackPosition += m_fTickPerSecond * fTimeDelta;
 
 	return false;
 }
@@ -423,26 +386,15 @@ _bool CAnimation::Bind_MorphChannels(const vector<string>& modelShapeKeys)
 	{
 		const _char* pChannelName = m_MorphMeshChannels[i]->Get_Name();
 
-		// 모델의 쉐이프 키 목록에서 이름이 같은 인덱스를 찾음
 		for (size_t j = 0; j < modelShapeKeys.size(); ++j)
 		{
 			if (modelShapeKeys[j] == pChannelName)
 			{
-				// 매핑 성공! (예: Channel 0번은 Model Index 3번을 제어)
 				m_MorphKeyIndicies[i] = static_cast<_int>(j); 
 				break;
 			}
 		}
 	}
-
-//#ifdef _DEBUG
-//	// 
-//	if (strcmp(m_szName, "Stand2") == 0)
-//		Print_MorphKeyIndices();
-//#endif // _DEBUG
-
-
-
 	
 	return true;
 }
@@ -579,6 +531,10 @@ void CAnimation::Free()
 	for (auto& pAnimNotfiy : m_AnimNotifies)
 		Safe_Release(pAnimNotfiy);
 	m_AnimNotifies.clear();
+
+	for (auto& pNotifyState : m_AnimNotifyStates)
+		Safe_Release(pNotifyState);
+	m_AnimNotifyStates.clear();
 
 	m_Notifies.clear();
 

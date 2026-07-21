@@ -580,7 +580,6 @@ namespace Engine
 		_vector			 vCurTargetPos;
 	} IK_GOAL;
 
-
 	typedef struct tagIKResult { 
 		_float fPosError; 
 		_uint iIterations; 

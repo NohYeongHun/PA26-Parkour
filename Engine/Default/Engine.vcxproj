@@ -84,7 +84,6 @@
     <ClInclude Include="..\public\HdrTexture.h" />
     <ClInclude Include="..\Public\HZB.h" />
     <ClInclude Include="..\Public\IKComponent.h" />
-    <ClInclude Include="..\Public\IKNotify.h" />
     <ClInclude Include="..\Public\IKSolver.h" />
     <ClInclude Include="..\Public\IKSovler_CCD.h" />
     <ClInclude Include="..\Public\IKSovler_Fabrik.h" />
@@ -131,8 +130,10 @@
     <ClInclude Include="..\public\ShadowMap.h" />
     <ClInclude Include="..\Public\ShapeKey.h" />
     <ClInclude Include="..\Public\SoundNotify.h" />
-    <ClInclude Include="..\Public\StateFlagNotify.h" />
-    <ClInclude Include="..\Public\MotionWarpNotify.h" />
+    <ClInclude Include="..\Public\AnimNotifyState.h" />
+    <ClInclude Include="..\Public\StateFlagNotifyState.h" />
+    <ClInclude Include="..\Public\MotionWarpNotifyState.h" />
+    <ClInclude Include="..\Public\IKNotifyState.h" />
     <ClInclude Include="..\public\SSAO.h" />
     <ClInclude Include="..\Public\State.h" />
     <ClInclude Include="..\Public\AnimationController.h" />
@@ -177,7 +178,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Private\IKComponent.cpp" />
-    <ClCompile Include="..\Private\IKNotify.cpp" />
     <ClCompile Include="..\Private\IKSolver.cpp" />
     <ClCompile Include="..\Private\IKSovler_CCD.cpp" />
     <ClCompile Include="..\Private\IKSovler_Fabrik.cpp" />
@@ -286,8 +286,10 @@
     <ClCompile Include="..\private\ShadowMap.cpp" />
     <ClCompile Include="..\Private\ShapeKey.cpp" />
     <ClCompile Include="..\Private\SoundNotify.cpp" />
-    <ClCompile Include="..\Private\StateFlagNotify.cpp" />
-    <ClCompile Include="..\Private\MotionWarpNotify.cpp" />
+    <ClCompile Include="..\Private\AnimNotifyState.cpp" />
+    <ClCompile Include="..\Private\StateFlagNotifyState.cpp" />
+    <ClCompile Include="..\Private\MotionWarpNotifyState.cpp" />
+    <ClCompile Include="..\Private\IKNotifyState.cpp" />
     <ClCompile Include="..\private\SSAO.cpp" />
     <ClCompile Include="..\Private\State.cpp" />
     <ClCompile Include="..\Private\AnimationController.cpp" />

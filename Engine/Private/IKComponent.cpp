@@ -22,8 +22,16 @@ CIKComponent::CIKComponent(const CIKComponent& Prototype)
 
 void CIKComponent::Set_Target(const _string& strGoal, _vector& vWorldPos)
 {
-	_uint iGoalHandle = m_GoalHandles[strGoal];
-	m_Goals[iGoalHandle].vCurTargetPos = vWorldPos;
+	auto iter = m_GoalHandles.find(strGoal);
+	if (iter == m_GoalHandles.end())
+		return;
+
+	IK_GOAL& goal = m_Goals[iter->second];
+	_matrix matWorldInv = m_pTransformCom->Get_WorldMatrix_Inv();
+	_vector vModel = XMVector3TransformCoord(vWorldPos, matWorldInv); // 모델 스페이스 변환
+
+	goal.Chain.vTargetPos = vModel;
+	goal.vCurTargetPos = vModel;
 }
 
 
@@ -61,10 +69,10 @@ void CIKComponent::Register_Goals(const _string& strFolderPath)
 
 		// 4. Register_Goal이 안 담는 나머지 채우기
 		IK_GOAL& goal = m_Goals[iGoal];
-		if (j.contains("poleVector") && j["poleVector"].size() == 3) // Two_Bone Solver 특화
-			goal.Chain.vPoleVector = XMVectorSet(j["poleVector"][0], j["poleVector"][1], j["poleVector"][2], 0.f);
-		goal.Chain.fPosWeight = j.value("posWeight", 1.f);
-		goal.Chain.fRotWeight = j.value("rotWeight", 1.f);
+		if (j.contains("PoleVector") && j["PoleVector"].size() == 3)
+			goal.Chain.vPoleVector = XMVectorSet(j["PoleVector"][0], j["PoleVector"][1], j["PoleVector"][2], 0.f);
+		goal.Chain.fPosWeight = j.value("PosWeight", 1.f);
+		goal.Chain.fRotWeight = j.value("RotWeight", 1.f);
 	}
 }
 
@@ -100,6 +108,7 @@ _uint CIKComponent::Register_Goal(const _string& strName, EIKSOLVER_TYPE eSolver
 
 void CIKComponent::Begin_Goal(const _string& strGoalName, EIKTARGET_MODE eMode, _float fPosWeight, _float fRotWeight, _float fBlendSec)
 {
+
 }
 
 void CIKComponent::End_Goal(const _string& strGoalName, _float fBlendSec)
@@ -109,6 +118,7 @@ void CIKComponent::End_Goal(const _string& strGoalName, _float fBlendSec)
 // Solver 생성.
 HRESULT CIKComponent::Initialize_Prototype()
 {
+	m_Solvers.resize(ENUM_CLASS(EIKSOLVER_TYPE::END));
 	m_Solvers[ENUM_CLASS(EIKSOLVER_TYPE::TWO_BONE)] = CIKSovler_TwoBone::Create(m_pDevice, m_pContext);
 	m_Solvers[ENUM_CLASS(EIKSOLVER_TYPE::CCD)]		= CIKSovler_CCD::Create(m_pDevice, m_pContext);
 	m_Solvers[ENUM_CLASS(EIKSOLVER_TYPE::FABRIK)]	= CIKSovler_Fabrik::Create(m_pDevice, m_pContext);

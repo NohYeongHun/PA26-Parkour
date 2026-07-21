@@ -45,6 +45,8 @@ public:
 	void				Sort_AnimNotify();
 	void				Reset_Status();
 
+	void				Force_EndNotifyStates();	// 활성 구간 전부 강제 End (인터럽트/랩/재시작용)
+
 public:
 	HRESULT			Initialize(ifstream& InputFile, const vector<class CBone*>& Bones, MODELTYPE eModelType = MODELTYPE::ANIM);
 	_bool				Update_TransformationMatrices(_float fTimeDelta, const vector<class CBone*>& Bones, _float* pTrackPosition = nullptr);
@@ -80,8 +82,11 @@ private:
 
 	_uint							m_iNotifyIndex = {};
 	
-	// Notify 
+	// Notify
 	vector<class CAnimNotify*>		m_AnimNotifies;
+
+	// Notify State (구간 노티 — StateFlag/MotionWarp/IK)
+	vector<class CAnimNotifyState*>	m_AnimNotifyStates;
 
 #pragma region MORPH TARGET
 	// Morph Target Data
@@ -101,6 +106,8 @@ private:
 
 
 private:
+	void Update_NotifyStates();		// 매 프레임 구간 스캔 — 중간 시작 Begin도 이 스캔이 담당
+
 	HRESULT Ready_NormalAnimations(ifstream& InputFile, const vector<class CBone*>& Bones, MODELTYPE eModelType = MODELTYPE::ANIM);
 	HRESULT Ready_CharacterAnimations(ifstream& InputFile, const vector<class CBone*>& Bones, MODELTYPE eModelType = MODELTYPE::ANIM);
 

@@ -167,9 +167,6 @@ _bool CAnimator::Play_BlendSpace2D_CPU(const BLENDSPACE_2D_DESC& desc, const ROO
 	return false;
 }
 
-// Update phase: last point that reads game state. Snapshots parameters, decides
-// playback change, advances tracks/phases/crossfade and fires notifies.
-// No bone is written here.
 void CAnimator::Update_Phase()
 {
 	Snapshot_Params();
@@ -320,7 +317,14 @@ void CAnimator::Handle_PlaybackChange(ETransitionSourceType eNewType, const _str
 		m_fBlendOverride = -1.f;
 		return;
 	}
-	
+
+	if (ETransitionSourceType::CLIP == m_eCurPlayType)
+	{
+		auto iterOld = m_pModel->m_Animations.find(m_strCurPlayKey);
+		if (iterOld != m_pModel->m_Animations.end())
+			iterOld->second->Force_EndNotifyStates();
+	}
+
 	_float fDuration;
 	if (m_fBlendOverride >= 0.f)
 	{
@@ -701,6 +705,13 @@ void CAnimator::HandleAnimationChange(const _string& strAnimationName)
 {
 	if (m_strPreAnimation == strAnimationName)
 		return;
+
+	if (false == m_strPreAnimation.empty())
+	{
+		auto iterOld = m_pModel->m_Animations.find(m_strPreAnimation);
+		if (iterOld != m_pModel->m_Animations.end())
+			iterOld->second->Force_EndNotifyStates();
+	}
 
 	m_isChangeAnimation = true;
 	m_strPreAnimation = strAnimationName;

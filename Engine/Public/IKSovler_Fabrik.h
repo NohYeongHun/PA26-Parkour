@@ -8,6 +8,7 @@ private:
 	explicit CIKSovler_Fabrik(const CIKSovler_Fabrik& Prototype);
 	virtual ~CIKSovler_Fabrik() = default;
 
+
 public:
 	virtual HRESULT		Initialize_Prototype() override;
 	virtual HRESULT		Initialize_Clone(void* pArg) override;
