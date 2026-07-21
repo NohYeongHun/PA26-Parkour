@@ -543,6 +543,12 @@ void CModel::Update_BoneMatrix_Map()
 		pBone->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_PreTransformMatrix), m_Bones);
 }
 
+void CModel::Update_BoneMatrix_Map(_uint iStartIndex)
+{
+	for (_uint i = iStartIndex; i < static_cast<_uint>(m_Bones.size()); ++i)
+		m_Bones[i]->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_PreTransformMatrix), m_Bones);
+}
+
 // Render 단위가 Mesh 단위.
 HRESULT CModel::Render(_uint iMeshIndex)
 {

@@ -56,17 +56,17 @@ _bool CEnvironmentQueryComponent::Resolve_Anchor(const _string& token, _vector& 
 	_vector vEdge = XMVectorSetW(XMLoadFloat3(&Geo.Top.vEdgePos), 1.f);
 	_vector vTrav = XMLoadFloat3(&Geo.vTraversalDir);
 	_vector vLat = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), vTrav)); // 엣지 좌우측
-	const _float fSpacing = 0.25f;
+	const _float fSpacing = 0.35f;
 
 	if (token == "TOP_LEFT_EDGE")
 	{
-		vOutPos = vEdge + vLat * fSpacing;
+		vOutPos = vEdge - vLat * fSpacing + XMVector3Normalize(vTrav) * 0.2f;
 		vOutNormal = XMLoadFloat3(&Geo.Top.vNormal);
 		return Geo.Top.isReachable;
 	}
 	if (token == "TOP_RIGHT_EDGE")
 	{
-		vOutPos = vEdge - vLat * fSpacing;
+		vOutPos = vEdge + vLat * fSpacing + XMVector3Normalize(vTrav) * 0.2f;
 		vOutNormal = XMLoadFloat3(&Geo.Top.vNormal);
 		return Geo.Top.isReachable;
 	}
@@ -109,7 +109,9 @@ void CEnvironmentQueryComponent::Execute()
 
 	Scan_Obstacle();
 	Measure_Geometry();
-
+#ifdef _DEBUG
+	m_pGameInstance->Add_DebugSphere(XMLoadFloat3(&m_Perception.Geometry.Top.vEdgePos), 0.1f, JPH::Color(0.f, 255.f, 0.f, 1.f));
+#endif
 #ifdef _DEBUG
 	Draw_DebugMarkers();
 #endif // _DEBUG
@@ -364,8 +366,13 @@ _bool CEnvironmentQueryComponent::Measure_Top(MEASURE_FRAME& Frame)
 
 	if (Geo.Front.hasHit)
 	{
-		_vector vFrontXZ = XMLoadFloat3(&Geo.Front.vHitPos);
-		Geo.Top.vEdgePos = _float3(XMVectorGetX(vFrontXZ), TopDownRay.vHitPosition.y, XMVectorGetZ(vFrontXZ));
+		const LINE_TRACE_HIT& TopHit = Scan.HeadHit.isHit ? Scan.HeadHit
+			: Scan.ChestHit.isHit ? Scan.ChestHit : Scan.KneeHit;
+		_vector vTopFrontXZ = XMLoadFloat3(&TopHit.vHitPosition);
+		Geo.Top.vEdgePos = _float3(XMVectorGetX(vTopFrontXZ), TopDownRay.vHitPosition.y, XMVectorGetZ(vTopFrontXZ));
+
+		//_vector vFrontXZ = XMLoadFloat3(&Geo.Front.vHitPos);
+		//Geo.Top.vEdgePos = _float3(XMVectorGetX(vFrontXZ), TopDownRay.vHitPosition.y, XMVectorGetZ(vFrontXZ));
 	}
 	else
 		Geo.Top.vEdgePos = TopDownRay.vHitPosition;

@@ -39,9 +39,9 @@ void CTraceurClimbHang::OnEnter(void* pArg)
 
 	// 1. Ready_Hang이 성공했다면? IK 실행. => Hang은 계속 유지되어야함.
 	m_pIKDriverCom->Activate("LeftArm", "TOP_LEFT_EDGE"
-		, EIKTARGET_MODE::POSITION, 1.f, 1.f, 0.2f, IK_TRIGGER::STATE, true);
-	m_pIKDriverCom->Activate("RightArm", "TOP_LEFT_EDGE"
-		, EIKTARGET_MODE::POSITION, 1.f, 1.f, 0.2f, IK_TRIGGER::STATE, true);
+		, EIKTARGET_MODE::POSITION, 1.f, 1.f, 0.4f, IK_TRIGGER::STATE, true);
+	m_pIKDriverCom->Activate("RightArm", "TOP_RIGHT_EDGE"
+		, EIKTARGET_MODE::POSITION, 1.f, 1.f, 0.4f, IK_TRIGGER::STATE, true);
 }
 
 void CTraceurClimbHang::OnExit()

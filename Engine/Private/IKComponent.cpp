@@ -60,6 +60,7 @@ void CIKComponent::Set_Target(const _string& strGoal, _fvector vWorldPos, _fvect
 
 	target.Chain.vTargetPos = vModelPos;
 	target.vCurTargetPos = vModelPos;
+	target.vTargetNormal = vModelNormal;
 }
 
 
@@ -125,6 +126,17 @@ _uint CIKComponent::Register_Target(const _string& strName, EIKSOLVER_TYPE eSolv
 		target.Chain.BoneChain.push_back(iBoneIndex);
 	}
 
+	if (eSolver == EIKSOLVER_TYPE::TWO_BONE && target.Chain.BoneChain.size() >= 3)
+	{
+		const vector<CBone*>& Bones = m_pModelCom->Get_Bones();
+		_uint iR = target.Chain.BoneChain[0];
+		_uint iM = target.Chain.BoneChain[1];
+		_uint iE = target.Chain.BoneChain[2];
+		// 부모 자식 관계가 아닌 Bone인경우 Crash
+		ASSERT_CRASH(Bones[iM]->Get_ParentIndex() == static_cast<_int>(iR));
+		ASSERT_CRASH(Bones[iE]->Get_ParentIndex() == static_cast<_int>(iM));
+	}
+
 	// 3. push한 위치가 handle값
 	_uint iGoal = static_cast<_uint>(m_Targets.size());
 	m_Targets.push_back(target);
@@ -170,9 +182,10 @@ HRESULT CIKComponent::Render()
 
 void CIKComponent::Execute(_float fTimeDelta)
 {
+	_uint iMinBone = UINT_MAX;
+
 	for (auto& target : m_Targets)
 	{
-		// 1. Target이 활성화되었는지 체크
 		if (!target.isEnable)
 			continue;
 
@@ -182,20 +195,24 @@ void CIKComponent::Execute(_float fTimeDelta)
 			continue;
 		}
 
-		// 2. fCurWeight를 fTargetWeigh로 램프
 		if (target.fCurWeight < target.fTargetWeight)
 			target.fCurWeight = min(target.fCurWeight + target.fBlendSpeed * fTimeDelta, target.fTargetWeight);
 		else if (target.fCurWeight > target.fTargetWeight)
 			target.fCurWeight = max(target.fCurWeight - target.fBlendSpeed * fTimeDelta, target.fTargetWeight);
 
-		// 3. 솔버 호출 => 솔버한테 적절한 데이터를 전달해야함.
 		IK_SOLVE_CONTEXT Context{};
 		Context.pBones = &m_pModelCom->Get_Bones();
 		Context.pTarget = &target;
 		Context.fTimeDelta = fTimeDelta;
-		m_Solvers[ENUM_CLASS(target.eSolver)]->Solve(Context);
 
+		IK_RESULT tResult = m_Solvers[ENUM_CLASS(target.eSolver)]->Solve(Context);
+
+		if (tResult.isSolved && !target.Chain.BoneChain.empty())
+			iMinBone = min(iMinBone, target.Chain.BoneChain[0]);
 	}
+
+	if (iMinBone != UINT_MAX)
+		m_pModelCom->Update_BoneMatrix_Map(iMinBone);
 }
 
 _uint CIKComponent::Find_BoneIndex(const char* pBoneName)

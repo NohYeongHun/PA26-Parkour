@@ -570,7 +570,7 @@ namespace Engine
 		_float fRotWeight; // 가중치
 	}IK_CHAIN_DESC;
 
-	typedef struct tagIKGoal
+	typedef struct tagIKTarget
 	{
 		_string          strName;		// 고정
 		EIKSOLVER_TYPE   eSolver;		// 고정
@@ -581,6 +581,7 @@ namespace Engine
 		_float			 fTargetWeight; // 수정되는 값
 		_float			 fBlendSpeed;	// 수정되는 값
 		_vector			 vCurTargetPos;	// 수정되는 값
+		_vector			 vTargetNormal; // 수정되는 값
 	} IK_TARGET;
 
 	typedef struct tagIKResult { 
