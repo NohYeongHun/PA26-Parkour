@@ -19,8 +19,11 @@ private:
 	virtual ~CIKComponent() = default;
 
 public:
-	void Register_AllSolvers(const _string& strFolderPath);
+	void Set_Target(const _string& strGoal, _vector& vWorldPos);
+	void Register_Goals(const _string& strFolderPath);
 	_uint Register_Goal(const _string& strName, EIKSOLVER_TYPE eSolver, const vector<_string>& BoneNames);
+
+public:
 
 public:
 	void Begin_Goal(const _string& strGoalName, EIKTARGET_MODE eMode, _float fPosWeight, _float fRotWeight, _float fBlendSec);
@@ -51,6 +54,7 @@ private:
 
 private:
 	_uint Find_BoneIndex(const char* pBoneName);
+	EIKSOLVER_TYPE To_SolverType(const _string& strSolverType);
 
 public:
 	static CIKComponent* Create(ID3D11Device * pDevice, ID3D11DeviceContext * pContext);

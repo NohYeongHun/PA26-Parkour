@@ -66,34 +66,6 @@ HRESULT CTraceur::Initialize_Clone(void* pArg)
 		return E_FAIL;
 	Bind_CollectSlots();
 	
-	auto StateFlagCallBack = [this](const _string& strFlag, _bool isOn) { Notify_StateFlag(strFlag, isOn); };
-
-	auto MotionWarpCallBack = [this](const _string& strName, _bool isStart, _float fEndPos, _bool bTrans, _bool bRot) {
-		if (m_pMotionWarpCom && m_pColliderCom)
-		{
-			m_pMotionWarpCom->On_WarpNotify(strName, isStart, fEndPos, bTrans, bRot);
-			m_pColliderCom->Set_Gravity(false);
-		};
-	};
-
-	auto IKCallBack = [this](const vector<IK_BINDING>& Bindings, _float fBlendSec, _bool isBegin) {
-		On_IK_Notify(Bindings, fBlendSec, isBegin);
-	};
-
-
-
-	m_pModelCom->Register_AllNotifies(
-		pDesc->strNotfiyFolderPath,
-		nullptr,   
-		nullptr,   
-		nullptr,   
-		StateFlagCallBack,
-		MotionWarpCallBack,
-		IKCallBack
-	);
-
-	
-
 	if (FAILED(Ready_Variables(pDesc)))
 		return E_FAIL;
 
@@ -292,12 +264,20 @@ void CTraceur::On_IK_Notify(const vector<IK_BINDING>& Bindings, _float fBlendSec
 	for (const auto& bind : Bindings) {
 		if (isBegin) {
 			m_pIKCom->Begin_Goal(bind.strGoalName, bind.eMode, bind.fPosWeight, bind.fRotWeight, fBlendSec);
+			m_ActiveIKSource[bind.strGoalName] = bind.strTargetSource;
 		}
 		else {
 			m_pIKCom->End_Goal(bind.strGoalName, fBlendSec);
+
+			if (m_ActiveIKSource.end() != m_ActiveIKSource.find(bind.strGoalName))
+			{
+				m_ActiveIKSource.erase(bind.strGoalName);
+			}
+			
 		}
 	}
 }
+
 
 // 객체 생성시에 pDesc에 등록된 정보를 가져올 수 있습니다.
 void CTraceur::OnCollider_During(_uint iLayer, void* pDesc, const ContactManifold& Manifold)
@@ -514,6 +494,30 @@ HRESULT CTraceur::Ready_EnvQueryComponents(const CHARACTER_DESC* pDesc)
 
 HRESULT CTraceur::Ready_Variables(const CHARACTER_DESC* pDesc)
 {
+	auto StateFlagCallBack = [this](const _string& strFlag, _bool isOn) { Notify_StateFlag(strFlag, isOn); };
+	auto MotionWarpCallBack = [this](const _string& strName, _bool isStart, _float fEndPos, _bool bTrans, _bool bRot) {
+		if (m_pMotionWarpCom && m_pColliderCom)
+		{
+			m_pMotionWarpCom->On_WarpNotify(strName, isStart, fEndPos, bTrans, bRot);
+			m_pColliderCom->Set_Gravity(false);
+		};
+	};
+	auto IKCallBack = [this](const vector<IK_BINDING>& Bindings, _float fBlendSec, _bool isBegin) {
+		On_IK_Notify(Bindings, fBlendSec, isBegin);
+	};
+
+	m_pModelCom->Register_AllNotifies(
+		pDesc->strNotfiyFolderPath,
+		nullptr,
+		nullptr,
+		nullptr,
+		StateFlagCallBack,
+		MotionWarpCallBack,
+		IKCallBack
+	);
+
+	m_pIKCom->Register_Goals(pDesc->strIKGoalFolderPath);
+
 	m_eCurLevel = pDesc->eCurLevel;
 
 	_fvector vPos = XMVectorSetW(XMLoadFloat3(&pDesc->vPosition), 1.f);

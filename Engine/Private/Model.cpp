@@ -516,8 +516,7 @@ HRESULT CModel::Clear_Materials(CDeferredShader* pShader, const _char* pConstanc
 
 void CModel::Clear_Animation(const _string& strAnimationName, _float fTrackPosition)
 {
-	// Data-side reset only. Root-motion/warp state reset lives in
-	// CAnimator::Clear_Animation, which delegates here.
+	// CAnimator::Clear_Animation, hich delegates here.
 	if (strAnimationName == "")
 		return;
 

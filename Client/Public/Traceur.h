@@ -29,6 +29,7 @@ public:
 public:
 	void Notify_StateFlag(const _string& strFlag, _bool isOn);
 	void On_IK_Notify(const vector<IK_BINDING>& bindings, _float blendSec, _bool isBegin);
+
 public:
 	void OnCollider_During(_uint iLayer, void* pDesc, const ContactManifold& Manifold);
 	void OnCollider_Enter(_uint iLayer, void* pDesc, const ContactManifold& Manifold);
@@ -65,6 +66,9 @@ private:
 	class CIKComponent*			m_pIKCom = { nullptr };
 
 private:
+	unordered_map<_string, _string> m_ActiveIKSource{};
+
+private:
 	BODY_PROFILE m_BodyProfile{};
 	HANG_CONTEXT m_HangCtx{};
 
@@ -90,6 +94,7 @@ private:
 	void Sync_Camera(_float fTimeDelta);
 	void Collect_StateFlags();
 	void Bind_CollectSlots();
+
 
 	struct COLLECT_SLOTS
 	{

@@ -21,6 +21,7 @@ public:
 		_float3 vRotation = { 0.f, 0.f, 0.f };
 		_float3 vPosition = { 0.f, 0.f, 0.f };
 		_string strNotfiyFolderPath = {};
+		_string strIKGoalFolderPath = {};
 	}CHARACTER_DESC;
 
 protected:

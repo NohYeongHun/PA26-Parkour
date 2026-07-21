@@ -320,7 +320,7 @@ void CAnimator::Handle_PlaybackChange(ETransitionSourceType eNewType, const _str
 		m_fBlendOverride = -1.f;
 		return;
 	}
-
+	
 	_float fDuration;
 	if (m_fBlendOverride >= 0.f)
 	{

@@ -407,9 +407,6 @@
     <Filter Include="01. Utility\04. Component\VIBuffer\Instance\FireFly">
       <UniqueIdentifier>{88af8b60-72fe-4c43-931f-273f2bf6f234}</UniqueIdentifier>
     </Filter>
-    <Filter Include="01. Utility\04. Component\20.Model_Streaming">
-      <UniqueIdentifier>{b6e24aa3-a926-43dd-9b4e-d07c9eaa0539}</UniqueIdentifier>
-    </Filter>
     <Filter Include="01. Utility\04. Component\Texture\Hdr">
       <UniqueIdentifier>{0afa1376-7b38-4c9f-98fb-74a9799ac323}</UniqueIdentifier>
     </Filter>
@@ -424,6 +421,9 @@
     </Filter>
     <Filter Include="01. Utility\04. Component\IK\Solver">
       <UniqueIdentifier>{6abe999e-ce43-4a44-b170-8223260d77d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Utility\04. Component\Model_Streaming">
+      <UniqueIdentifier>{b6e24aa3-a926-43dd-9b4e-d07c9eaa0539}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -855,19 +855,19 @@
       <Filter>01. Utility\04. Component\VIBuffer\Instance\FireFly</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\Model_Streaming.h">
-      <Filter>01. Utility\04. Component\20.Model_Streaming</Filter>
+      <Filter>01. Utility\04. Component\Model_Streaming</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\Mesh_Streaming.h">
-      <Filter>01. Utility\04. Component\20.Model_Streaming</Filter>
+      <Filter>01. Utility\04. Component\Model_Streaming</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\Model_Manager.h">
-      <Filter>01. Utility\04. Component\20.Model_Streaming</Filter>
+      <Filter>01. Utility\04. Component\Model_Streaming</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\BufferPool.h">
-      <Filter>01. Utility\04. Component\20.Model_Streaming</Filter>
+      <Filter>01. Utility\04. Component\Model_Streaming</Filter>
     </ClInclude>
     <ClInclude Include="..\Public\FreeList.h">
-      <Filter>01. Utility\04. Component\20.Model_Streaming</Filter>
+      <Filter>01. Utility\04. Component\Model_Streaming</Filter>
     </ClInclude>
     <ClInclude Include="..\public\HdrTexture.h">
       <Filter>01. Utility\04. Component\Texture\Hdr</Filter>
@@ -893,6 +893,9 @@
     </ClInclude>
     <ClInclude Include="..\Public\IKSovler_Fabrik.h">
       <Filter>01. Utility\04. Component\IK\Solver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\IKNotify.h">
+      <Filter>01. Utility\04. Component\Model\Animation\Notify</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1301,19 +1304,19 @@
       <Filter>01. Utility\04. Component\VIBuffer\Instance\FireFly</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\Mesh_Streaming.cpp">
-      <Filter>01. Utility\04. Component\20.Model_Streaming</Filter>
+      <Filter>01. Utility\04. Component\Model_Streaming</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\Model_Manager.cpp">
-      <Filter>01. Utility\04. Component\20.Model_Streaming</Filter>
+      <Filter>01. Utility\04. Component\Model_Streaming</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\Model_Streaming.cpp">
-      <Filter>01. Utility\04. Component\20.Model_Streaming</Filter>
+      <Filter>01. Utility\04. Component\Model_Streaming</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\BufferPool.cpp">
-      <Filter>01. Utility\04. Component\20.Model_Streaming</Filter>
+      <Filter>01. Utility\04. Component\Model_Streaming</Filter>
     </ClCompile>
     <ClCompile Include="..\Private\FreeList.cpp">
-      <Filter>01. Utility\04. Component\20.Model_Streaming</Filter>
+      <Filter>01. Utility\04. Component\Model_Streaming</Filter>
     </ClCompile>
     <ClCompile Include="..\private\HdrTexture.cpp">
       <Filter>01. Utility\04. Component\Texture\Hdr</Filter>
@@ -1339,6 +1342,9 @@
     </ClCompile>
     <ClCompile Include="..\Private\IKSovler_Fabrik.cpp">
       <Filter>01. Utility\04. Component\IK\Solver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Private\IKNotify.cpp">
+      <Filter>01. Utility\04. Component\Model\Animation\Notify</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

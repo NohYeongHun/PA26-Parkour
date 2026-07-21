@@ -84,6 +84,7 @@
     <ClInclude Include="..\public\HdrTexture.h" />
     <ClInclude Include="..\Public\HZB.h" />
     <ClInclude Include="..\Public\IKComponent.h" />
+    <ClInclude Include="..\Public\IKNotify.h" />
     <ClInclude Include="..\Public\IKSolver.h" />
     <ClInclude Include="..\Public\IKSovler_CCD.h" />
     <ClInclude Include="..\Public\IKSovler_Fabrik.h" />
@@ -176,6 +177,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Private\IKComponent.cpp" />
+    <ClCompile Include="..\Private\IKNotify.cpp" />
     <ClCompile Include="..\Private\IKSolver.cpp" />
     <ClCompile Include="..\Private\IKSovler_CCD.cpp" />
     <ClCompile Include="..\Private\IKSovler_Fabrik.cpp" />
