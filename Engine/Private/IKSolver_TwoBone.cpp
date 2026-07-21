@@ -2,6 +2,7 @@
 #include "IKSolver_TwoBone.h"
 #include "GameObject.h"
 #include "Bone.h"
+#include "Engine_Profile.h"
 
 CIKSolver_TwoBone::CIKSolver_TwoBone(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	: CIKSolver { pDevice, pContext }
@@ -34,8 +35,10 @@ HRESULT CIKSolver_TwoBone::Render()
 
 IK_RESULT CIKSolver_TwoBone::Solve(const IK_SOLVE_CONTEXT& Context)
 {
+	PROFILE_ZONE();
 	IK_RESULT tResult{};
 
+	const _float fEPS = 1e-6f;
 	const vector<CBone*>& Bones = *Context.pBones;
 	const IK_TARGET& Target = *Context.pTarget;
 	const vector<_uint>& Chain = Target.Chain.BoneChain;
@@ -61,23 +64,41 @@ IK_RESULT CIKSolver_TwoBone::Solve(const IK_SOLVE_CONTEXT& Context)
 	_vector vEndPos = XMLoadFloat4x4(Bones[iEnd]->Get_CombinedTransformationMatrix()).r[3];
 	_vector vTargetPos = Target.vCurTargetPos;
 
-	_vector vUpper = vMidPos - vRootPos;
-	_vector vLower = vEndPos - vMidPos;
-	_vector vTarget = vRootPos - vTargetPos;
+	_vector vUpper = vMidPos - vRootPos;		// Root -> Mid
+	_vector vLower = vEndPos - vMidPos;			// Mid -> End
+	_vector vTarget = vTargetPos - vRootPos;	// Root -> Target
 
-	_float l1 = XMVectorGetX(XMVector3Length(vUpper));	 // Root -> Mid
-	_float l2 = XMVectorGetX(XMVector3Length(vLower));	 // Mid -> End
-	_float d = XMVectorGetX(XMVector3Length(vTarget)); // Root -> Target
+	_float l1 = XMVectorGetX(XMVector3Length(vUpper));	 
+	_float l2 = XMVectorGetX(XMVector3Length(vLower));	
+	_float d = XMVectorGetX(XMVector3Length(vTarget)); 
 	
-	// 2. 사잇각 구하기. => 목표 값으로의 회전
+	// 2. 목표 값으로의 회전을 위한 사잇각 구하기.
 	_float cosTheta1 = std::clamp((l1 * l1 + d * d - l2 * l2) / ((2 * l1) * d), -1.f, 1.f);
 	_float theta1 = acosf(cosTheta1);
 	_float cosTheta2 = std::clamp((l1 * l1 + l2 * l2 - d * d) / (2 * l1 * l2), -1.f, 1.f);
 	_float theta2 = acosf(cosTheta2);
 
+	
 	// 3. 회전축 구하기.
-	_vector vTargetDir = XMVector3Normalize(vTargetPos - vRootPos);
-	_vector vPole = XMVector3Normalize(XMVector3Cross(XMVector3Cross(vUpper, vLower), vUpper));
+	// 현재 upper와 lower가 이루는 각에서 theta2가 되도록 Mid를 회전
+	// 회전축은 굽힘 평면의 법선 입니다.
+	// 평면의 법선은 vUpper와 vLower의 외적으로 구합니다.
+
+	_vector vRotAxis{};
+	_vector vRotCross = XMVector3Cross(vUpper, vLower);
+	// 예외상황 => 팔이 일직선이라면? 두 선이 평행해서 값이 0벡터에 가까워짐.
+	if (XMVectorGetX(XMVector3LengthSq(vRotCross)) < fEPS)
+	{
+		return tResult; // 예외처리 하지 않고 일단 반환
+	}
+	else
+	{
+		vRotAxis = XMVector3Normalize(vRotCross);
+	}
+
+
+	/*_vector vTargetDir = XMVector3Normalize(vTargetPos - vRootPos);
+	_vector vPole = XMVector3Normalize(XMVector3Cross(XMVector3Cross(vUpper, vLower), vUpper));*/
 
 	tResult.isSolved = true;
 	return tResult;
