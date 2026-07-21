@@ -243,6 +243,9 @@
     <ClCompile Include="..\Private\StateBlackboard.cpp">
       <Filter>04. Component\State\Transition</Filter>
     </ClCompile>
+    <ClCompile Include="..\Private\IKDriver.cpp">
+      <Filter>04. Component\IK</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h">
@@ -427,6 +430,9 @@
     </ClInclude>
     <ClInclude Include="..\Public\StateBlackboard.h">
       <Filter>04. Component\State\Transition</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Public\IKDriver.h">
+      <Filter>04. Component\IK</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

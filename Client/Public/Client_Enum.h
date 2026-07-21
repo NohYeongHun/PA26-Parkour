@@ -50,6 +50,9 @@ namespace Client
 		END
 	};
 
+	// IK TRIGGER
+	enum class IK_TRIGGER { NOTIFY, STATE };
+
 
 	enum class INSTANCETYPE { DEFAULT, SONORO, NONSONORO, END };
 

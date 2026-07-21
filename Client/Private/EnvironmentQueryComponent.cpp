@@ -49,6 +49,38 @@ HRESULT CEnvironmentQueryComponent::Initialize_Clone(void* pArg)
 	return S_OK;
 }
 
+_bool CEnvironmentQueryComponent::Resolve_Anchor(const _string& token, _vector& vOutPos, _vector& vOutNormal)
+{
+	const auto& Geo = m_Perception.Geometry;
+
+	_vector vEdge = XMVectorSetW(XMLoadFloat3(&Geo.Top.vEdgePos), 1.f);
+	_vector vTrav = XMLoadFloat3(&Geo.vTraversalDir);
+	_vector vLat = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), vTrav)); // 엣지 좌우측
+	const _float fSpacing = 0.25f;
+
+	if (token == "TOP_LEFT_EDGE")
+	{
+		vOutPos = vEdge + vLat * fSpacing;
+		vOutNormal = XMLoadFloat3(&Geo.Top.vNormal);
+		return Geo.Top.isReachable;
+	}
+	if (token == "TOP_RIGHT_EDGE")
+	{
+		vOutPos = vEdge - vLat * fSpacing;
+		vOutNormal = XMLoadFloat3(&Geo.Top.vNormal);
+		return Geo.Top.isReachable;
+	}
+
+	if (token == "FORWARD_WALL")
+	{
+		vOutPos = XMLoadFloat3(&Geo.Front.vHitPos);
+		vOutNormal = XMLoadFloat3(&Geo.Front.vNormal);
+		return Geo.Front.hasHit;
+	}
+
+	return false;
+}
+
 void CEnvironmentQueryComponent::Set_ScanDirOverride(_fvector vDir)
 {
 	_vector vXZ = XMVectorSetY(vDir, 0.f);

@@ -18,16 +18,17 @@ private:
 	explicit CIKComponent(const CIKComponent& Prototype);
 	virtual ~CIKComponent() = default;
 
-public:
-	void Set_Target(const _string& strGoal, _vector& vWorldPos);
-	void Register_Goals(const _string& strFolderPath);
-	_uint Register_Goal(const _string& strName, EIKSOLVER_TYPE eSolver, const vector<_string>& BoneNames);
 
 public:
+	void Begin_Target(const _string& strTarget, EIKTARGET_MODE eMode, _float fPosWeight, _float fRotWeight, _float fBlendSec);
+	void End_Target(const _string& strTarget, _float fBlendSec);
 
 public:
-	void Begin_Goal(const _string& strGoalName, EIKTARGET_MODE eMode, _float fPosWeight, _float fRotWeight, _float fBlendSec);
-	void End_Goal(const _string& strGoalName, _float fBlendSec);
+	void Set_SpaceMatrix(_fmatrix mat) { m_matWorldToModel = XMMatrixInverse(nullptr, mat);  }
+	void Set_Target(const _string& strGoal, _fvector vWorldPos, _fvector vNormal);
+	void Register_Targets(const _string& strFolderPath);
+	_uint Register_Target(const _string& strName, EIKSOLVER_TYPE eSolver, const vector<_string>& BoneNames);
+
 
 public:
 	virtual HRESULT		Initialize_Prototype() override;
@@ -35,7 +36,7 @@ public:
 	virtual HRESULT		Render() override;
 
 public:
-	void Update(_float fTimeDelta);
+	void Execute(_float fTimeDelta);
 
 
 private:
@@ -47,10 +48,12 @@ private:
 private:
 	// 모든 Goal이 공유할 알고리즘 클래스이므로 state-less
 	vector<class CIKSolver*> m_Solvers{};
+
+private:
 	// 부위 마다 1개를 가집니다.
-	vector<IK_GOAL> m_Goals{};
-	
-	unordered_map<_string, _uint> m_GoalHandles;
+	vector<IK_TARGET> m_Targets{};
+	unordered_map<_string, _uint> m_TargetHandles;
+	_matrix m_matWorldToModel{};
 
 private:
 	_uint Find_BoneIndex(const char* pBoneName);

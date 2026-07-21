@@ -219,10 +219,10 @@ public:
 	_bool					Get_Body_AABB(const BodyID& ID, _float3& vOutMin, _float3& vOutMax);
 
 #ifdef _DEBUG
-	void					DrawShape(const Shape* pShape, RMat44 Matrix, Color BodyColor = Color(0.f, 255.f, 0.f, 1.f));
+	void					DrawShape(const Shape* pShape, RMat44 Matrix, JPH::Color BodyColor = JPH::Color(0.F, 255.F, 0.F, 1.F));
 	void					DrawRay(const _fvector& vStartPos, const _fvector& vEndPos);
-	void					Add_DebugSphere(const _fvector& vCenter, _float fRadius, const Color& color = Color(0.f, 255.f, 255.f, 1.f));
-	void					Add_DebugLine(const _fvector& vStart, const _fvector& vEnd, const Color& color = Color(0.f, 255.f, 0.f, 1.f));
+	void					Add_DebugSphere(const _fvector& vCenter, _float fRadius, const JPH::Color& color = JPH::Color(0.F, 255.F, 255.F, 1.F));
+	void					Add_DebugLine(const _fvector& vStart, const _fvector& vEnd, const JPH::Color& color = JPH::Color(0.F, 255.F, 0.F, 1.F));
 	_bool					IsParkourDebug();
 #endif
 #pragma endregion

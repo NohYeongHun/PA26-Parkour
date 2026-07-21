@@ -1,4 +1,4 @@
-#include "EnginePch.h"
+﻿#include "EnginePch.h"
 #include "IKNotifyState.h"
 
 CIKNotifyState::CIKNotifyState(_float fBeginTrackPos, _float fEndTrackPos)
@@ -27,7 +27,7 @@ json CIKNotifyState::To_Json() const
     j["EndTrackPosition"] = m_fEndTrackPosition;
     j["BlendInSec"] = m_fBlendInSec;
     j["BlendOutSec"] = m_fBlendOutSec;
-    j["IsState"] = true;    // 문서화용 필드
+    j["IsState"] = true;    
 
     json bindings = json::array();
     for (const auto& b : m_Bindings) {
@@ -36,7 +36,8 @@ json CIKNotifyState::To_Json() const
             { "Mode",         Mode_ToString(b.eMode) },
             { "TargetSource", b.strTargetSource },
             { "PosWeight",    b.fPosWeight },
-            { "RotWeight",    b.fRotWeight }
+            { "RotWeight",    b.fRotWeight },
+			{ "IsFix",		  b.isFix}
             });
     }
     j["Bindings"] = bindings;
@@ -99,6 +100,7 @@ CIKNotifyState* CIKNotifyState::From_Json(const json& j)
         bind.strTargetSource = b.value("TargetSource", string(""));
         bind.fPosWeight = b.value("PosWeight", 1.f);
         bind.fRotWeight = b.value("RotWeight", 1.f);
+		bind.isFix		= b.value("IsFix", false);
         pInstance->m_Bindings.push_back(bind);
     }
     return pInstance;

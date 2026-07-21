@@ -215,5 +215,17 @@ namespace Client
 	};
 #pragma endregion
 
+#pragma region IK
+	typedef struct tagActiveIK
+	{
+		_string     strToken;        
+		IK_TRIGGER  eTrigger;      
+		_bool       isFixed;
+		_bool		isResolved;
+		_float3     fFixedPos;   
+	}ACTIVE_IK;
+#pragma endregion
+
+
 
 }

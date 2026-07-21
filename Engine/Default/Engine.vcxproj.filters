@@ -891,13 +891,13 @@
     <ClInclude Include="..\Public\IKSolver.h">
       <Filter>01. Utility\04. Component\IK\Solver</Filter>
     </ClInclude>
-    <ClInclude Include="..\Public\IKSovler_TwoBone.h">
+    <ClInclude Include="..\Public\IKSolver_TwoBone.h">
       <Filter>01. Utility\04. Component\IK\Solver</Filter>
     </ClInclude>
-    <ClInclude Include="..\Public\IKSovler_CCD.h">
+    <ClInclude Include="..\Public\IKSolver_CCD.h">
       <Filter>01. Utility\04. Component\IK\Solver</Filter>
     </ClInclude>
-    <ClInclude Include="..\Public\IKSovler_Fabrik.h">
+    <ClInclude Include="..\Public\IKSolver_Fabrik.h">
       <Filter>01. Utility\04. Component\IK\Solver</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1343,13 +1343,13 @@
     <ClCompile Include="..\Private\IKSolver.cpp">
       <Filter>01. Utility\04. Component\IK\Solver</Filter>
     </ClCompile>
-    <ClCompile Include="..\Private\IKSovler_TwoBone.cpp">
+    <ClCompile Include="..\Private\IKSolver_TwoBone.cpp">
       <Filter>01. Utility\04. Component\IK\Solver</Filter>
     </ClCompile>
-    <ClCompile Include="..\Private\IKSovler_CCD.cpp">
+    <ClCompile Include="..\Private\IKSolver_CCD.cpp">
       <Filter>01. Utility\04. Component\IK\Solver</Filter>
     </ClCompile>
-    <ClCompile Include="..\Private\IKSovler_Fabrik.cpp">
+    <ClCompile Include="..\Private\IKSolver_Fabrik.cpp">
       <Filter>01. Utility\04. Component\IK\Solver</Filter>
     </ClCompile>
   </ItemGroup>

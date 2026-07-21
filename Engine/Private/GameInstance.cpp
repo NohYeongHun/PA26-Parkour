@@ -813,7 +813,7 @@ _bool CGameInstance::Get_Body_AABB(const BodyID& ID, _float3& vOutMin, _float3& 
 }
 
 #ifdef _DEBUG
-void CGameInstance::DrawShape(const Shape* pShape, RMat44 Matrix, Color BodyColor)
+void CGameInstance::DrawShape(const Shape* pShape, RMat44 Matrix, JPH::Color BodyColor)
 {
 	m_pPhysicsManager->DrawShape(pShape, Matrix, BodyColor);
 }
@@ -822,12 +822,12 @@ void CGameInstance::DrawRay(const _fvector& vStartPos, const _fvector& vEndPos)
 	m_pPhysicsManager->DrawRay(vStartPos, vEndPos);
 }
 
-void CGameInstance::Add_DebugSphere(const _fvector& vCenter, _float fRadius, const Color& color)
+void CGameInstance::Add_DebugSphere(const _fvector& vCenter, _float fRadius, const JPH::Color& color)
 {
 	m_pPhysicsManager->Add_DebugSphere(vCenter, fRadius, color);
 }
 
-void CGameInstance::Add_DebugLine(const _fvector& vStart, const _fvector& vEnd, const Color& color)
+void CGameInstance::Add_DebugLine(const _fvector& vStart, const _fvector& vEnd, const JPH::Color& color)
 {
 	m_pPhysicsManager->Add_DebugLine(vStart, vEnd, color);
 }

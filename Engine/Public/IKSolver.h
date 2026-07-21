@@ -17,7 +17,7 @@ public:
 	virtual const _char* Get_Name() const = 0;
 
 public:
-	virtual IK_RESULT Solve(_float fTimeDelta) = 0;
+	virtual IK_RESULT Solve(const IK_SOLVE_CONTEXT& Context) = 0;
 	
 
 protected:

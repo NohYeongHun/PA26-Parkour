@@ -2,9 +2,9 @@
 #include "IKComponent.h"
 #include "Model.h"
 #include "Transform.h"
-#include "IKSovler_CCD.h"
-#include "IKSovler_Fabrik.h"
-#include "IKSovler_TwoBone.h"
+#include "IKSolver_CCD.h"
+#include "IKSolver_Fabrik.h"
+#include "IKSolver_TwoBone.h"
 #include "Bone.h"
 
 CIKComponent::CIKComponent(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
@@ -20,22 +20,51 @@ CIKComponent::CIKComponent(const CIKComponent& Prototype)
 		Safe_AddRef(pSovler);
 }
 
-void CIKComponent::Set_Target(const _string& strGoal, _vector& vWorldPos)
+// 등록된 Bone Chain을 사용 가능한 상태로 만듭니다.
+void CIKComponent::Begin_Target(const _string& strTarget, EIKTARGET_MODE eMode, _float fPosWeight, _float fRotWeight, _float fBlendSec)
 {
-	auto iter = m_GoalHandles.find(strGoal);
-	if (iter == m_GoalHandles.end())
+	auto iter = m_TargetHandles.find(strTarget);
+	if (iter == m_TargetHandles.end())
 		return;
 
-	IK_GOAL& goal = m_Goals[iter->second];
-	_matrix matWorldInv = m_pTransformCom->Get_WorldMatrix_Inv();
-	_vector vModel = XMVector3TransformCoord(vWorldPos, matWorldInv); // 모델 스페이스 변환
+	IK_TARGET& Target = m_Targets[iter->second];
 
-	goal.Chain.vTargetPos = vModel;
-	goal.vCurTargetPos = vModel;
+	Target.isEnable = true;
+	Target.eMode = eMode;
+	Target.Chain.fPosWeight = fPosWeight;
+	Target.Chain.fRotWeight = fRotWeight;
+	Target.fBlendSpeed = (fBlendSec > 0.f) ? 1.f / fBlendSec : FLT_MAX;
+	Target.fTargetWeight = 1.f;
+}
+
+void CIKComponent::End_Target(const _string& strTarget, _float fBlendSec)
+{
+	auto it = m_TargetHandles.find(strTarget);
+	if (it == m_TargetHandles.end()) return;
+	IK_TARGET& target = m_Targets[it->second];
+
+	target.fTargetWeight = 0.f;
+	target.fBlendSpeed = (fBlendSec > 0.f) ? 1.f / fBlendSec : FLT_MAX;
+}
+
+void CIKComponent::Set_Target(const _string& strGoal, _fvector vWorldPos, _fvector vNormal)
+{
+	auto iter = m_TargetHandles.find(strGoal);
+	if (iter == m_TargetHandles.end())
+		return;
+
+	IK_TARGET& target = m_Targets[iter->second];
+	_matrix matWorldInv = m_pTransformCom->Get_WorldMatrix_Inv();
+	_vector vModelPos = XMVector3TransformCoord(vWorldPos, matWorldInv); // 모델 스페이스 변환
+	_vector vModelNormal = XMVector3TransformNormal(vNormal, matWorldInv); // 모델 스페이스 변환 => 아직 미사용
+
+	target.Chain.vTargetPos = vModelPos;
+	target.vCurTargetPos = vModelPos;
 }
 
 
-void CIKComponent::Register_Goals(const _string& strFolderPath)
+// LeftArm, RightArm 등 특정 본 체인을 게임 시작 시 json으로 파싱해둡니다.
+void CIKComponent::Register_Targets(const _string& strFolderPath)
 {
 	// 1. 외부 FolderPath를 받아 Json을 파싱한다.
 	namespace fs = std::filesystem;
@@ -53,7 +82,7 @@ void CIKComponent::Register_Goals(const _string& strFolderPath)
 		try { file >> j; }
 		catch (...) { continue; }   // 파싱 실패 스킵
 
-		_string        strName = j.value("GoalName", string(""));
+		_string        strName = j.value("TargetName", string(""));
 		EIKSOLVER_TYPE eSolver = To_SolverType(j.value("Solver", string("")));
 		if (strName.empty() || eSolver == EIKSOLVER_TYPE::END) continue;
 
@@ -65,10 +94,10 @@ void CIKComponent::Register_Goals(const _string& strFolderPath)
 		if (boneNames.empty()) continue;
 
 		// 3. 등록
-		_uint iGoal = Register_Goal(strName, eSolver, boneNames);
+		_uint iGoal = Register_Target(strName, eSolver, boneNames);
 
 		// 4. Register_Goal이 안 담는 나머지 채우기
-		IK_GOAL& goal = m_Goals[iGoal];
+		IK_TARGET& goal = m_Targets[iGoal];
 		if (j.contains("PoleVector") && j["PoleVector"].size() == 3)
 			goal.Chain.vPoleVector = XMVectorSet(j["PoleVector"][0], j["PoleVector"][1], j["PoleVector"][2], 0.f);
 		goal.Chain.fPosWeight = j.value("PosWeight", 1.f);
@@ -77,51 +106,43 @@ void CIKComponent::Register_Goals(const _string& strFolderPath)
 }
 
 
-_uint CIKComponent::Register_Goal(const _string& strName, EIKSOLVER_TYPE eSolver, const vector<_string>& BoneNames)
+_uint CIKComponent::Register_Target(const _string& strName, EIKSOLVER_TYPE eSolver, const vector<_string>& BoneNames)
 {
 	// 1. 중복 방지.
-	auto it = m_GoalHandles.find(strName);
-	if (it != m_GoalHandles.end())
+	auto it = m_TargetHandles.find(strName);
+	if (it != m_TargetHandles.end())
 		return it->second;
 
 	// 2. 본 이름을 통한 인덱스 찾기.
-	IK_GOAL goal{};
-	goal.strName = strName;
-	goal.eSolver = eSolver;
+	IK_TARGET target{};
+	target.strName = strName;
+	target.eSolver = eSolver;
 
 	for (auto& name : BoneNames)
 	{
 		_uint iBoneIndex = Find_BoneIndex(name.c_str());
 		ASSERT_CRASH(iBoneIndex != UINT_MAX);
-		goal.Chain.BoneChain.push_back(iBoneIndex);
+		target.Chain.BoneChain.push_back(iBoneIndex);
 	}
 
 	// 3. push한 위치가 handle값
-	_uint iGoal = static_cast<_uint>(m_Goals.size());
-	m_Goals.push_back(goal);
+	_uint iGoal = static_cast<_uint>(m_Targets.size());
+	m_Targets.push_back(target);
 
 	// 4. Map 등록
-	m_GoalHandles.emplace(strName, iGoal);
+	m_TargetHandles.emplace(strName, iGoal);
 
 	return iGoal;
 }
 
-void CIKComponent::Begin_Goal(const _string& strGoalName, EIKTARGET_MODE eMode, _float fPosWeight, _float fRotWeight, _float fBlendSec)
-{
-
-}
-
-void CIKComponent::End_Goal(const _string& strGoalName, _float fBlendSec)
-{
-}
 
 // Solver 생성.
 HRESULT CIKComponent::Initialize_Prototype()
 {
 	m_Solvers.resize(ENUM_CLASS(EIKSOLVER_TYPE::END));
-	m_Solvers[ENUM_CLASS(EIKSOLVER_TYPE::TWO_BONE)] = CIKSovler_TwoBone::Create(m_pDevice, m_pContext);
-	m_Solvers[ENUM_CLASS(EIKSOLVER_TYPE::CCD)]		= CIKSovler_CCD::Create(m_pDevice, m_pContext);
-	m_Solvers[ENUM_CLASS(EIKSOLVER_TYPE::FABRIK)]	= CIKSovler_Fabrik::Create(m_pDevice, m_pContext);
+	m_Solvers[ENUM_CLASS(EIKSOLVER_TYPE::TWO_BONE)] = CIKSolver_TwoBone::Create(m_pDevice, m_pContext);
+	m_Solvers[ENUM_CLASS(EIKSOLVER_TYPE::CCD)]		= CIKSolver_CCD::Create(m_pDevice, m_pContext);
+	m_Solvers[ENUM_CLASS(EIKSOLVER_TYPE::FABRIK)]	= CIKSolver_Fabrik::Create(m_pDevice, m_pContext);
 	return S_OK;
 }
 
@@ -147,8 +168,34 @@ HRESULT CIKComponent::Render()
 	return S_OK;
 }
 
-void CIKComponent::Update(_float fTimeDelta)
+void CIKComponent::Execute(_float fTimeDelta)
 {
+	for (auto& target : m_Targets)
+	{
+		// 1. Target이 활성화되었는지 체크
+		if (!target.isEnable)
+			continue;
+
+		if (target.fTargetWeight <= 0.f && target.fCurWeight <= 0.f)
+		{
+			target.isEnable = false;
+			continue;
+		}
+
+		// 2. fCurWeight를 fTargetWeigh로 램프
+		if (target.fCurWeight < target.fTargetWeight)
+			target.fCurWeight = min(target.fCurWeight + target.fBlendSpeed * fTimeDelta, target.fTargetWeight);
+		else if (target.fCurWeight > target.fTargetWeight)
+			target.fCurWeight = max(target.fCurWeight - target.fBlendSpeed * fTimeDelta, target.fTargetWeight);
+
+		// 3. 솔버 호출 => 솔버한테 적절한 데이터를 전달해야함.
+		IK_SOLVE_CONTEXT Context{};
+		Context.pBones = &m_pModelCom->Get_Bones();
+		Context.pTarget = &target;
+		Context.fTimeDelta = fTimeDelta;
+		m_Solvers[ENUM_CLASS(target.eSolver)]->Solve(Context);
+
+	}
 }
 
 _uint CIKComponent::Find_BoneIndex(const char* pBoneName)

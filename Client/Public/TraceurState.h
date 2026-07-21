@@ -75,6 +75,7 @@ protected:
 	Engine::CAnimationController*      m_pAnimCtrlCom        = { nullptr };
 	class CStateBlackboard*            m_pBlackboardCom      = { nullptr };
 	class CClimbEvaluator*             m_pClimbEvalCom       = { nullptr };
+	class CIKDriver*				   m_pIKDriverCom		 = { nullptr };
 
 	const ENV_PERCEPTION&   Enter_Perception(void* pArg) const;
 	const PARKOUR_DECISION& Enter_Decision(void* pArg) const;

@@ -15,6 +15,7 @@
 #include "TraceurStateNames.h"
 #include "StateBlackboard.h"
 #include "ClimbEvaluator.h"
+#include "IKDriver.h"
 
 
 HRESULT CTraceurState::Initialize(CTraceur* pOwner)
@@ -73,6 +74,10 @@ HRESULT CTraceurState::Initialize(CTraceur* pOwner)
 
 	m_pClimbEvalCom = dynamic_cast<CClimbEvaluator*>(m_pOwner->Get_Component(TEXT("Com_ClimbEvaluator")));
 	if (nullptr == m_pClimbEvalCom)
+		return E_FAIL;
+
+	m_pIKDriverCom = dynamic_cast<CIKDriver*>(m_pOwner->Get_Component(TEXT("Com_IKDriver")));
+	if (nullptr == m_pIKDriverCom)
 		return E_FAIL;
 
 	m_iMoveKey |= static_cast<_uint>(KEYINPUT::W);

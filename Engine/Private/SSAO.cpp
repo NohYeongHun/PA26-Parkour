@@ -54,8 +54,8 @@ HRESULT CSSAO::Render(CVIBuffer_Rect* pVIBuffer, CShader* pShader)
 #pragma region BLUR_X
 	SSAO_BLUR_DATA Data = {};
 	Data.fSSAO_MinDepthDistance = m_fSSAO_MinDepthDistance;
-	Data.fWidth = m_fWinSizeX;
-	Data.fHeight = m_fWinSizeY;
+	Data.fWidth = static_cast<_float>(m_fWinSizeX);
+	Data.fHeight = static_cast<_float>(m_fWinSizeY);
 
 	if (FAILED(m_pGameInstance->Add_BufferData(TEXT("RCS_SSAO_BLUR_X"), "SSAO_BLUR_DATA", reinterpret_cast<void*>(&Data), sizeof(SSAO_BLUR_DATA))))
 		return E_FAIL;
@@ -146,7 +146,7 @@ HRESULT CSSAO::Ready_SSAO_SampleVector()
 		_vector vSample = XMVector3Normalize(XMVectorSet(fX, fY, fZ, 0.f));
 
 		_float fScale = static_cast<_float>(i) / static_cast<_float>(m_iNumKernel);
-		fScale = 0.1f + (0.9f * pow(fScale, 2));
+		fScale = 0.1f + (0.9f * static_cast<_float>(pow(fScale, 2)));
 
 		m_SSAO_SampleVector.push_back(XMVectorScale(vSample, fScale));
 	}

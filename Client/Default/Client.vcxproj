@@ -23,6 +23,7 @@
     <ClCompile Include="..\Private\Character.cpp" />
     <ClCompile Include="..\Private\ClimbState.cpp" />
     <ClCompile Include="..\Private\GroundState.cpp" />
+    <ClCompile Include="..\Private\IKDriver.cpp" />
     <ClCompile Include="..\Private\TraceurAirFall.cpp" />
     <ClCompile Include="..\Private\TraceurAirJump.cpp" />
     <ClCompile Include="..\Private\TraceurClimbEnter.cpp" />
@@ -78,6 +79,7 @@
     <ClInclude Include="..\Public\Client_Function.h" />
     <ClInclude Include="..\Public\ClimbState.h" />
     <ClInclude Include="..\Public\GroundState.h" />
+    <ClInclude Include="..\Public\IKDriver.h" />
     <ClInclude Include="..\Public\TraceurAirFall.h" />
     <ClInclude Include="..\Public\TraceurAirJump.h" />
     <ClInclude Include="..\Public\TraceurClimbEnter.h" />

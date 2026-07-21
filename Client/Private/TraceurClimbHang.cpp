@@ -8,6 +8,7 @@
 #include "GameSystem.h"
 #include "ParkourTuningTable.h"
 #include "ParkourMath.h"
+#include "IKDriver.h"
 
 HRESULT CTraceurClimbHang::Initialize(CTraceur* pOwner)
 {
@@ -23,6 +24,7 @@ void CTraceurClimbHang::OnEnter(void* pArg)
 	m_pColliderCom->Set_Gravity(false);
 	Request_Anim(ENUM_CLASS(ETraceurClimbHang::HopIdle));
 
+
 	if (!Ready_Hang(pArg))
 	{
 		m_pOwner->Get_HangContext().Reset();
@@ -34,12 +36,21 @@ void CTraceurClimbHang::OnEnter(void* pArg)
 			m_pStateMachinCom->Change_State(ENUM_CLASS(EStateCategory::AIR), ENUM_CLASS(ETraceurAirState::Fall));
 		return;
 	}
+
+	// 1. Ready_Hang이 성공했다면? IK 실행. => Hang은 계속 유지되어야함.
+	m_pIKDriverCom->Activate("LeftArm", "TOP_LEFT_EDGE"
+		, EIKTARGET_MODE::POSITION, 1.f, 1.f, 0.2f, IK_TRIGGER::STATE, true);
+	m_pIKDriverCom->Activate("RightArm", "TOP_LEFT_EDGE"
+		, EIKTARGET_MODE::POSITION, 1.f, 1.f, 0.2f, IK_TRIGGER::STATE, true);
 }
 
 void CTraceurClimbHang::OnExit()
 {
 	__super::OnExit();
 	m_pMotionWarpCom->End_CurveWarp();
+
+	m_pIKDriverCom->Deactivate("LeftArm", 0.2f);
+	m_pIKDriverCom->Deactivate("RightArm", 0.2f);
 }
 
 _bool CTraceurClimbHang::Ready_Hang(void* pArg)

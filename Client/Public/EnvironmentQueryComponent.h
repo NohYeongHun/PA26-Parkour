@@ -48,10 +48,13 @@ public:
 	virtual HRESULT		Initialize_Clone(void* pArg) override;
 
 public:
+	// IK에 전달할 장애물의 특정 지점 위치와 Normal
+	_bool Resolve_Anchor(const _string& token, _vector& vOutPos, _vector& vOutNormal);
 	const ENV_PERCEPTION& Get_Perception() const { return m_Perception; }
 
 	void Set_ScanDirOverride(_fvector vDir);
 	void Clear_ScanDirOverride() { m_hasScanDirOverride = false; }
+
 
 public:
 	void Execute();

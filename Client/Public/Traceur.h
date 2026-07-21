@@ -64,9 +64,7 @@ private:
 	class CClimbEvaluator*      m_pClimbEvalCom = { nullptr };
 
 	class CIKComponent*			m_pIKCom = { nullptr };
-
-private:
-	unordered_map<_string, _string> m_ActiveIKSource{};
+	class CIKDriver*			m_pIKDriverCom = { nullptr };
 
 private:
 	BODY_PROFILE m_BodyProfile{};
@@ -113,6 +111,7 @@ private:
 private:
 	// Late Update
 	void Sync_Transform();
+	void Drive_IK(_float fTimeDelta);
 	void Ready_Render();
 
 

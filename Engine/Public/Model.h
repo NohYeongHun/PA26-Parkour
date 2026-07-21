@@ -103,7 +103,7 @@ private:
 public:
 	_uint								Get_NumBones(_uint iMeshIndex);
 	void								Copy_BoneMatrices(_float4x4* pOutMatrices, _uint iMeshIndex);
-	const vector<class CBone*>			Get_Bones() { return m_Bones; }
+	const vector<class CBone*>&			Get_Bones() { return m_Bones; }
 	_uint								Get_NumMesh() { return m_iNumMeshes; }
 	const _float4x4* Get_BoneMatrixPtr(const _char* pBoneName);
 	const vector<_uint>& Get_Indices(_uint iIndex);

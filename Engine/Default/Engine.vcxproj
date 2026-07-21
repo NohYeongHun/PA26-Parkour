@@ -85,9 +85,9 @@
     <ClInclude Include="..\Public\HZB.h" />
     <ClInclude Include="..\Public\IKComponent.h" />
     <ClInclude Include="..\Public\IKSolver.h" />
-    <ClInclude Include="..\Public\IKSovler_CCD.h" />
-    <ClInclude Include="..\Public\IKSovler_Fabrik.h" />
-    <ClInclude Include="..\Public\IKSovler_TwoBone.h" />
+    <ClInclude Include="..\Public\IKSolver_CCD.h" />
+    <ClInclude Include="..\Public\IKSolver_Fabrik.h" />
+    <ClInclude Include="..\Public\IKSolver_TwoBone.h" />
     <ClInclude Include="..\Public\InputController.h" />
     <ClInclude Include="..\Public\Input_Device.h" />
     <ClInclude Include="..\Public\Layer.h" />
@@ -179,9 +179,9 @@
   <ItemGroup>
     <ClCompile Include="..\Private\IKComponent.cpp" />
     <ClCompile Include="..\Private\IKSolver.cpp" />
-    <ClCompile Include="..\Private\IKSovler_CCD.cpp" />
-    <ClCompile Include="..\Private\IKSovler_Fabrik.cpp" />
-    <ClCompile Include="..\Private\IKSovler_TwoBone.cpp" />
+    <ClCompile Include="..\Private\IKSolver_CCD.cpp" />
+    <ClCompile Include="..\Private\IKSolver_Fabrik.cpp" />
+    <ClCompile Include="..\Private\IKSolver_TwoBone.cpp" />
     <ClCompile Include="..\Public\Tracy\TracyClient.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>

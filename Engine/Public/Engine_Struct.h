@@ -572,13 +572,16 @@ namespace Engine
 
 	typedef struct tagIKGoal
 	{
-		_string          strName;
-		EIKSOLVER_TYPE   eSolver;        
-		IK_CHAIN_DESC    Chain;          
-		_bool            isEnable;
-		_float           fCurWeight;
-		_vector			 vCurTargetPos;
-	} IK_GOAL;
+		_string          strName;		// 고정
+		EIKSOLVER_TYPE   eSolver;		// 고정
+		EIKTARGET_MODE	 eMode;			// 수정되는 값
+		IK_CHAIN_DESC    Chain;			// 고정
+		_bool            isEnable;		// 수정되는 값
+		_float           fCurWeight;	// 수정되는 값
+		_float			 fTargetWeight; // 수정되는 값
+		_float			 fBlendSpeed;	// 수정되는 값
+		_vector			 vCurTargetPos;	// 수정되는 값
+	} IK_TARGET;
 
 	typedef struct tagIKResult { 
 		_float fPosError; 
@@ -592,7 +595,15 @@ namespace Engine
 		_string			strTargetSource;
 		_float			fPosWeight;
 		_float			fRotWeight;
+		_bool			isFix;
 	}IK_BINDING;
+
+	typedef struct tagIKSolveContext
+	{
+		const vector<class CBone*>* pBones;
+		const IK_TARGET*			pTarget;
+		_float						fTimeDelta;
+	}IK_SOLVE_CONTEXT;
 #pragma endregion
 
 }

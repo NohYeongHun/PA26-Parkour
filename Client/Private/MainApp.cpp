@@ -12,6 +12,7 @@
 #include "MotionWarpingComponent.h"
 #include "AnimationController.h"
 #include "IKComponent.h"
+#include "IKDriver.h"
 
 #include "StateBlackboard.h"
 #include "TransitionEvaluator.h"
@@ -279,6 +280,10 @@ void CMainApp::Ready_Prototype_ForStatic()
 	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_IK"),
 		CIKComponent::Create(m_pDevice, m_pContext))))
 		CRASH("Failed to Add Prototype IKComponent");
+
+	if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_IKDriver"),
+		CIKDriver::Create(m_pDevice, m_pContext))))
+		CRASH("Failed to Add Prototype IKDriver");
 
 #pragma endregion
 

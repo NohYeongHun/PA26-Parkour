@@ -21,6 +21,7 @@
 #include "TagRegistry.h"
 #include "TransitionEvaluator.h"
 #include "ClimbEvaluator.h"
+#include "IKDriver.h"
 
 #include "Engine_Profile.h"
 
@@ -204,6 +205,7 @@ void CTraceur::Late_Update(_float fTimeDelta)
 	Sync_Transform();
 
 	// 2. IK 적용 예정 => 모든 물리 로직으로 인한 위치 보정이 끝난 시점이 IK를 적용할 시점.
+	Drive_IK(fTimeDelta);
 
 	// Render
 	Ready_Render();
@@ -261,21 +263,7 @@ void CTraceur::Notify_StateFlag(const _string& strFlag, _bool isOn)
 void CTraceur::On_IK_Notify(const vector<IK_BINDING>& Bindings, _float fBlendSec, _bool isBegin)
 {
 	// 여러개의 Goal을 실행시킵니다.
-	for (const auto& bind : Bindings) {
-		if (isBegin) {
-			m_pIKCom->Begin_Goal(bind.strGoalName, bind.eMode, bind.fPosWeight, bind.fRotWeight, fBlendSec);
-			m_ActiveIKSource[bind.strGoalName] = bind.strTargetSource;
-		}
-		else {
-			m_pIKCom->End_Goal(bind.strGoalName, fBlendSec);
-
-			if (m_ActiveIKSource.end() != m_ActiveIKSource.find(bind.strGoalName))
-			{
-				m_ActiveIKSource.erase(bind.strGoalName);
-			}
-			
-		}
-	}
+	
 }
 
 
@@ -382,6 +370,12 @@ void CTraceur::Sync_Transform()
 	m_pColliderCom->Sync_Position(m_pTransformCom);
 }
 
+// Physics 시뮬레이션 이후 Late_Update 구간에서 실행되어야함 
+// => 물리 처리가 끝난 애니메이션 상태에서 계산해야 정확함.
+void CTraceur::Drive_IK(_float fTimeDelta)
+{
+	m_pIKDriverCom->Execute(fTimeDelta);
+}
 
 
 void CTraceur::Ready_Render()
@@ -389,8 +383,6 @@ void CTraceur::Ready_Render()
 	if (FAILED(m_pGameInstance->Add_Render_Object(RENDERGROUP::DYNAMIC, this)))
 		return;
 }
-
-
 
 
 HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
@@ -444,6 +436,12 @@ HRESULT CTraceur::Ready_Components(const CHARACTER_DESC* pDesc)
 	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_IK"),
 		TEXT("Com_IK"), reinterpret_cast<CComponent**>(&m_pIKCom), &IKDesc)))
 		CRASH("IK");
+
+	CIKDriver::IK_DRIVER_DESC IKDriverDesc{};
+	IKDriverDesc.pOwner = this;
+	if (FAILED(Add_Component(ENUM_CLASS(LEVEL::STATIC), TEXT("Prototype_Component_IKDriver"),
+		TEXT("Com_IKDriver"), reinterpret_cast<CComponent**>(&m_pIKDriverCom), &IKDriverDesc)))
+		CRASH("IK_Driver");
 
 	return S_OK;
 }
@@ -502,8 +500,16 @@ HRESULT CTraceur::Ready_Variables(const CHARACTER_DESC* pDesc)
 			m_pColliderCom->Set_Gravity(false);
 		};
 	};
+
 	auto IKCallBack = [this](const vector<IK_BINDING>& Bindings, _float fBlendSec, _bool isBegin) {
-		On_IK_Notify(Bindings, fBlendSec, isBegin);
+		for (const auto& bind : Bindings) {
+			if (isBegin) {
+				m_pIKDriverCom->Activate(bind.strGoalName, bind.strTargetSource, bind.eMode, bind.fPosWeight, bind.fRotWeight, fBlendSec, IK_TRIGGER::NOTIFY, bind.isFix);
+			}
+			else {
+				m_pIKDriverCom->Deactivate(bind.strGoalName, fBlendSec);
+			}
+		}
 	};
 
 	m_pModelCom->Register_AllNotifies(
@@ -516,7 +522,8 @@ HRESULT CTraceur::Ready_Variables(const CHARACTER_DESC* pDesc)
 		IKCallBack
 	);
 
-	m_pIKCom->Register_Goals(pDesc->strIKGoalFolderPath);
+	// Bone Chain을 등록합니다.
+	m_pIKCom->Register_Targets(pDesc->strIKGoalFolderPath);
 
 	m_eCurLevel = pDesc->eCurLevel;
 
@@ -595,4 +602,5 @@ void CTraceur::Free()
 	Safe_Release(m_pTransitionEvalCom);
 	Safe_Release(m_pClimbEvalCom);
 	Safe_Release(m_pIKCom);
+	Safe_Release(m_pIKDriverCom);
 }
