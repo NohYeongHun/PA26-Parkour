@@ -10,6 +10,7 @@
 #include "ObjectFuncNotify.h"
 #include "StateFlagNotify.h"
 #include "MotionWarpNotify.h"
+#include "IKNotify.h"
 
 CAnimation::CAnimation()
 {
@@ -86,7 +87,13 @@ void CAnimation::Register_Notify(const NOTIFY& AnimNotify)
 	m_Notifies.push_back(AnimNotify);
 }
 
-void CAnimation::Load_Notify(const json& notifyJson, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback, function<void(const _string&, _bool)> StateFlagCallback, function<void(const _string&, _bool, _float, _bool, _bool)> WarpCallback)
+void CAnimation::Load_Notify(const json& notifyJson
+	, function<void(const _wstring&, _bool)> ColliderCallback
+	, function<void(const _wstring&)> EffectCallback
+	, function<void(const _wstring&)> ObjectCallback
+	, function<void(const _string&, _bool)> StateFlagCallback
+	, function<void(const _string&, _bool, _float, _bool, _bool)> WarpCallback
+	, function<void(const vector<IK_BINDING>& Bindings, _float fBlendSec, _bool isBegin)> IKCallback)
 {
 	for (const auto& notifyObject : notifyJson)
 	{
@@ -148,6 +155,18 @@ void CAnimation::Load_Notify(const json& notifyJson, function<void(const _wstrin
 					false, warpJson["EndTrackPosition"],
 					warpJson.value("WarpTranslation", true), warpJson.value("WarpRotation", false));
 				pEnd->Set_WarpCallback(WarpCallback);
+				m_AnimNotifies.emplace_back(pEnd);
+			}
+		}
+		else if (type == "IK")
+		{
+			CIKNotify* pBegin = CIKNotify::From_Json(notifyObject, true);
+			pBegin->Set_IKCallback(IKCallback);
+			pAnimNotify = pBegin;
+
+			if (notifyObject.contains("EndTrackPosition")) {
+				CIKNotify* pEnd = CIKNotify::From_Json(notifyObject, false);
+				pEnd->Set_IKCallback(IKCallback);
 				m_AnimNotifies.emplace_back(pEnd);
 			}
 		}

@@ -586,6 +586,14 @@ namespace Engine
 		_uint iIterations; 
 		_bool isSolved; 
 	}IK_RESULT;
+
+	typedef struct tagIKBinding {
+		_string			strGoalName;
+		EIKTARGET_MODE	eMode;
+		_string			strTargetSource;
+		_float			fPosWeight;
+		_float			fRotWeight;
+	}IK_BINDING;
 #pragma endregion
 
 }

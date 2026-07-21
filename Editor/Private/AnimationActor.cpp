@@ -505,12 +505,6 @@ _bool CAnimationActor::Is_ChildActor()
 	return m_ChildActors.size() > 0;
 }
 
-//void CAnimationActor::Child_Render()
-//{
-//	ASSERT_CRASH(m_pChildActor);
-//	m_pChildActor->Render_Detail();
-//
-//}
 void CAnimationActor::Child_Render()
 {
 	int index = 0; // 인덱스 관리 (ID 충돌 방지용)

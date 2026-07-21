@@ -32,7 +32,13 @@ public:
 public:
 	void				Register_Notify(const NOTIFY& AnimNotify); 
 
-	void				Load_Notify(const json& notifyJson, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback, function<void(const _string&, _bool)> StateFlagCallback = nullptr, function<void(const _string&, _bool, _float, _bool, _bool)> WarpCallback = nullptr);
+	void				Load_Notify(const json& notifyJson
+		, function<void(const _wstring&, _bool)> ColliderCallback
+		, function<void(const _wstring&)> EffectCallback
+		, function<void(const _wstring&)> ObjectCallback
+		, function<void(const _string&, _bool)> StateFlagCallback
+		, function<void(const _string&, _bool, _float, _bool, _bool)> WarpCallback
+		, function<void(const vector<IK_BINDING>& Bindings, _float fBlendSec, _bool isBegin)> IKCallback);
 	
 
 	void				Sort_Notify();

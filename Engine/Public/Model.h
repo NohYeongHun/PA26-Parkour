@@ -142,7 +142,12 @@ public:
 
 public:
 	void								Register_Notify(const _string& strFilePath, const vector<function<void()>>& Functions);
-	void								Register_AllNotifies(const _string& strNotifyFolderPath, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback, function<void(const _wstring&)> ObjectCallback, function<void(const _string&, _bool)> StateFlagCallback = nullptr, function<void(const _string&, _bool, _float, _bool, _bool)> WarpCallback = nullptr);
+	void								Register_AllNotifies(const _string& strNotifyFolderPath
+		, function<void(const _wstring&, _bool)> ColliderCallback, function<void(const _wstring&)> EffectCallback
+		, function<void(const _wstring&)> ObjectCallback
+		, function<void(const _string&, _bool)> StateFlagCallback
+		, function<void(const _string&, _bool, _float, _bool, _bool)> WarpCallback
+		, function<void(const vector<IK_BINDING>& Bindings, _float fBlendSec, _bool isBegin)> IKCallback);
 
 #ifdef _DEBUG
 	void								Clear_AllNotifies(); // Debug 용도

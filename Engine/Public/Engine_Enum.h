@@ -12,6 +12,7 @@ namespace Engine
 
 	// IK
 	enum class EIKSOLVER_TYPE : unsigned int { TWO_BONE = 0, CCD, FABRIK, END };
+	enum class EIKTARGET_MODE : unsigned int { POSITION, POSITION_ROTATION, END };
 
 	// Fade
 	enum class FADE { FADE_OUT, FADE_IN };

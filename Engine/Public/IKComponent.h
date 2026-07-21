@@ -19,12 +19,20 @@ private:
 	virtual ~CIKComponent() = default;
 
 public:
+	void Register_AllSolvers(const _string& strFolderPath);
 	_uint Register_Goal(const _string& strName, EIKSOLVER_TYPE eSolver, const vector<_string>& BoneNames);
+
+public:
+	void Begin_Goal(const _string& strGoalName, EIKTARGET_MODE eMode, _float fPosWeight, _float fRotWeight, _float fBlendSec);
+	void End_Goal(const _string& strGoalName, _float fBlendSec);
 
 public:
 	virtual HRESULT		Initialize_Prototype() override;
 	virtual HRESULT		Initialize_Clone(void* pArg) override;
 	virtual HRESULT		Render() override;
+
+public:
+	void Update(_float fTimeDelta);
 
 
 private:

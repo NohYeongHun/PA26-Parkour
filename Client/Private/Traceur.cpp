@@ -65,21 +65,34 @@ HRESULT CTraceur::Initialize_Clone(void* pArg)
 	if (FAILED(CTagRegistry::Load("../../Client/Bin/Data/TraceurTags.json", m_pStateBlackboardCom)))
 		return E_FAIL;
 	Bind_CollectSlots();
+	
+	auto StateFlagCallBack = [this](const _string& strFlag, _bool isOn) { Notify_StateFlag(strFlag, isOn); };
+
+	auto MotionWarpCallBack = [this](const _string& strName, _bool isStart, _float fEndPos, _bool bTrans, _bool bRot) {
+		if (m_pMotionWarpCom && m_pColliderCom)
+		{
+			m_pMotionWarpCom->On_WarpNotify(strName, isStart, fEndPos, bTrans, bRot);
+			m_pColliderCom->Set_Gravity(false);
+		};
+	};
+
+	auto IKCallBack = [this](const vector<IK_BINDING>& Bindings, _float fBlendSec, _bool isBegin) {
+		On_IK_Notify(Bindings, fBlendSec, isBegin);
+	};
+
+
 
 	m_pModelCom->Register_AllNotifies(
 		pDesc->strNotfiyFolderPath,
 		nullptr,   
 		nullptr,   
 		nullptr,   
-		[this](const _string& strFlag, _bool isOn) { Notify_StateFlag(strFlag, isOn); },
-		[this](const _string& strName, _bool isStart, _float fEndPos, _bool bTrans, _bool bRot) {
-			if (m_pMotionWarpCom && m_pColliderCom)
-			{
-				m_pMotionWarpCom->On_WarpNotify(strName, isStart, fEndPos, bTrans, bRot);
-				m_pColliderCom->Set_Gravity(false);
-			}
-				
-		});
+		StateFlagCallBack,
+		MotionWarpCallBack,
+		IKCallBack
+	);
+
+	
 
 	if (FAILED(Ready_Variables(pDesc)))
 		return E_FAIL;
@@ -219,6 +232,8 @@ void CTraceur::Late_Update(_float fTimeDelta)
 	Sync_Transform();
 
 	// 2. IK 적용 예정 => 모든 물리 로직으로 인한 위치 보정이 끝난 시점이 IK를 적용할 시점.
+
+	// Render
 	Ready_Render();
 
 #ifdef _DEBUG
@@ -269,6 +284,19 @@ void CTraceur::Notify_StateFlag(const _string& strFlag, _bool isOn)
 {
 	if (m_pStateBlackboardCom)
 		m_pStateBlackboardCom->Set_Notify(strFlag, isOn);
+}
+
+void CTraceur::On_IK_Notify(const vector<IK_BINDING>& Bindings, _float fBlendSec, _bool isBegin)
+{
+	// 여러개의 Goal을 실행시킵니다.
+	for (const auto& bind : Bindings) {
+		if (isBegin) {
+			m_pIKCom->Begin_Goal(bind.strGoalName, bind.eMode, bind.fPosWeight, bind.fRotWeight, fBlendSec);
+		}
+		else {
+			m_pIKCom->End_Goal(bind.strGoalName, fBlendSec);
+		}
+	}
 }
 
 // 객체 생성시에 pDesc에 등록된 정보를 가져올 수 있습니다.

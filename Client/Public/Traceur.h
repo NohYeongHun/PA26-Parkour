@@ -28,7 +28,7 @@ public:
 
 public:
 	void Notify_StateFlag(const _string& strFlag, _bool isOn);
-
+	void On_IK_Notify(const vector<IK_BINDING>& bindings, _float blendSec, _bool isBegin);
 public:
 	void OnCollider_During(_uint iLayer, void* pDesc, const ContactManifold& Manifold);
 	void OnCollider_Enter(_uint iLayer, void* pDesc, const ContactManifold& Manifold);
