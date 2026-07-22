@@ -128,7 +128,7 @@ void CIKComponent::Register_Targets(const _string& strFolderPath)
 		EIKSOLVER_TYPE eSolver = To_SolverType(j.value("Solver", string("")));
 		if (strName.empty() || eSolver == EIKSOLVER_TYPE::END) continue;
 
-		// 2. 본 체인 (root→end)
+		// 2. 본 체인 (root->end)
 		vector<_string> boneNames;
 		if (j.contains("BoneChain"))
 			for (const auto& b : j["BoneChain"])

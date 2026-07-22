@@ -202,6 +202,7 @@ _float CIKSolver_TwoBone::Measure_DeepestPenetration(const vector<CBone*>& Bones
 			continue;
 
 		_vector vPos = XMLoadFloat4x4(Bones[i]->Get_CombinedTransformationMatrix()).r[3];
+		// 침투 깊이는 정사영해서 노말 벡터의 직선거리로 구합니다.
 		_float fPen = XMVectorGetX(XMVector3Dot(vPos - vPlanePoint, vPlaneNormal));
 		if (fPen < fMin)
 		{

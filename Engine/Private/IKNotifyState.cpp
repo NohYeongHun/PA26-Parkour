@@ -60,8 +60,8 @@ void CIKNotifyState::ImGui_Print()
 
 EIKTARGET_MODE CIKNotifyState::To_Mode(const string& s)
 {
-    if (s == "POSITION_ROTATION")
-        return EIKTARGET_MODE::POSITION_ROTATION;
+    if (s == "POSITION_CLEARANCE" || s == "POSITION_ROTATION")
+        return EIKTARGET_MODE::POSITION_CLEARANCE;
     if (s == "POSITION")
         return EIKTARGET_MODE::POSITION;
 
@@ -72,8 +72,8 @@ _string CIKNotifyState::Mode_ToString(EIKTARGET_MODE eMode)
 {
     _string result = "END";
 
-    if (eMode == EIKTARGET_MODE::POSITION_ROTATION)
-        result = "POSITION_ROTATION";
+    if (eMode == EIKTARGET_MODE::POSITION_CLEARANCE)
+        result = "POSITION_CLEARANCE";
     else if (eMode == EIKTARGET_MODE::POSITION)
         result = "POSITION";
 

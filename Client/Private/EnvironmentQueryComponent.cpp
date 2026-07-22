@@ -89,7 +89,7 @@ void CEnvironmentQueryComponent::Compute_EdgeAnchor(const _string& token, _fvect
 		fSide = 1.f;
 	}
 
-	vOutPos    = vEdge + vLat * (fSide * fSpacing) + vT * 0.2f + vTopN * 0.1f;
+	vOutPos    = vEdge + vLat * (fSide * fSpacing);
 	vOutNormal = vTopN;
 }
 
@@ -278,7 +278,8 @@ void CEnvironmentQueryComponent::Scan_Reach()
 	Scan.isObstacleDetected		   = true;
 	Scan.Reach.Hit.isHit           = true;
 	Scan.Reach.Hit.vHitPosition    = _float3(Hit.vHitPoint.x, Hit.vHitPoint.y, Hit.vHitPoint.z);
-	Scan.Reach.Hit.vHitNormal      = _float3(Hit.vHitNormal.x, Hit.vHitNormal.y, Hit.vHitNormal.z);
+	_vector vReachNormal = -XMVector3Normalize(XMLoadFloat4(&Hit.vHitNormal));
+	XMStoreFloat3(&Scan.Reach.Hit.vHitNormal, vReachNormal);
 	Scan.Reach.Hit.fCenterDistance = Hit.fFraction * m_fLineTraceDistance;
 	Scan.Reach.HitBodyID = Hit.HitBodyID;
 	Scan.iHeightFlag |= ENUM_CLASS(HEIGHT_HIT_FLAG::REACH);
@@ -295,12 +296,12 @@ void CEnvironmentQueryComponent::Probe_ReachEdge(_fvector vBottom)
 
 	_vector vLook = Get_ScanDir();
 	_vector vNormalXZ = XMVectorSetY(XMLoadFloat3(&Scan.Reach.Hit.vHitNormal), 0.f);
-	_vector vInward = XMVectorGetX(XMVector3LengthSq(vNormalXZ)) > 1e-4f
-		? -XMVector3Normalize(vNormalXZ) : vLook; // 벽 Normal의 반대 방향 Vector를 얻는데, 너무 값이 작을 경우 Look벡터를 사용한다.
+	_vector vInward = vLook; // 벽 Normal의 반대 방향 Vector를 얻는데, 너무 값이 작을 경우 Look벡터를 사용한다.
 	_vector vProbeXZ = XMLoadFloat3(&Scan.Reach.Hit.vHitPosition) + vInward * (m_pBodyProfile->fRadius * 0.5f);
 	const _float fTopY = XMVectorGetY(vBottom) + m_pBodyProfile->fMaxReach + m_pBodyProfile->fRadius;
 	_vector vDownStart = XMVectorSetY(vProbeXZ, fTopY);
 	_vector vDownEnd   = XMVectorSetY(vProbeXZ, Scan.Reach.Hit.vHitPosition.y - 0.1f);
+
 
 	LINE_TRACE_HIT TopHit = Cast_Ray(vDownStart, vDownEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
 	if (!TopHit.isHit)

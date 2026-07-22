@@ -61,8 +61,7 @@ void CClimbEvaluator::Evaluate(const ENV_PERCEPTION& P, const PARKOUR_DECISION& 
 	_vector vToCacheXZ = XMVectorSetY(XMLoadFloat3(&m_vTopStandCache) - vPos, 0.f);
 	_float  fXZDistSq  = XMVectorGetX(XMVector3LengthSq(vToCacheXZ));
 	const _float fRadius = m_pColliderCom->Get_Radius();
-	_bool inTopBand = m_hasTopStandCache
-		&& fPosY >= m_vTopStandCache.y - fRadius
+	_bool inTopBand = m_hasTopStandCache && fPosY >= m_vTopStandCache.y - fRadius
 		&& fXZDistSq <= (fRadius * 1.5f) * (fRadius * 1.5f);
 	_bool isToppingOut = inTopBand && (!isSupported || fPosY >= m_vTopStandCache.y);
 

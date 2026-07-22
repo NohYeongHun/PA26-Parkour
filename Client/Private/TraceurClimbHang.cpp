@@ -53,7 +53,6 @@ void CTraceurClimbHang::OnEnter(void* pArg)
 
 	const HANG_TUNING& T = CGameSystem::GetInstance()->Get_ParkourTuning()->Get().Hang;
 
-	//_vector vWallN = XMLoadFloat3(&m_pEnvQueryCom->Get_Perception().Geometry.vTraversalDir);
 	_vector vWallN = XMLoadFloat3(&Ctx.vWallNormal);
 	m_pIKDriverCom->Activate_WallFoot("LeftLegTwoBone", vWallN, T.fFootPosWeight, T.fFootRotWeight, T.fFootBlendSec,
 		T.fFootProbeOut, T.fFootProbeDepth, T.fFootSkin);
