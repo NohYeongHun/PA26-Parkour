@@ -18,6 +18,9 @@ public:
 	// IKComponent에 명령 및 ACTIVE_IK 등록
 	void Activate(const _string& strTarget, const _string& strToken, EIKTARGET_MODE eMode
 		, _float fPosWeight, _float fRotWeight, _float fBlendSec, IK_TRIGGER eTrigger, _bool isFix);
+	// 고정 좌표 등록.
+	void Activate_Fixed(const _string& strTarget, _fvector vWorldPos, _fvector vWorldNormal
+		, EIKTARGET_MODE eMode, _float fPosWeight, _float fRotWeight, _float fBlendSec);
 	void Deactivate(const _string& strTarget, _float fBlendSec);
 
 public:

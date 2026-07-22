@@ -56,7 +56,7 @@ IK_RESULT CIKSolver_TwoBone::Solve(const IK_SOLVE_CONTEXT& Context)
 	// 0. 도달할 수 있는 최소 거리는 뼈 길이 차이의 절대값 |l1 - l2| >= d
 	//    도달할 수 있는 최대 거리는 뼈 길이의 합 |l1 + l2 | < d
 	//	  | l1 - l2 | <= d < | l1 + l2 |
-	//    못 푸는 해라 할지라도 팔을 쭉 뻗는다던가 하는 식으로 (최대한 근사치) 구현
+	//    못 푸는 해라 할지라도 최대한 근사치 구현 => 팔을 쭉 뻗는다던가 하는 식으로
 
 	// 1. 현재 Position 읽기.
 	_vector vRootPos = XMLoadFloat4x4(Bones[iRoot]->Get_CombinedTransformationMatrix()).r[3];
@@ -72,63 +72,61 @@ IK_RESULT CIKSolver_TwoBone::Solve(const IK_SOLVE_CONTEXT& Context)
 	_float l2 = XMVectorGetX(XMVector3Length(vLower));	
 	_float d = XMVectorGetX(XMVector3Length(vJointTarget));
 	
-	// 2. 목표 값으로의 회전을 위한 사잇각 구하기.
-	// Analytic Two Bone IK => 무한한 평면에서도 모든 각도가 사용이 가능함
-	// 그래서 무한한 평면 해 중에서 평면을 고르는 과정이 중요하다.
-	_float cosTheta1 = std::clamp((l1 * l1 + d * d - l2 * l2) / ((2 * l1) * d), -1.f, 1.f);
-	_float theta1 = acosf(cosTheta1);
-	_float cosTheta2 = std::clamp((l1 * l1 + l2 * l2 - d * d) / (2 * l1 * l2), -1.f, 1.f);
-	_float theta2 = acosf(cosTheta2);
+	// 2. 코사인 법칙으로 상단 뼈 각도 계산
+	_float cosAngle = std::clamp((l1 * l1 + d * d - l2 * l2) / ((2 * l1) * d), -1.f, 1.f);
+	_float angle = acosf(cosAngle);
 
-	// 3. 굽힘 평면 구하기
-	// => 방향 벡터 구하기.
+	// 3. 굽힘 평면 기저 구하기: forward(Root->Target) + forward에 직교하는 bend 방향
 	_vector vForward = XMVector3Normalize(vJointTarget);
-	_vector vJointPlaneNormal, vJointBendDir;
-	if (d < 0.1f) // 길이가 너무 짧다면?
+	_vector vBendDir;
+	if (d < 0.1f) // 타겟이 Root에 너무 붙어 방향이 불안정한 경우
 	{
-		vJointPlaneNormal = XMVectorSet(0.f, 1.f, 0.f, 0.f);
-		vJointBendDir = XMVectorSet(0.f, 0.f, 1.f, 0.f);
+		vForward = XMVectorSet(1.f, 0.f, 0.f, 0.f);
+		vBendDir = XMVectorSet(0.f, 0.f, 1.f, 0.f);
 	}
 	else
 	{
-		vJointBendDir = CIKSolver::TwoBoneMakePoleVector(vRootPos, vMidPos, vEndPos);
-		// 회전 축.
-		vJointPlaneNormal = XMVector3Cross(vForward, vJointBendDir);
-
-		if (XMVectorGetX(XMVector3LengthSq(vJointPlaneNormal)) < fEPSILON)
-			vJointPlaneNormal = XMVectorSet(0.f, 1.f, 0.f, 0.f); // 법선 길이가 너무 작다면?
-		else
-			vJointPlaneNormal = XMVector3Normalize(vJointPlaneNormal);
+		// 폴 벡터를 forward에 직교하도록 정사영
+		_vector vPole = CIKSolver::TwoBoneMakePoleVector(vRootPos, vMidPos, vEndPos);
+		vBendDir = vPole - XMVector3Dot(vPole, vForward) * vForward;
+		if (XMVectorGetX(XMVector3LengthSq(vBendDir)) < fEPSILON) // 굽힘 정도가 거의 없고 평행하다면?
+		{
+			// 폴이 forward와 거의 평행 => forward에 직교하는 임의 축 선택
+			vBendDir = XMVector3Cross(vForward, XMVectorSet(0.f, 1.f, 0.f, 0.f));
+			if (XMVectorGetX(XMVector3LengthSq(vBendDir)) < fEPSILON)
+				vBendDir = XMVector3Cross(vForward, XMVectorSet(1.f, 0.f, 0.f, 0.f));
+		}
+		vBendDir = XMVector3Normalize(vBendDir);
 	}
 
-	// 4. 굽힘 평면을 이용하여 회전
+	// 4. 위치 삼각형을 풀어 관절/엔드의 목표 좌표 확정.
+	//    상단 뼈를 forward 축 성분 + 평면 수직 성분으로 분해.
+	_float  projDist      = l1 * cosAngle;          // forward 축 방향 성분 (부호 포함)
+	_float  jointLineDist = l1 * sinf(angle);       // 평면 수직 성분
+	_vector vSolvedMidPos = vRootPos + projDist * vForward + jointLineDist * vBendDir; // Mid를 회전할 구간.
+	_vector vSolvedEndPos = vJointTargetPos;        // 엔드의 목표 = 이펙터(타겟)
 
-	// Root 회전
-	_vector vCurUpperDir	= XMVector3Normalize(vMidPos - vRootPos); // Root -> Mid
-	_vector qRootTilt		= XMQuaternionRotationAxis(vJointPlaneNormal, theta1); // 특정 회전 쿼터니언
-	_vector vDesiredUpper	= XMVector3Rotate(vForward, qRootTilt);                // Root->Target 방향 벡터를 쿼터니언으로 회전시킴.
-	_vector qRootDelta		= QuatFromTo(vCurUpperDir, vDesiredUpper);             // Root에 줄 모델스페이스 델타 => vRoot -> vMid 회전을 수정하는 변환 벡터
-	qRootDelta = XMQuaternionSlerp(XMQuaternionIdentity(), qRootDelta, fWeight);   // 현재 가중치에 맞게 구면 선형보간
+	// 확정된 좌표를 향해 각 뼈를 회전시켜 실제 스켈레톤을 갱신.
 
-	// Mid 회전 (각도 기반: theta2 사용)
-	vDesiredUpper = XMVector3Rotate(vCurUpperDir, qRootDelta); // weight 반영된 실제 상단 방향
-	_vector vNewMidPos = vRootPos + vDesiredUpper * l1;        // 피벗 회전에 여전히 필요
+	// Root: 상단 뼈를 (Root -> 목표 관절 위치) 방향으로 회전
+	_vector vCurUpperDir = XMVector3Normalize(vMidPos - vRootPos);
+	_vector vTgtUpperDir = XMVector3Normalize(vSolvedMidPos - vRootPos);
+	_vector qRootDelta = QuatFromTo(vCurUpperDir, vTgtUpperDir);
+	qRootDelta = XMQuaternionSlerp(XMQuaternionIdentity(), qRootDelta, fWeight); // 가중치 블렌딩
 
-	// 하단 뼈 = 상단 뼈를 (π - theta2)만큼 꺾은 방향
-	// 부호(-)는 theta1 기울인 방향과 반대로 접혀야 타겟으로 되돌아오기 때문
-	_float   bendAngle = -(XM_PI - theta2);
-	_vector  qMidBend = XMQuaternionRotationAxis(vJointPlaneNormal, bendAngle);
-	_vector  vDesiredLower = XMVector3Rotate(vDesiredUpper, qMidBend);
-
-	_vector vCurLowerDir = XMVector3Rotate(XMVector3Normalize(vEndPos - vMidPos), qRootDelta);
-	_vector qMidDelta = QuatFromTo(vCurLowerDir, vDesiredLower);
-	qMidDelta = XMQuaternionSlerp(XMQuaternionIdentity(), qMidDelta, fWeight); 
+	// Mid: Root 회전이 전파된 뒤, 하단 뼈를 (회전된 관절 -> 목표 엔드) 방향으로 회전
+	_vector vNewMidPos = vRootPos + XMVector3Rotate(vCurUpperDir, qRootDelta) * l1; // 가중치 반영된 실제 관절 위치
+	_vector vTgtLowerDir = XMVector3Normalize(vSolvedEndPos - vNewMidPos);
+	_vector vCurLowerDir = XMVector3Rotate(XMVector3Normalize(vEndPos - vMidPos), qRootDelta); // Root 회전 전파 반영
+	_vector qMidDelta = QuatFromTo(vCurLowerDir, vTgtLowerDir);
+	qMidDelta = XMQuaternionSlerp(XMQuaternionIdentity(), qMidDelta, fWeight);
 
 	
 	/*
 		1. Pivot의 점을 원점으로 돌리기
-		2. 변화량으로 회전
+		2. qDelta 변화량으로 회전
 		3. Pivot으로 다시 변경
+		=> 이러한 변환 행렬을 생성.
 	*/
 
 	auto PivotRot = [](_fvector qDelta, _fvector vPivot) -> _matrix {

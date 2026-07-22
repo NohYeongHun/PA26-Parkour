@@ -50,6 +50,8 @@ public:
 public:
 	// IK에 전달할 장애물의 특정 지점 위치와 Normal
 	_bool Resolve_Anchor(const _string& token, _vector& vOutPos, _vector& vOutNormal);
+	void Compute_EdgeAnchor(const _string& token, _fvector vEdge, _fvector vTrav,
+		_fvector vTopNormal, _vector& vOutPos, _vector& vOutNormal) const;
 	const ENV_PERCEPTION& Get_Perception() const { return m_Perception; }
 
 	void Set_ScanDirOverride(_fvector vDir);

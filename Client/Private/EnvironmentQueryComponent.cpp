@@ -55,19 +55,10 @@ _bool CEnvironmentQueryComponent::Resolve_Anchor(const _string& token, _vector& 
 
 	_vector vEdge = XMVectorSetW(XMLoadFloat3(&Geo.Top.vEdgePos), 1.f);
 	_vector vTrav = XMLoadFloat3(&Geo.vTraversalDir);
-	_vector vLat = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), vTrav)); // 엣지 좌우측
-	const _float fSpacing = 0.35f;
 
-	if (token == "TOP_LEFT_EDGE")
+	if (token == "TOP_LEFT_EDGE" || token == "TOP_RIGHT_EDGE")
 	{
-		vOutPos = vEdge - vLat * fSpacing + XMVector3Normalize(vTrav) * 0.2f + XMVector3Normalize(XMLoadFloat3(&Geo.Top.vNormal)) * 0.19f;
-		vOutNormal = XMLoadFloat3(&Geo.Top.vNormal);
-		return Geo.Top.isReachable;
-	}
-	if (token == "TOP_RIGHT_EDGE")
-	{
-		vOutPos = vEdge + vLat * fSpacing + XMVector3Normalize(vTrav) * 0.2f + XMVector3Normalize(XMLoadFloat3(&Geo.Top.vNormal)) * 0.19f;
-		vOutNormal = XMLoadFloat3(&Geo.Top.vNormal);
+		Compute_EdgeAnchor(token, vEdge, vTrav, XMLoadFloat3(&Geo.Top.vNormal), vOutPos, vOutNormal);
 		return Geo.Top.isReachable;
 	}
 
@@ -79,6 +70,27 @@ _bool CEnvironmentQueryComponent::Resolve_Anchor(const _string& token, _vector& 
 	}
 
 	return false;
+}
+
+void CEnvironmentQueryComponent::Compute_EdgeAnchor(const _string& token, _fvector vEdge, _fvector vTrav,
+	_fvector vTopNormal, _vector& vOutPos, _vector& vOutNormal) const
+{
+	_vector vT    = XMVector3Normalize(vTrav);
+	_vector vLat  = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), vT)); // 엣지 좌우측
+	_vector vTopN = XMVector3Normalize(vTopNormal);
+	const _float fSpacing = 0.35f;
+	_float fSide{};
+	if (token == "TOP_LEFT_EDGE")
+	{
+		fSide = -1.f;
+	}
+	else if (token == "TOP_RIGHT_EDGE")
+	{
+		fSide = 1.f;
+	}
+
+	vOutPos    = vEdge + vLat * (fSide * fSpacing) + vT * 0.2f + vTopN * 0.1f;
+	vOutNormal = vTopN;
 }
 
 void CEnvironmentQueryComponent::Set_ScanDirOverride(_fvector vDir)

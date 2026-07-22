@@ -26,6 +26,20 @@ void CIKDriver::Activate(const _string& strTarget, const _string& strToken, EIKT
 	m_ActiveIKSource[strTarget] = Active;
 }
 
+void CIKDriver::Activate_Fixed(const _string& strTarget, _fvector vWorldPos, _fvector vWorldNormal
+	, EIKTARGET_MODE eMode, _float fPosWeight, _float fRotWeight, _float fBlendSec)
+{
+	m_pIKCom->Begin_Target(strTarget, eMode, fPosWeight, fRotWeight, fBlendSec);
+
+	ACTIVE_IK Active{};
+	Active.eTrigger   = IK_TRIGGER::STATE;
+	Active.isFixed    = true;
+	Active.isResolved = true;                       // 즉시 latch — perception 재쿼리 없음
+	XMStoreFloat3(&Active.vFixedPos,    vWorldPos);
+	XMStoreFloat3(&Active.vFixedNormal, vWorldNormal);
+	m_ActiveIKSource[strTarget] = Active;
+}
+
 void CIKDriver::Deactivate(const _string& strTarget, _float fBlendSec)
 {
 	// 현재 Driver 제거.

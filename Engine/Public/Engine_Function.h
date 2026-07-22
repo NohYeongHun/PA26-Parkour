@@ -110,6 +110,11 @@ namespace Engine
 		return t * t * (3.f - 2.f * t);
 	}
 
+	inline _float EaseInOut(_float t)
+	{
+		return t * t * (3.f - 2.f * t);
+	}
+
 	inline _float Saturate(_float fValue)
 	{
 		return max(min(fValue, 1.f), 0.f);

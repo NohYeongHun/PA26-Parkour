@@ -199,10 +199,12 @@ void CIKComponent::Execute(_float fTimeDelta)
 			continue;
 		}
 
-		if (target.fCurWeight < target.fTargetWeight)
-			target.fCurWeight = min(target.fCurWeight + target.fBlendSpeed * fTimeDelta, target.fTargetWeight);
-		else if (target.fCurWeight > target.fTargetWeight)
-			target.fCurWeight = max(target.fCurWeight - target.fBlendSpeed * fTimeDelta, target.fTargetWeight);
+		// Ease Out 도입.
+		_float fAlpha = 1.f - expf(-target.fBlendSpeed * fTimeDelta);
+		target.fCurWeight += (target.fTargetWeight - target.fCurWeight) * fAlpha;
+
+		if (fabsf(target.fTargetWeight - target.fCurWeight) < 1e-3f)
+			target.fCurWeight = target.fTargetWeight;
 
 		IK_SOLVE_CONTEXT Context{};
 		Context.pBones = &m_pModelCom->Get_Bones();

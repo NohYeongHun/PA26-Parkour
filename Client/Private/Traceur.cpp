@@ -297,10 +297,14 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 {
 #ifdef _DEBUG
 
-	// 1/2/3 키는 파쿠르 디버그 카테고리 토글로 이동(PhysicsManager에서 처리)
-	// 루트모션 궤적 토글: 4번 → 5번 키로 이동
 	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D5), KEYSTATE::UP))
 		m_IsShowTrajectory = !m_IsShowTrajectory;
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D6), KEYSTATE::UP))
+	{
+		m_pGameSystem->Reload_TransitionTable();
+		m_pGameSystem->Reload_ParkourTuning();
+	}
+		
 #endif // _DEBUG
 
 }
@@ -319,7 +323,7 @@ void CTraceur::Update_Physics(_float fTimeDelta)
 
 void CTraceur::Update_EnvQuery(_float fTimeDelta)
 {
-	if (nullptr == m_pEnvQueryCom)
+	if (nullptr == m_pEnvQueryCom || nullptr == m_pStateMachineCom)
 		return;
 
 	if (nullptr != m_pStateMachineCom)
@@ -337,8 +341,11 @@ void CTraceur::Update_EnvQuery(_float fTimeDelta)
 	m_pParkourDeciderCom->Decide(m_pEnvQueryCom->Get_Perception(), fTimeDelta);
 
 	if (m_pStateMachineCom->Get_CurrentCategory() == ENUM_CLASS(EStateCategory::CLIMB))
+	{
 		m_pClimbEvalCom->Evaluate(m_pEnvQueryCom->Get_Perception(),
 			m_pParkourDeciderCom->Get_Decision(), fTimeDelta);
+	}
+		
 }
 
 void CTraceur::Sync_Camera(_float fTimeDelta)

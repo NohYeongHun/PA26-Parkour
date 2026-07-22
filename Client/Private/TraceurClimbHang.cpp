@@ -9,6 +9,7 @@
 #include "ParkourTuningTable.h"
 #include "ParkourMath.h"
 #include "IKDriver.h"
+#include "EnvironmentQueryComponent.h"
 
 HRESULT CTraceurClimbHang::Initialize(CTraceur* pOwner)
 {
@@ -38,10 +39,17 @@ void CTraceurClimbHang::OnEnter(void* pArg)
 	}
 
 	// 1. Ready_Hang이 성공했다면? IK 실행. => Hang은 계속 유지되어야함.
-	m_pIKDriverCom->Activate("LeftArm", "TOP_LEFT_EDGE"
-		, EIKTARGET_MODE::POSITION, 1.f, 1.f, 0.4f, IK_TRIGGER::STATE, true);
-	m_pIKDriverCom->Activate("RightArm", "TOP_RIGHT_EDGE"
-		, EIKTARGET_MODE::POSITION, 1.f, 1.f, 0.4f, IK_TRIGGER::STATE, true);
+	HANG_CONTEXT& Ctx = m_pOwner->Get_HangContext();
+	_vector vEdge = XMLoadFloat3(&Ctx.vGrabEdgePos);
+	_vector vTrav = XMVectorNegate(XMLoadFloat3(&Ctx.vWallNormal));
+	_vector vTopN = XMVectorSet(0.f, 1.f, 0.f, 0.f);
+
+	_vector vLeft{}, vRight{}, vN{};
+	m_pEnvQueryCom->Compute_EdgeAnchor("TOP_LEFT_EDGE",  vEdge, vTrav, vTopN, vLeft,  vN);
+	m_pEnvQueryCom->Compute_EdgeAnchor("TOP_RIGHT_EDGE", vEdge, vTrav, vTopN, vRight, vN);
+
+	m_pIKDriverCom->Activate_Fixed("LeftArm",  vLeft,  vN, EIKTARGET_MODE::POSITION, 1.f, 1.f, 0.4f);
+	m_pIKDriverCom->Activate_Fixed("RightArm", vRight, vN, EIKTARGET_MODE::POSITION, 1.f, 1.f, 0.4f);
 }
 
 void CTraceurClimbHang::OnExit()
@@ -80,7 +88,7 @@ _bool CTraceurClimbHang::Ready_Hang(void* pArg)
 
 	_vector vP0 = m_pTransformCom->Get_State(Engine::STATE::POSITION);
 	_vector vP2 = ParkourMath::Calc_HangPos(XMLoadFloat3(&Ctx.vGrabEdgePos), vNormal,
-		pBody->fRadius * 0.7f, pBody->fHeight, T.fHangOffsetMult, T.fWallOffset);
+		pBody->fRadius, pBody->fHeight, T.fHangOffsetMult, T.fWallOffset);
 
 	m_fSnapElapsed = 0.f;
 	m_isSnapping   = true;

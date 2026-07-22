@@ -48,7 +48,7 @@ _vector CIKSolver::TwoBoneMakePoleVector(_fvector vRootPos, _fvector vMidPos, _v
 
 	// 3. 축 성분을 제거하여 축에 순수 직교하는 성분만 남깁니다.
 	_float vDot = XMVectorGetX(XMVector3Dot(vBendDir, vAxis));
-	vBendDir = vBendDir - vDot * vAxis;
+	vBendDir = vBendDir - vDot * vAxis; // 이건 vRoot와 vEnd의 중점에서 굽어있는 수직 벡터를 구하기 위함.
 
 	// 4. 관절이 거의 직선 상에 있어 방향이 불안정한 경우
 	_vector vLenSq = XMVector3LengthSq(vBendDir);
