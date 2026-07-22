@@ -297,24 +297,9 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 {
 #ifdef _DEBUG
 
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D1), KEYSTATE::UP))
-	{
-		m_pColliderCom->Set_Gravity(false);
-	}
-
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D2), KEYSTATE::UP))
-	{
-		m_pColliderCom->Set_Gravity(true);
-	}
-
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D3), KEYSTATE::UP))
-	{
-		CGameSystem::GetInstance()->Reload_TransitionTable();
-		CGameSystem::GetInstance()->Reload_ParkourTuning();
-		m_pAnimControllerCom->Reload();
-	}
-
-	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D4), KEYSTATE::UP))
+	// 1/2/3 키는 파쿠르 디버그 카테고리 토글로 이동(PhysicsManager에서 처리)
+	// 루트모션 궤적 토글: 4번 → 5번 키로 이동
+	if (m_pInputControllerCom->Check_AnyInput(ENUM_CLASS(KEYINPUT::D5), KEYSTATE::UP))
 		m_IsShowTrajectory = !m_IsShowTrajectory;
 #endif // _DEBUG
 
@@ -374,6 +359,7 @@ void CTraceur::Sync_Transform()
 // => 물리 처리가 끝난 애니메이션 상태에서 계산해야 정확함.
 void CTraceur::Drive_IK(_float fTimeDelta)
 {
+
 	m_pIKDriverCom->Execute(fTimeDelta);
 }
 

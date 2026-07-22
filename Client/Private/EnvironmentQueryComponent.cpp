@@ -60,13 +60,13 @@ _bool CEnvironmentQueryComponent::Resolve_Anchor(const _string& token, _vector& 
 
 	if (token == "TOP_LEFT_EDGE")
 	{
-		vOutPos = vEdge - vLat * fSpacing + XMVector3Normalize(vTrav) * 0.2f;
+		vOutPos = vEdge - vLat * fSpacing + XMVector3Normalize(vTrav) * 0.2f + XMVector3Normalize(XMLoadFloat3(&Geo.Top.vNormal)) * 0.19f;
 		vOutNormal = XMLoadFloat3(&Geo.Top.vNormal);
 		return Geo.Top.isReachable;
 	}
 	if (token == "TOP_RIGHT_EDGE")
 	{
-		vOutPos = vEdge + vLat * fSpacing + XMVector3Normalize(vTrav) * 0.2f;
+		vOutPos = vEdge + vLat * fSpacing + XMVector3Normalize(vTrav) * 0.2f + XMVector3Normalize(XMLoadFloat3(&Geo.Top.vNormal)) * 0.19f;
 		vOutNormal = XMLoadFloat3(&Geo.Top.vNormal);
 		return Geo.Top.isReachable;
 	}
@@ -110,7 +110,8 @@ void CEnvironmentQueryComponent::Execute()
 	Scan_Obstacle();
 	Measure_Geometry();
 #ifdef _DEBUG
-	m_pGameInstance->Add_DebugSphere(XMLoadFloat3(&m_Perception.Geometry.Top.vEdgePos), 0.1f, JPH::Color(0.f, 255.f, 0.f, 1.f));
+	if (m_pGameInstance->IsParkourDebug() && m_pGameInstance->IsDebugSphere())
+		m_pGameInstance->Add_DebugSphere(XMLoadFloat3(&m_Perception.Geometry.Top.vEdgePos), 0.1f, JPH::Color(0.f, 255.f, 0.f, 1.f));
 #endif
 #ifdef _DEBUG
 	Draw_DebugMarkers();
@@ -160,7 +161,7 @@ LINE_TRACE_HIT CEnvironmentQueryComponent::Cast_Ray(_fvector vStart, _fvector vE
 	}
 
 #ifdef _DEBUG
-	if (m_pGameInstance->IsParkourDebug())
+	if (m_pGameInstance->IsParkourDebug() && m_pGameInstance->IsDebugRay())
 	{
 		JPH::Color color = JPH::Color(128.f, 128.f, 128.f, 1.f);
 		if (lineTrace.isHit)
@@ -230,7 +231,6 @@ void CEnvironmentQueryComponent::Scan_Reach()
 	_vector vStart = vBottom + XMVectorSet(0.f, fBandCenterY, 0.f, 0.f);
 
 	SHAPE_CAST_HIT Hit{};
-	OutputDebugStringA("[EQDBG-SRC] Scan_Reach\n");
 	if (!m_pGameInstance->Shape_Cast(m_pOwnerColliderCom->Get_Shape(), XMQuaternionIdentity(),
 			vStart, vLook, m_fLineTraceDistance, ENUM_CLASS(m_eTargetLayer), Hit))
 		return;
@@ -355,12 +355,18 @@ _bool CEnvironmentQueryComponent::Measure_Top(MEASURE_FRAME& Frame)
 	if (!TopDownRay.isHit || TopDownRay.vHitPosition.y <= TopHit.vHitPosition.y)
 	{
 		Geo.Top.isReachable = false;
+		Geo.Top.vNormal = _float3(0.f, 1.f, 0.f);   // 무효여도 0벡터로 두지 않음
 		Geo.Top.fHeight = m_pBodyProfile->fMaxReach;
 		return false;
 	}
 
 	Geo.Top.isReachable = true;
-	Geo.Top.vNormal = TopDownRay.vHitNormal;
+
+	_vector vTopN = XMLoadFloat3(&TopDownRay.vHitNormal);
+	if (XMVectorGetX(XMVector3LengthSq(vTopN)) < 1e-6f)
+		vTopN = XMVectorSet(0.f, 1.f, 0.f, 0.f);
+	XMStoreFloat3(&Geo.Top.vNormal, vTopN);
+
 	Geo.Top.fHeight = TopDownRay.vHitPosition.y - XMVectorGetY(Frame.vBottom);
 	Frame.fTopSurfaceY = TopDownRay.vHitPosition.y;
 
@@ -542,16 +548,23 @@ void CEnvironmentQueryComponent::Measure_PathClearance(const MEASURE_FRAME& Fram
 	{
 		const JPH::Color Color = Geo.isPathBlocked ? JPH::Color(255.f, 0.f, 0.f, 1.f) : JPH::Color(0.f, 255.f, 0.f, 1.f);
 
-		// 충돌지점
-		m_pGameInstance->Add_DebugSphere(Frame.vBottom, 0.1f, JPH::Color(0.F, 0.F, 255.F, 1.F));
+		// 캡슐 스윕(Shape Cast) 경로 라인 → ShapeCast 카테고리(2번)
+		if (m_pGameInstance->IsDebugShape())
+			m_pGameInstance->Add_DebugLine(vStart, vStart + Frame.vTraversal * fDist, Color);
 
-		// 시작 위치?
-		m_pGameInstance->Add_DebugSphere(Frame.vBottom, 0.1f, JPH::Color(0.F, 0.F, 255.F, 1.F));
-		m_pGameInstance->Add_DebugLine(vStart, vStart + Frame.vTraversal * fDist, Color);
-		m_pGameInstance->Add_DebugSphere(XMVectorSetW(XMLoadFloat3(&Geo.Top.vStandPos), 1.f), 0.1f, JPH::Color(0.F, 0.F, 255.F, 1.F));
-		m_pGameInstance->Add_DebugSphere(XMVectorSetW(XMLoadFloat3(&Geo.Landing.vPos), 1.f), 0.2f, JPH::Color(0.F, 0.F, 0.F, 1.F));
-		if (isHit)
-			m_pGameInstance->Add_DebugSphere(XMVectorSetW(XMLoadFloat4(&Hit.vHitPoint), 1.f), 0.1f, JPH::Color(0.F, 0.F, 255.F, 1.F));
+		// 마커 스피어 → DebugSphere 카테고리(3번)
+		if (m_pGameInstance->IsDebugSphere())
+		{
+			// 충돌지점
+			m_pGameInstance->Add_DebugSphere(Frame.vBottom, 0.1f, JPH::Color(0.F, 0.F, 255.F, 1.F));
+
+			// 시작 위치?
+			m_pGameInstance->Add_DebugSphere(Frame.vBottom, 0.1f, JPH::Color(0.F, 0.F, 255.F, 1.F));
+			m_pGameInstance->Add_DebugSphere(XMVectorSetW(XMLoadFloat3(&Geo.Top.vStandPos), 1.f), 0.1f, JPH::Color(0.F, 0.F, 255.F, 1.F));
+			m_pGameInstance->Add_DebugSphere(XMVectorSetW(XMLoadFloat3(&Geo.Landing.vPos), 1.f), 0.2f, JPH::Color(0.F, 0.F, 0.F, 1.F));
+			if (isHit)
+				m_pGameInstance->Add_DebugSphere(XMVectorSetW(XMLoadFloat4(&Hit.vHitPoint), 1.f), 0.1f, JPH::Color(0.F, 0.F, 255.F, 1.F));
+		}
 	}
 #endif
 }
@@ -575,7 +588,7 @@ void CEnvironmentQueryComponent::Measure_LandingClearance(const MEASURE_FRAME& F
 #ifdef _DEBUG
 void CEnvironmentQueryComponent::Draw_DebugMarkers()
 {
-	if (!m_pGameInstance->IsParkourDebug())
+	if (!m_pGameInstance->IsParkourDebug() || !m_pGameInstance->IsDebugSphere())
 		return;
 
 	const OBSTACLE_GEOMETRY& Geo = m_Perception.Geometry;

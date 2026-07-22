@@ -577,6 +577,7 @@ namespace Engine
 		EIKTARGET_MODE	 eMode;			// 수정되는 값
 		IK_CHAIN_DESC    Chain;			// 고정
 		_bool            isEnable;		// 수정되는 값
+		_bool			 isTargetSet;	// 수정되는 값 => 최소 1회 유효되었는지.
 		_float           fCurWeight;	// 수정되는 값
 		_float			 fTargetWeight; // 수정되는 값
 		_float			 fBlendSpeed;	// 수정되는 값

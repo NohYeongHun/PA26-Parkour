@@ -142,6 +142,14 @@ void CPhysicsManager::Update(_float fTimeDelta)
 
 	if (m_pGameInstance->Get_DIKeyState(DIK_END) == KEYSTATE::DOWN)
 		m_isParkourDebug = !m_isParkourDebug;
+
+	// 파쿠르 디버그 카테고리별 토글 (마스터 END 하위)
+	if (m_pGameInstance->Get_DIKeyState(DIK_1) == KEYSTATE::DOWN)
+		m_isDebugRay = !m_isDebugRay;
+	if (m_pGameInstance->Get_DIKeyState(DIK_2) == KEYSTATE::DOWN)
+		m_isDebugShape = !m_isDebugShape;
+	if (m_pGameInstance->Get_DIKeyState(DIK_3) == KEYSTATE::DOWN)
+		m_isDebugSphere = !m_isDebugSphere;
 #endif
 	m_pContactListener->Clear_Resource();
 	m_pPhysicsSystem->Update(fTimeDelta, 1, m_pAllocator, m_pJobSystem);
@@ -284,18 +292,16 @@ RAY_CAST_HIT CPhysicsManager::Ray_Cast(_fvector vStartPos, _fvector vEndPos, con
 		if (lock.Succeeded())
 		{
 			const Body& body = lock.GetBody();
+			Vec3 normal = body.GetWorldSpaceSurfaceNormal(result.mSubShapeID2, LoadVec3(vHitPos));
 
-			Vec3 normal =
-				body.GetWorldSpaceSurfaceNormal(
-					result.mSubShapeID2,
-					LoadVec3(vHitPos));
-
-			RayCastHit.vHitNormal =
-			{
-				normal.GetX(),
-				normal.GetY(),
-				normal.GetZ()
-			};
+			_vector vN = XMVectorSet(normal.GetX(), normal.GetY(), normal.GetZ(), 0.f);
+			if (XMVectorGetX(XMVector3LengthSq(vN)) < 1e-6f)
+				vN = -XMVector3Normalize(vDir);
+			XMStoreFloat3(&RayCastHit.vHitNormal, vN);
+		}
+		else
+		{
+			XMStoreFloat3(&RayCastHit.vHitNormal, -XMVector3Normalize(vDir));
 		}
 	}
 	
@@ -418,9 +424,12 @@ RefConst<Shape> CPhysicsManager::Get_SphereShape(_float fRadius)
 // => Debug 용도 Render 함수들.
 void CPhysicsManager::Render()
 {
-	// Ray Render
-	for (size_t i = 0; i < m_RayPoint.size(); ++i)
-		DrawRay(XMLoadFloat3(&m_RayPoint[i].first), XMLoadFloat3(&m_RayPoint[i].second));
+	// Ray Render (RayCast 카테고리, 1번 키) — 큐는 항상 비워 누적 방지
+	if (m_isDebugRay)
+	{
+		for (size_t i = 0; i < m_RayPoint.size(); ++i)
+			DrawRay(XMLoadFloat3(&m_RayPoint[i].first), XMLoadFloat3(&m_RayPoint[i].second));
+	}
 	m_RayPoint.clear();
 
 	// Sphere/Line Render (큐잉된 디버그 도형)
@@ -436,8 +445,8 @@ void CPhysicsManager::Render()
 	m_DebugSpheres.clear();
 	m_DebugLines.clear();
 
-	// Box Cast Render (파쿠르 디버그 토글에 종속) END키를 켰을때만?
-	if (true == m_isParkourDebug)
+	// Box Cast Render (파쿠르 디버그 토글에 종속) END키 마스터 + 2번키 카테고리
+	if (m_isParkourDebug && m_isDebugShape)
 	{
 		for (const SHAPE_CAST_DEBUG& Debug : m_ShapeCastDebugs)
 			DrawShapeCast(Debug.pShape, Debug.StartMatrix, Debug.EndMatrix, Debug.isHit, Debug.HitPoints);

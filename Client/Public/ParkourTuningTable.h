@@ -45,7 +45,7 @@ struct HANG_TUNING
 	_float fMaxNormalY        = 0.2f;
 	// 행 포즈 (pose)
 	_float fHangOffsetMult    = 1.25f;
-	_float fWallOffset        = 0.1f; 
+	_float fWallOffset        = 0.0f; 
 	_float fSnapTime          = 0.15f;
 	// Hop 탐색 (probe)
 	_float fHopDistLR         = 2.5f;

@@ -836,6 +836,18 @@ _bool CGameInstance::IsParkourDebug()
 {
 	return m_pPhysicsManager->IsParkourDebug();
 }
+_bool CGameInstance::IsDebugRay()
+{
+	return m_pPhysicsManager->IsDebugRay();
+}
+_bool CGameInstance::IsDebugShape()
+{
+	return m_pPhysicsManager->IsDebugShape();
+}
+_bool CGameInstance::IsDebugSphere()
+{
+	return m_pPhysicsManager->IsDebugSphere();
+}
 #endif
 
 #pragma endregion

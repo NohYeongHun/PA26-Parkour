@@ -222,7 +222,8 @@ namespace Client
 		IK_TRIGGER  eTrigger;      
 		_bool       isFixed;
 		_bool		isResolved;
-		_float3     fFixedPos;   
+		_float3     vFixedPos;   
+		_float3		vFixedNormal{ 0.f, 1.f, 0.f };
 	}ACTIVE_IK;
 #pragma endregion
 

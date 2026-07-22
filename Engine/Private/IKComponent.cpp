@@ -29,12 +29,15 @@ void CIKComponent::Begin_Target(const _string& strTarget, EIKTARGET_MODE eMode, 
 
 	IK_TARGET& Target = m_Targets[iter->second];
 
+
 	Target.isEnable = true;
+	Target.isTargetSet = false;
 	Target.eMode = eMode;
 	Target.Chain.fPosWeight = fPosWeight;
 	Target.Chain.fRotWeight = fRotWeight;
 	Target.fBlendSpeed = (fBlendSec > 0.f) ? 1.f / fBlendSec : FLT_MAX;
 	Target.fTargetWeight = 1.f;
+	
 }
 
 void CIKComponent::End_Target(const _string& strTarget, _float fBlendSec)
@@ -61,6 +64,7 @@ void CIKComponent::Set_Target(const _string& strGoal, _fvector vWorldPos, _fvect
 	target.Chain.vTargetPos = vModelPos;
 	target.vCurTargetPos = vModelPos;
 	target.vTargetNormal = vModelNormal;
+	target.isTargetSet = true;
 }
 
 
@@ -186,7 +190,7 @@ void CIKComponent::Execute(_float fTimeDelta)
 
 	for (auto& target : m_Targets)
 	{
-		if (!target.isEnable)
+		if (!target.isEnable || !target.isTargetSet)
 			continue;
 
 		if (target.fTargetWeight <= 0.f && target.fCurWeight <= 0.f)
@@ -211,6 +215,7 @@ void CIKComponent::Execute(_float fTimeDelta)
 			iMinBone = min(iMinBone, target.Chain.BoneChain[0]);
 	}
 
+	// Solver가 동작하고 난 뒤 FK 수행. => 회전 전파.
 	if (iMinBone != UINT_MAX)
 		m_pModelCom->Update_BoneMatrix_Map(iMinBone);
 }

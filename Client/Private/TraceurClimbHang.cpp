@@ -80,7 +80,7 @@ _bool CTraceurClimbHang::Ready_Hang(void* pArg)
 
 	_vector vP0 = m_pTransformCom->Get_State(Engine::STATE::POSITION);
 	_vector vP2 = ParkourMath::Calc_HangPos(XMLoadFloat3(&Ctx.vGrabEdgePos), vNormal,
-		pBody->fRadius, pBody->fHeight, T.fHangOffsetMult, T.fWallOffset);
+		pBody->fRadius * 0.7f, pBody->fHeight, T.fHangOffsetMult, T.fWallOffset);
 
 	m_fSnapElapsed = 0.f;
 	m_isSnapping   = true;

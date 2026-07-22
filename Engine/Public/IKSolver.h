@@ -14,6 +14,9 @@ public:
 	virtual HRESULT		Render();
 
 public:
+	static _vector TwoBoneMakePoleVector(_fvector vRootPos, _fvector vMidPos, _vector  vEndPos, _float Distance = 2.f);
+
+public:
 	virtual const _char* Get_Name() const = 0;
 
 public:

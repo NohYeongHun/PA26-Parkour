@@ -123,6 +123,27 @@ namespace Engine
 			+ XMLoadFloat3(&vP2) * (fT * fT);
 	}
 
+	// A -> B 벡터가 되기 위해 필요한 쿼터니언 계산.
+	inline _vector QuatFromTo(_fvector vA, _fvector vB)
+	{
+		const _float fEPSILON = 1e-6f;
+		_vector vNA = XMVector3Normalize(vA);
+		_vector vNB = XMVector3Normalize(vB);
+
+		_float fDot = std::clamp(XMVectorGetX(XMVector3Dot(vNA, vNB)), -1.f, 1.f);
+		if (fDot > 0.9999f) return XMQuaternionIdentity();
+		if (fDot < -0.9999f)
+		{
+			_vector vAxis = XMVector3Cross(vNA, XMVectorSet(1.f, 0.f, 0.f, 0.f));
+			if (XMVectorGetX(XMVector3LengthSq(vAxis)) < fEPSILON)
+			{
+				vAxis = XMVector3Cross(vNA, XMVectorSet(0.f, 1.f, 0.f, 0.f));
+			}
+			return XMQuaternionRotationAxis(XMVector3Normalize(vAxis), XM_PI);
+		}
+		return XMQuaternionRotationAxis(XMVector3Normalize(XMVector3Cross(vNA, vNB)), acosf(fDot));
+	}
+
 #ifdef _DEBUG
 	inline void OutPutDebugFloat4(_wstring strPrePix, _float4 fVector)
 	{

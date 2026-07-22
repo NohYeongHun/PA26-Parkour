@@ -67,6 +67,10 @@ public:
 
 	void				DrawShapeCast(const Shape* pShape, const RMat44& StartMatrix, const RMat44& EndMatrix, _bool isHit, const vector<_float3>& HitPoints);
 	_bool				IsParkourDebug() { return m_isParkourDebug; }
+	// 파쿠르 디버그 카테고리별 토글 (마스터 IsParkourDebug 하위, 1/2/3 키)
+	_bool				IsDebugRay()    { return m_isDebugRay; }
+	_bool				IsDebugShape()  { return m_isDebugShape; }
+	_bool				IsDebugSphere() { return m_isDebugSphere; }
 
 	// 지정한 지점에 와이어 스피어
 	void				Add_DebugSphere(_fvector vCenter, _float fRadius, const Color& color = Color(0.f, 255.f, 255.f, 1.f));
@@ -121,6 +125,10 @@ private:
 	BodyManager::DrawSettings m_DrawSetting;
 	_bool m_isRenderAll = { false };
 	_bool m_isParkourDebug = { false };
+	// 카테고리별 토글 (기본 켜짐: 마스터가 켜지면 전부 보이고 개별로 끔)
+	_bool m_isDebugRay = { true };
+	_bool m_isDebugShape = { true };
+	_bool m_isDebugSphere = { true };
 	_uint m_iHighlightLayer = {};
 	vector<pair<_float3, _float3>>	m_RayPoint;
 

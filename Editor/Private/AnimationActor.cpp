@@ -428,7 +428,7 @@ void CAnimationActor::Register_AllNotifies(const _string& strFolderPath)
 #endif // _DEBUG
 
 	
-	m_pModelCom->Register_AllNotifies(strFolderPath, colliderCallback, effectCallBack, objectCallBack, stateFlagCallBack);
+	//m_pModelCom->Register_AllNotifies(strFolderPath, colliderCallback, effectCallBack, objectCallBack, stateFlagCallBack);
     
 }
 void CAnimationActor::Collider_Active(const _wstring&, _bool)

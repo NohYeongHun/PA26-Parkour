@@ -132,7 +132,7 @@ void CEditorProp::Register_AllNotifies(const _string& strFolderPath)
 		this->Object_Func(tag);
 		};
 
-	m_pModelCom->Register_AllNotifies(strFolderPath, colliderCallback, effectCallBack, objectCallBack);
+	//m_pModelCom->Register_AllNotifies(strFolderPath, colliderCallback, effectCallBack, objectCallBack);
 }
 
 void CEditorProp::Free()

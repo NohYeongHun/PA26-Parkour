@@ -224,6 +224,9 @@ public:
 	void					Add_DebugSphere(const _fvector& vCenter, _float fRadius, const JPH::Color& color = JPH::Color(0.F, 255.F, 255.F, 1.F));
 	void					Add_DebugLine(const _fvector& vStart, const _fvector& vEnd, const JPH::Color& color = JPH::Color(0.F, 255.F, 0.F, 1.F));
 	_bool					IsParkourDebug();
+	_bool					IsDebugRay();
+	_bool					IsDebugShape();
+	_bool					IsDebugSphere();
 #endif
 #pragma endregion
 

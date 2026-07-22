@@ -73,30 +73,36 @@ void CIKDriver::Execute(_float fTimeDelta)
 		_vector vWorld{};
 		_vector vNormal{};
 		_bool isValid{};
+
+
 		if (active.isFixed && active.isResolved)
 		{
-			vWorld = XMLoadFloat3(&active.fFixedPos);
+			vWorld = XMLoadFloat3(&active.vFixedPos);
+			vNormal = XMLoadFloat3(&active.vFixedNormal);
 			isValid = true;
 		}
 		else
 		{
 			isValid = m_pEnvQueryCom->Resolve_Anchor(active.strToken, vWorld, vNormal);
-			if (isValid && active.isFixed)
-			{
-				XMStoreFloat3(&active.fFixedPos, vWorld);
-				active.isResolved = true;
-			}
+			
 		}
-		if (isValid)
+
+		if (!isValid)
+			continue;
+
+		if (isValid && active.isFixed)
 		{
-			m_pIKCom->Set_Target(target, vWorld, vNormal);
-#ifdef _DEBUG
-			m_pGameInstance->Add_DebugSphere(vWorld, 0.05f, JPH::Color(255.f, 0.f, 0.f, 1.f));
-#endif
+			XMStoreFloat3(&active.vFixedPos, vWorld);
+			active.isResolved = true;
 		}
+
+		m_pIKCom->Set_Target(target, vWorld, vNormal);
+#ifdef _DEBUG
+		m_pGameInstance->Add_DebugSphere(vWorld, 0.05f, JPH::Color(255.f, 0.f, 0.f, 1.f));
+#endif
 	}
 	
-	// Solver의 실행은 IkComponent가 수행.
+	// Solver의 실행은 IK Component가 수행.
 	m_pIKCom->Execute(fTimeDelta);
 
 	

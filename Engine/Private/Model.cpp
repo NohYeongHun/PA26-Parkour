@@ -543,6 +543,7 @@ void CModel::Update_BoneMatrix_Map()
 		pBone->Update_CombinedTransformationMatrix(XMLoadFloat4x4(&m_PreTransformMatrix), m_Bones);
 }
 
+// Chain의 시작 지점부터 전파되는 아래 지점까지 FK를 다시 수행합니다.
 void CModel::Update_BoneMatrix_Map(_uint iStartIndex)
 {
 	for (_uint i = iStartIndex; i < static_cast<_uint>(m_Bones.size()); ++i)
