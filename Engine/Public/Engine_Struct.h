@@ -576,6 +576,7 @@ namespace Engine
 		_string          strName;		// 고정
 		EIKSOLVER_TYPE   eSolver;		// 고정
 		EIKTARGET_MODE	 eMode;			// 수정되는 값
+		EALIGN_MODE		 eAlignMode;	// 수정되는 값 (엔드 본 방향 정렬 모드)
 		IK_CHAIN_DESC    Chain;			// 고정
 		_bool            isEnable;		// 수정되는 값
 		_bool			 isTargetSet;	// 수정되는 값 => 최소 1회 유효되었는지.

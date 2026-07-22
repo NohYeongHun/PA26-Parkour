@@ -3,6 +3,7 @@
 #include "GameObject.h"
 #include "Bone.h"
 #include "Engine_Profile.h"
+#include "GameInstance.h"   // 디버그 드로우용
 
 CIKSolver_TwoBone::CIKSolver_TwoBone(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	: CIKSolver { pDevice, pContext }
@@ -35,7 +36,28 @@ HRESULT CIKSolver_TwoBone::Render()
 IK_RESULT CIKSolver_TwoBone::Solve(const IK_SOLVE_CONTEXT& Context)
 {
 	PROFILE_ZONE();
+	IK_RESULT tResult = Update_InverseKinematics(Context);
+
+	// Update FK
+	if (tResult.isSolved && !Context.pTarget->Chain.BoneChain.empty())
+	{
+		m_pOwner->Update_ForwardKinematics(Context.pTarget->Chain.BoneChain[0]);
+	}
+	
+	return tResult;
+}
+
+
+
+const _char* CIKSolver_TwoBone::Get_Name() const
+{
+	return nullptr;
+}
+
+IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Context)
+{
 	IK_RESULT tResult{};
+	tResult.isSolved = true;
 
 	const _float fEPSILON = 1e-6f;
 	const vector<CBone*>& Bones = *Context.pBones;
@@ -68,10 +90,10 @@ IK_RESULT CIKSolver_TwoBone::Solve(const IK_SOLVE_CONTEXT& Context)
 	_vector vLower = vEndPos - vMidPos;					// Mid -> End
 	_vector vJointTarget = vJointTargetPos - vRootPos;	// Root -> Target
 
-	_float l1 = XMVectorGetX(XMVector3Length(vUpper));	 
-	_float l2 = XMVectorGetX(XMVector3Length(vLower));	
+	_float l1 = XMVectorGetX(XMVector3Length(vUpper));
+	_float l2 = XMVectorGetX(XMVector3Length(vLower));
 	_float d = XMVectorGetX(XMVector3Length(vJointTarget));
-	
+
 	// 2. 코사인 법칙으로 상단 뼈 각도 계산
 	_float cosAngle = std::clamp((l1 * l1 + d * d - l2 * l2) / ((2 * l1) * d), -1.f, 1.f);
 	_float angle = acosf(cosAngle);
@@ -101,7 +123,7 @@ IK_RESULT CIKSolver_TwoBone::Solve(const IK_SOLVE_CONTEXT& Context)
 
 	// 4. 위치 삼각형을 풀어 관절/엔드의 목표 좌표 확정.
 	//    상단 뼈를 forward 축 성분 + 평면 수직 성분으로 분해.
-	_float  projDist      = l1 * cosAngle;          // forward 축 방향 성분 (부호 포함)
+	_float  projDist = l1 * cosAngle;          // forward 축 방향 성분 (부호 포함)
 	_float  jointLineDist = l1 * sinf(angle);       // 평면 수직 성분
 	_vector vSolvedMidPos = vRootPos + projDist * vForward + jointLineDist * vBendDir; // Mid를 회전할 구간.
 	_vector vSolvedEndPos = vJointTargetPos;        // 엔드의 목표 = 이펙터(타겟)
@@ -121,14 +143,13 @@ IK_RESULT CIKSolver_TwoBone::Solve(const IK_SOLVE_CONTEXT& Context)
 	_vector qMidDelta = QuatFromTo(vCurLowerDir, vTgtLowerDir);
 	qMidDelta = XMQuaternionSlerp(XMQuaternionIdentity(), qMidDelta, fWeight);
 
-	
+
 	/*
 		1. Pivot의 점을 원점으로 돌리기
 		2. qDelta 변화량으로 회전
 		3. Pivot으로 다시 변경
 		=> 이러한 변환 행렬을 생성.
 	*/
-
 	auto PivotRot = [](_fvector qDelta, _fvector vPivot) -> _matrix {
 		return XMMatrixTranslationFromVector(-vPivot)
 			* XMMatrixRotationQuaternion(qDelta)
@@ -147,17 +168,8 @@ IK_RESULT CIKSolver_TwoBone::Solve(const IK_SOLVE_CONTEXT& Context)
 	_matrix matMidComb = (XMLoadFloat4x4(Bones[iMid]->Get_CombinedTransformationMatrix()) * mRootPivot) * mMidPivot;
 	// 현재 계산한 Matrix는 Model Space이므로 뼈의 Local Space로 돌려줍니다.
 	Bones[iMid]->Set_TransformationMatrix(matMidComb * XMMatrixInverse(nullptr, matRootComb));
-
-	tResult.isSolved = true;
-	return tResult;
 }
 
-
-
-const _char* CIKSolver_TwoBone::Get_Name() const
-{
-	return nullptr;
-}
 
 CIKSolver_TwoBone* CIKSolver_TwoBone::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 {

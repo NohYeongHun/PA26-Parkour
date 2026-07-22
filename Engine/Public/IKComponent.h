@@ -18,10 +18,13 @@ private:
 	explicit CIKComponent(const CIKComponent& Prototype);
 	virtual ~CIKComponent() = default;
 
+public:
+	void Update_ForwardKinematics(_uint iRootIdx);
 
 public:
 	void Begin_Target(const _string& strTarget, EIKTARGET_MODE eMode, _float fPosWeight, _float fRotWeight, _float fBlendSec);
 	void End_Target(const _string& strTarget, _float fBlendSec);
+	void Set_AlignMode(const _string& strTarget, EALIGN_MODE eAlignMode);
 
 public:
 	_bool Get_TargetEndWorldPos(const _string& strTarget, _vector& vOutWorld);

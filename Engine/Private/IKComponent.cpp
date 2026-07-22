@@ -17,8 +17,16 @@ CIKComponent::CIKComponent(const CIKComponent& Prototype)
 	: CComponent(Prototype)
 	, m_Solvers { Prototype.m_Solvers }
 {
-	for (auto& pSovler : m_Solvers)
-		Safe_AddRef(pSovler);
+	for (auto& pSolver : m_Solvers)
+	{
+		Safe_AddRef(pSolver);
+		pSolver->Set_Owner(this);
+	}
+		
+}
+
+void CIKComponent::Update_ForwardKinematics(_uint iRootIdx)
+{
 }
 
 // 등록된 Bone Chain을 사용 가능한 상태로 만듭니다.
@@ -34,11 +42,19 @@ void CIKComponent::Begin_Target(const _string& strTarget, EIKTARGET_MODE eMode, 
 	Target.isEnable = true;
 	Target.isTargetSet = false;
 	Target.eMode = eMode;
+	Target.eAlignMode = EALIGN_MODE::NONE;   // 기본값 (Set_AlignMode로 지정)
 	Target.Chain.fPosWeight = fPosWeight;
 	Target.Chain.fRotWeight = fRotWeight;
 	Target.fBlendSpeed = (fBlendSec > 0.f) ? 1.f / fBlendSec : FLT_MAX;
 	Target.fTargetWeight = 1.f;
-	
+
+}
+
+void CIKComponent::Set_AlignMode(const _string& strTarget, EALIGN_MODE eAlignMode)
+{
+	auto it = m_TargetHandles.find(strTarget);
+	if (it == m_TargetHandles.end()) return;
+	m_Targets[it->second].eAlignMode = eAlignMode;
 }
 
 void CIKComponent::End_Target(const _string& strTarget, _float fBlendSec)
@@ -87,7 +103,7 @@ void CIKComponent::Set_Target(const _string& strGoal, _fvector vWorldPos, _fvect
 }
 
 
-// LeftArm, RightArm 등 특정 본 체인을 게임 시작 시 json으로 파싱해둡니다.
+// LeftArmTwoBone, RightArmTwoBone 등 특정 본 체인을 게임 시작 시 json으로 파싱해둡니다.
 void CIKComponent::Register_Targets(const _string& strFolderPath)
 {
 	// 1. 외부 FolderPath를 받아 Json을 파싱한다.
@@ -222,11 +238,10 @@ void CIKComponent::Execute(_float fTimeDelta)
 		}
 
 		// Ease Out 도입.
-		_float fAlpha = 1.f - expf(-target.fBlendSpeed * fTimeDelta);
-		target.fCurWeight += (target.fTargetWeight - target.fCurWeight) * fAlpha;
-
-		if (fabsf(target.fTargetWeight - target.fCurWeight) < 1e-3f)
-			target.fCurWeight = target.fTargetWeight;
+		if (target.fCurWeight < target.fTargetWeight)
+			target.fCurWeight = min(target.fCurWeight + target.fBlendSpeed * fTimeDelta, target.fTargetWeight);
+		else if (target.fCurWeight > target.fTargetWeight)
+			target.fCurWeight = max(target.fCurWeight - target.fBlendSpeed * fTimeDelta, target.fTargetWeight);
 
 		IK_SOLVE_CONTEXT Context{};
 		Context.pBones = &m_pModelCom->Get_Bones();
@@ -236,13 +251,13 @@ void CIKComponent::Execute(_float fTimeDelta)
 
 		IK_RESULT tResult = m_Solvers[ENUM_CLASS(target.eSolver)]->Solve(Context);
 
-		if (tResult.isSolved && !target.Chain.BoneChain.empty())
-			iMinBone = min(iMinBone, target.Chain.BoneChain[0]);
+		/*if (tResult.isSolved && !target.Chain.BoneChain.empty())
+			iMinBone = min(iMinBone, target.Chain.BoneChain[0]);*/
 	}
 
 	// Solver가 동작하고 난 뒤 FK 수행. => 회전 전파.
-	if (iMinBone != UINT_MAX)
-		m_pModelCom->Update_BoneMatrix_Map(iMinBone);
+	/*if (iMinBone != UINT_MAX)
+		m_pModelCom->Update_BoneMatrix_Map(iMinBone);*/
 }
 
 #ifdef _DEBUG

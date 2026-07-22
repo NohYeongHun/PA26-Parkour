@@ -17,6 +17,10 @@ public:
 	virtual IK_RESULT    Solve(const IK_SOLVE_CONTEXT& Context) override;
 	virtual const _char* Get_Name() const override;
 
+private:
+	IK_RESULT Update_InverseKinematics(const IK_SOLVE_CONTEXT& Context);
+	
+
 public:
 	static CIKSolver_TwoBone* Create(ID3D11Device * pDevice, ID3D11DeviceContext * pContext);
 	virtual CIKSolver* Clone(void* pArg) override;
