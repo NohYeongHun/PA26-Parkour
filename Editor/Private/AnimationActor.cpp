@@ -270,6 +270,7 @@ void CAnimationActor::Render()
 
 #ifdef _DEBUG
 	//Print_WorldMatrix();
+	m_pModelCom->Debug_DrawSkeleton(XMLoadFloat4x4(&m_CombinedMatrix), JPH::Color(0.F, 0.F, 255.F), "mixamorig:Head"); // 파랑 스켈레톤 (Head 하위 제외)
 #endif // _DEBUG
 }
 

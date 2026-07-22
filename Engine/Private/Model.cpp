@@ -296,6 +296,48 @@ void CModel::Debug_RootMotionDraw(const _string& strAnimName, _fmatrix StartWorl
 	}
 }
 
+void CModel::Debug_DrawSkeleton(_fmatrix WorldMatrix, const JPH::Color& BoneColor, const _char* pStopSubtreeBoneName)
+{
+	CGameInstance* pGI = CGameInstance::GetInstance();
+
+	
+	_int iStopIndex = -1;
+	if (pStopSubtreeBoneName)
+	{
+		for (size_t i = 0; i < m_Bones.size(); ++i)
+		{
+			if (0 == strcmp(m_Bones[i]->Get_Name(), pStopSubtreeBoneName))
+			{
+				iStopIndex = static_cast<_int>(i);
+				break;
+			}
+		}
+	}
+
+	for (size_t i = 0; i < m_Bones.size(); ++i)
+	{
+		_int iParent = m_Bones[i]->Get_ParentIndex();
+		if (iParent < 0)
+			continue; // 루트 본은 부모 없음 → 스킵
+
+		if (iStopIndex >= 0)
+		{
+			_bool bBelowStop = false;
+			for (_int iAncestor = iParent; iAncestor >= 0; iAncestor = m_Bones[iAncestor]->Get_ParentIndex())
+			{
+				if (iAncestor == iStopIndex) { bBelowStop = true; break; }
+			}
+			if (bBelowStop)
+				continue;
+		}
+
+		_matrix ChildWorld  = XMLoadFloat4x4(m_Bones[i]->Get_CombinedTransformationMatrix()) * WorldMatrix;
+		_matrix ParentWorld = XMLoadFloat4x4(m_Bones[iParent]->Get_CombinedTransformationMatrix()) * WorldMatrix;
+
+		pGI->Add_DebugLine(ParentWorld.r[3], ChildWorld.r[3], BoneColor);
+	}
+}
+
 void CModel::Dump_RootMotionCurve(const _string& strAnimName)
 {
 	CAnimation* pAnim = Get_AnimationOrNull(strAnimName);

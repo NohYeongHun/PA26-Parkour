@@ -6,6 +6,7 @@
 #include "IKSolver_Fabrik.h"
 #include "IKSolver_TwoBone.h"
 #include "Bone.h"
+#include "GameInstance.h"
 
 CIKComponent::CIKComponent(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	: CComponent{ pDevice, pContext }
@@ -221,6 +222,37 @@ void CIKComponent::Execute(_float fTimeDelta)
 	if (iMinBone != UINT_MAX)
 		m_pModelCom->Update_BoneMatrix_Map(iMinBone);
 }
+
+#ifdef _DEBUG
+void CIKComponent::Debug_DrawActiveIK(_fmatrix WorldMatrix, const JPH::Color& ChainColor, const JPH::Color& TargetColor)
+{
+	CGameInstance* pGI = CGameInstance::GetInstance();
+	const vector<CBone*>& Bones = m_pModelCom->Get_Bones();
+
+	for (const IK_TARGET& target : m_Targets)
+	{
+		if (!target.isEnable || !target.isTargetSet)
+			continue;
+
+		const vector<_uint>& Chain = target.Chain.BoneChain;
+		for (size_t k = 1; k < Chain.size(); ++k)
+		{
+			_matrix Prev = XMLoadFloat4x4(Bones[Chain[k - 1]]->Get_CombinedTransformationMatrix()) * WorldMatrix;
+			_matrix Cur  = XMLoadFloat4x4(Bones[Chain[k]]->Get_CombinedTransformationMatrix()) * WorldMatrix;
+			pGI->Add_DebugLine(Prev.r[3], Cur.r[3], ChainColor);
+		}
+
+		_vector vTargetWorld = XMVector3TransformCoord(target.vCurTargetPos, WorldMatrix);
+		const _float fCross = 0.05f;
+		_vector vX = XMVectorSet(fCross, 0.f, 0.f, 0.f);
+		_vector vY = XMVectorSet(0.f, fCross, 0.f, 0.f);
+		_vector vZ = XMVectorSet(0.f, 0.f, fCross, 0.f);
+		pGI->Add_DebugLine(XMVectorSubtract(vTargetWorld, vX), XMVectorAdd(vTargetWorld, vX), TargetColor);
+		pGI->Add_DebugLine(XMVectorSubtract(vTargetWorld, vY), XMVectorAdd(vTargetWorld, vY), TargetColor);
+		pGI->Add_DebugLine(XMVectorSubtract(vTargetWorld, vZ), XMVectorAdd(vTargetWorld, vZ), TargetColor);
+	}
+}
+#endif
 
 _uint CIKComponent::Find_BoneIndex(const char* pBoneName)
 {

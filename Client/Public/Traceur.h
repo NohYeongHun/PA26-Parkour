@@ -28,7 +28,6 @@ public:
 
 public:
 	void Notify_StateFlag(const _string& strFlag, _bool isOn);
-	void On_IK_Notify(const vector<IK_BINDING>& bindings, _float blendSec, _bool isBegin);
 
 public:
 	void OnCollider_During(_uint iLayer, void* pDesc, const ContactManifold& Manifold);
@@ -78,6 +77,9 @@ private:
 	_ubyte    m_iTrajectoryToggleKey = { DIK_5 }; 
 	_float4x4 m_TrajectoryAnchor = {};
 	_string   m_strTrajectoryAnchorAnim = {};
+
+	// 본/IK 시각화 토글 (4번 키)
+	_bool     m_IsShowBoneIK = { false };
 #endif
 
 private:

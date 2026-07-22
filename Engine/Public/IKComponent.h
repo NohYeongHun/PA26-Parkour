@@ -38,6 +38,11 @@ public:
 public:
 	void Execute(_float fTimeDelta);
 
+#ifdef _DEBUG
+public:
+	void Debug_DrawActiveIK(_fmatrix WorldMatrix, const JPH::Color& ChainColor, const JPH::Color& TargetColor);
+#endif
+
 
 private:
 	// 참조용 컴포넌트 (약한 참조)

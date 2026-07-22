@@ -131,6 +131,8 @@ public:
 	HRESULT Bind_Bone_to_GUI(_int& iBoneIndex, _fmatrix TransformMatrix);
 	void Render_Gizmo(_fmatrix TransformMatrix);
 
+	void Debug_DrawSkeleton(_fmatrix WorldMatrix, const JPH::Color& BoneColor, const _char* pStopSubtreeBoneName = nullptr);
+
 	_bool Find_Animation(const _string& strAnimName);
 
 	void Print_ShapeKeyWeights();
