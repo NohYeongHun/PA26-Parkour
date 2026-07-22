@@ -27,6 +27,7 @@ CIKComponent::CIKComponent(const CIKComponent& Prototype)
 
 void CIKComponent::Update_ForwardKinematics(_uint iRootIdx)
 {
+	m_pModelCom->Update_BoneMatrix_Map(iRootIdx);
 }
 
 // 등록된 Bone Chain을 사용 가능한 상태로 만듭니다.
