@@ -566,6 +566,7 @@ namespace Engine
 		_vector vTargetPos;	 // 목표 위치
 		_vector vTargetRot; // 목표 회전
 		_vector vPoleVector;
+		_vector vSoleAxis; // 발바닥 방향 로컬 축.
 		_float fPosWeight; // 가중치
 		_float fRotWeight; // 가중치
 	}IK_CHAIN_DESC;
@@ -605,6 +606,7 @@ namespace Engine
 		const vector<class CBone*>* pBones;
 		const IK_TARGET*			pTarget;
 		_float						fTimeDelta;
+		_matrix						matModelToWorld;	// 디버그 드로우용(모델→월드)
 	}IK_SOLVE_CONTEXT;
 #pragma endregion
 

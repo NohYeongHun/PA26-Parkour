@@ -24,7 +24,8 @@ public:
 	void End_Target(const _string& strTarget, _float fBlendSec);
 
 public:
-	void Set_SpaceMatrix(_fmatrix mat) { m_matWorldToModel = XMMatrixInverse(nullptr, mat);  }
+	_bool Get_TargetEndWorldPos(const _string& strTarget, _vector& vOutWorld);
+	void Set_SpaceMatrix(_fmatrix mat) { m_matModelToWorld = mat; m_matWorldToModel = XMMatrixInverse(nullptr, mat);  }
 	void Set_Target(const _string& strGoal, _fvector vWorldPos, _fvector vNormal);
 	void Register_Targets(const _string& strFolderPath);
 	_uint Register_Target(const _string& strName, EIKSOLVER_TYPE eSolver, const vector<_string>& BoneNames);
@@ -59,6 +60,7 @@ private:
 	vector<IK_TARGET> m_Targets{};
 	unordered_map<_string, _uint> m_TargetHandles;
 	_matrix m_matWorldToModel{};
+	_matrix m_matModelToWorld{};
 
 private:
 	_uint Find_BoneIndex(const char* pBoneName);

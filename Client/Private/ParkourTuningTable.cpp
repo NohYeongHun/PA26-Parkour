@@ -90,6 +90,13 @@ HRESULT CParkourTuningTable::Parse(const _string& strFilePath, PARKOUR_TUNING& O
 			OutTuning.Hang.fStandProbeUp      = GetF(Root["hang"], "standProbeUp",      OutTuning.Hang.fStandProbeUp);
 			OutTuning.Hang.fStandProbeInset   = GetF(Root["hang"], "standProbeInset",   OutTuning.Hang.fStandProbeInset);
 			OutTuning.Hang.fStandMaxRise      = GetF(Root["hang"], "standMaxRise",      OutTuning.Hang.fStandMaxRise);
+			OutTuning.Hang.fStandMaxRise	  = GetF(Root["hang"], "standMaxRise", OutTuning.Hang.fStandMaxRise);
+			OutTuning.Hang.fFootProbeOut	  = GetF(Root["hang"], "footProbeOut", OutTuning.Hang.fFootProbeOut);
+			OutTuning.Hang.fFootProbeDepth	  = GetF(Root["hang"], "footProbeDepth", OutTuning.Hang.fFootProbeDepth);
+			OutTuning.Hang.fFootSkin		  = GetF(Root["hang"], "footSkin", OutTuning.Hang.fFootSkin);
+			OutTuning.Hang.fFootPosWeight	  = GetF(Root["hang"], "footPosWeight", OutTuning.Hang.fFootPosWeight);
+			OutTuning.Hang.fFootRotWeight	  = GetF(Root["hang"], "footRotWeight", OutTuning.Hang.fFootRotWeight);
+			OutTuning.Hang.fFootBlendSec	  = GetF(Root["hang"], "footBlendSec", OutTuning.Hang.fFootBlendSec);
 		}
 		if (Root.contains("cooldowns"))
 			OutTuning.fWallRunCooldown = GetF(Root["cooldowns"], "WALL_RUN", OutTuning.fWallRunCooldown);

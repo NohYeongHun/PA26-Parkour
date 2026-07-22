@@ -224,6 +224,12 @@ namespace Client
 		_bool		isResolved;
 		_float3     vFixedPos;   
 		_float3		vFixedNormal{ 0.f, 1.f, 0.f };
+
+		_bool		isWallProject = { false };
+		_float3     vWallNormal{ 0.f, 0.f, 1.f };
+		_float		fProbeOut = 0.3f;
+		_float		fProbeDepth = 0.6f;
+		_float		fSkin = 0.02f;
 	}ACTIVE_IK;
 #pragma endregion
 

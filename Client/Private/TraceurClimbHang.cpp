@@ -50,6 +50,15 @@ void CTraceurClimbHang::OnEnter(void* pArg)
 
 	m_pIKDriverCom->Activate_Fixed("LeftArm",  vLeft,  vN, EIKTARGET_MODE::POSITION, 1.f, 1.f, 0.4f);
 	m_pIKDriverCom->Activate_Fixed("RightArm", vRight, vN, EIKTARGET_MODE::POSITION, 1.f, 1.f, 0.4f);
+
+	const HANG_TUNING& T = CGameSystem::GetInstance()->Get_ParkourTuning()->Get().Hang;
+
+	//_vector vWallN = XMLoadFloat3(&m_pEnvQueryCom->Get_Perception().Geometry.vTraversalDir);
+	_vector vWallN = XMLoadFloat3(&Ctx.vWallNormal);
+	m_pIKDriverCom->Activate_WallFoot("LeftLeg", vWallN, T.fFootPosWeight, T.fFootRotWeight, T.fFootBlendSec,
+		T.fFootProbeOut, T.fFootProbeDepth, T.fFootSkin);
+	m_pIKDriverCom->Activate_WallFoot("RightLeg", vWallN, T.fFootPosWeight, T.fFootRotWeight, T.fFootBlendSec,
+		T.fFootProbeOut, T.fFootProbeDepth, T.fFootSkin);
 }
 
 void CTraceurClimbHang::OnExit()
@@ -59,6 +68,8 @@ void CTraceurClimbHang::OnExit()
 
 	m_pIKDriverCom->Deactivate("LeftArm", 0.2f);
 	m_pIKDriverCom->Deactivate("RightArm", 0.2f);
+	m_pIKDriverCom->Deactivate("LeftLeg", 0.2f);
+	m_pIKDriverCom->Deactivate("RightLeg", 0.2f);
 }
 
 _bool CTraceurClimbHang::Ready_Hang(void* pArg)

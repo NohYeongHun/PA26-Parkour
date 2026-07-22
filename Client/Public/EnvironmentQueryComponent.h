@@ -52,6 +52,9 @@ public:
 	_bool Resolve_Anchor(const _string& token, _vector& vOutPos, _vector& vOutNormal);
 	void Compute_EdgeAnchor(const _string& token, _fvector vEdge, _fvector vTrav,
 		_fvector vTopNormal, _vector& vOutPos, _vector& vOutNormal) const;
+	_bool Raycast_Wall(_fvector vOrigin, _fvector vWallNormal,
+		_float fProbeOut, _float fProbeDepth, _float fSkin,
+		_vector& vOutPos, _vector& vOutNormal);
 	const ENV_PERCEPTION& Get_Perception() const { return m_Perception; }
 
 	void Set_ScanDirOverride(_fvector vDir);

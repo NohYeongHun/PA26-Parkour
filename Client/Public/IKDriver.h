@@ -21,6 +21,10 @@ public:
 	// 고정 좌표 등록.
 	void Activate_Fixed(const _string& strTarget, _fvector vWorldPos, _fvector vWorldNormal
 		, EIKTARGET_MODE eMode, _float fPosWeight, _float fRotWeight, _float fBlendSec);
+	void Activate_WallFoot(const _string& strTarget, _fvector vWallNormal
+		, _float fPosWeight, _float fRotWeight, _float fBlendSec
+		, _float fProbeOut, _float fProbeDepth, _float fSkin);
+
 	void Deactivate(const _string& strTarget, _float fBlendSec);
 
 public:

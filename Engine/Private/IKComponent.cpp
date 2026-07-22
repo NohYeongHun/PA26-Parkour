@@ -51,6 +51,24 @@ void CIKComponent::End_Target(const _string& strTarget, _float fBlendSec)
 	target.fBlendSpeed = (fBlendSec > 0.f) ? 1.f / fBlendSec : FLT_MAX;
 }
 
+_bool CIKComponent::Get_TargetEndWorldPos(const _string& strTarget, _vector& vOutWorld)
+{
+	auto it = m_TargetHandles.find(strTarget);
+	if (it == m_TargetHandles.end())
+		return false;
+
+	const IK_TARGET& target = m_Targets[it->second];
+	if (target.Chain.BoneChain.empty())
+		return false;
+
+	_uint iEnd = target.Chain.BoneChain.back();
+	const vector<CBone*>& Bones = m_pModelCom->Get_Bones();
+	_vector vModelPos = XMLoadFloat4x4(Bones[iEnd]->Get_CombinedTransformationMatrix()).r[3];
+	vOutWorld = XMVector3TransformCoord(vModelPos, m_matModelToWorld);
+
+	return true;
+}
+
 void CIKComponent::Set_Target(const _string& strGoal, _fvector vWorldPos, _fvector vNormal)
 {
 	auto iter = m_TargetHandles.find(strGoal);
@@ -100,14 +118,16 @@ void CIKComponent::Register_Targets(const _string& strFolderPath)
 		if (boneNames.empty()) continue;
 
 		// 3. 등록
-		_uint iGoal = Register_Target(strName, eSolver, boneNames);
+		_uint iTarget = Register_Target(strName, eSolver, boneNames);
 
 		// 4. Register_Goal이 안 담는 나머지 채우기
-		IK_TARGET& goal = m_Targets[iGoal];
+		IK_TARGET& Target = m_Targets[iTarget];
 		if (j.contains("PoleVector") && j["PoleVector"].size() == 3)
-			goal.Chain.vPoleVector = XMVectorSet(j["PoleVector"][0], j["PoleVector"][1], j["PoleVector"][2], 0.f);
-		goal.Chain.fPosWeight = j.value("PosWeight", 1.f);
-		goal.Chain.fRotWeight = j.value("RotWeight", 1.f);
+			Target.Chain.vPoleVector = XMVectorSet(j["PoleVector"][0], j["PoleVector"][1], j["PoleVector"][2], 0.f);
+		if (j.contains("SoleAxis") && j["SoleAxis"].size() == 3)
+			Target.Chain.vSoleAxis = XMVectorSet(j["SoleAxis"][0], j["SoleAxis"][1], j["SoleAxis"][2], 0.f);
+		Target.Chain.fPosWeight = j.value("PosWeight", 1.f);
+		Target.Chain.fRotWeight = j.value("RotWeight", 1.f);
 	}
 }
 
@@ -123,6 +143,7 @@ _uint CIKComponent::Register_Target(const _string& strName, EIKSOLVER_TYPE eSolv
 	IK_TARGET target{};
 	target.strName = strName;
 	target.eSolver = eSolver;
+	target.Chain.vSoleAxis = XMVectorSet(0.f, -1.f, 0.f, 0.f); // 기본값.
 
 	for (auto& name : BoneNames)
 	{
@@ -143,13 +164,13 @@ _uint CIKComponent::Register_Target(const _string& strName, EIKSOLVER_TYPE eSolv
 	}
 
 	// 3. push한 위치가 handle값
-	_uint iGoal = static_cast<_uint>(m_Targets.size());
+	_uint iTarget = static_cast<_uint>(m_Targets.size());
 	m_Targets.push_back(target);
 
 	// 4. Map 등록
-	m_TargetHandles.emplace(strName, iGoal);
+	m_TargetHandles.emplace(strName, iTarget);
 
-	return iGoal;
+	return iTarget;
 }
 
 
@@ -211,6 +232,7 @@ void CIKComponent::Execute(_float fTimeDelta)
 		Context.pBones = &m_pModelCom->Get_Bones();
 		Context.pTarget = &target;
 		Context.fTimeDelta = fTimeDelta;
+		Context.matModelToWorld = m_matModelToWorld;
 
 		IK_RESULT tResult = m_Solvers[ENUM_CLASS(target.eSolver)]->Solve(Context);
 

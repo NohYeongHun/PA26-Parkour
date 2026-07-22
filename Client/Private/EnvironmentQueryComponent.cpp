@@ -93,6 +93,34 @@ void CEnvironmentQueryComponent::Compute_EdgeAnchor(const _string& token, _fvect
 	vOutNormal = vTopN;
 }
 
+_bool CEnvironmentQueryComponent::Raycast_Wall(_fvector vOrigin, _fvector vWallNormal
+	, _float fProbeOut, _float fProbeDepth, _float fSkin, _vector& vOutPos, _vector& vOutNormal)
+{
+	_vector vN = XMVector3Normalize(vWallNormal);
+	_vector vStart = vOrigin + vN * fProbeOut;
+	_vector vEnd = vOrigin - vN * fProbeDepth;
+
+#ifdef _DEBUG
+	//m_pGameInstance->Add_DebugSphere(vStart, 0.05f, JPH::Color(0.f, 255.f, 0.f, 1.f));
+	//m_pGameInstance->Add_DebugSphere(vEnd, 0.05f, JPH::Color(0.f, 255.f, 0.f, 1.f));
+#endif
+
+	LINE_TRACE_HIT hit = Cast_Ray(vStart, vEnd, ENUM_CLASS(m_eTargetLayer), RAY_KIND::MEASURE);
+	if (!hit.isHit)
+	{
+		hit = Cast_Ray(vStart, vEnd, ENUM_CLASS(COLLISIONLAYER::MAP), RAY_KIND::MEASURE);
+	}
+
+	if(!hit.isHit)
+		return false;
+
+	_vector vHitPos = XMVectorSetW(XMLoadFloat3(&hit.vHitPosition),1.f);
+	_vector vHitNormal = XMVector3Normalize(XMLoadFloat3(&hit.vHitNormal));
+	vOutPos = vHitPos + vHitNormal * fSkin;
+	vOutNormal = vHitNormal;
+	return true;
+}
+
 void CEnvironmentQueryComponent::Set_ScanDirOverride(_fvector vDir)
 {
 	_vector vXZ = XMVectorSetY(vDir, 0.f);

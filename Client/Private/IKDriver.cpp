@@ -40,6 +40,20 @@ void CIKDriver::Activate_Fixed(const _string& strTarget, _fvector vWorldPos, _fv
 	m_ActiveIKSource[strTarget] = Active;
 }
 
+void CIKDriver::Activate_WallFoot(const _string& strTarget, _fvector vWallNormal, _float fPosWeight, _float fRotWeight, _float fBlendSec, _float fProbeOut, _float fProbeDepth, _float fSkin)
+{
+	m_pIKCom->Begin_Target(strTarget, EIKTARGET_MODE::POSITION_ROTATION, fPosWeight, fRotWeight, fBlendSec);
+
+	ACTIVE_IK Active{};
+	Active.eTrigger = IK_TRIGGER::STATE;
+	Active.isWallProject = true;
+	XMStoreFloat3(&Active.vWallNormal, vWallNormal);
+	Active.fProbeOut = fProbeOut;
+	Active.fProbeDepth = fProbeDepth;
+	Active.fSkin = fSkin;
+	m_ActiveIKSource[strTarget] = Active;
+}
+
 void CIKDriver::Deactivate(const _string& strTarget, _float fBlendSec)
 {
 	// 현재 Driver 제거.
@@ -87,6 +101,25 @@ void CIKDriver::Execute(_float fTimeDelta)
 		_vector vWorld{};
 		_vector vNormal{};
 		_bool isValid{};
+
+		if (active.isWallProject)
+		{
+			_vector vFootWorld{};
+			
+			if (!m_pIKCom->Get_TargetEndWorldPos(target, vFootWorld))
+				continue;
+
+			_vector vPos{}, vNor{};
+			if (!m_pEnvQueryCom->Raycast_Wall(vFootWorld, XMLoadFloat3(&active.vWallNormal),
+				active.fProbeOut, active.fProbeDepth, active.fSkin, vPos, vNor))
+				continue;   // 미스 → 이 프레임 발 IK 스킵(애님 유지)
+
+			m_pIKCom->Set_Target(target, vPos, vNor);
+#ifdef _DEBUG
+			m_pGameInstance->Add_DebugSphere(vPos, 0.05f, JPH::Color(0.f, 255.f, 0.f, 1.f));
+#endif
+			continue;
+		}
 
 
 		if (active.isFixed && active.isResolved)

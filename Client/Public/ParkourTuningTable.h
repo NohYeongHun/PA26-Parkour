@@ -59,6 +59,13 @@ struct HANG_TUNING
 	_float fStandProbeUp      = 1.0f;
 	_float fStandProbeInset   = 0.3f;
 	_float fStandMaxRise      = 0.7f;
+	// 발 IK
+	_float fFootProbeOut	  = 0.3f;
+	_float fFootProbeDepth    = 0.6f;
+	_float fFootSkin		  = 0.02f;  
+	_float fFootPosWeight	  = 1.0f;
+	_float fFootRotWeight	  = 1.0f;
+	_float fFootBlendSec	  = 0.4f;
 };
 
 struct PARKOUR_TUNING
