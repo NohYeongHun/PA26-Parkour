@@ -97,6 +97,7 @@ void CIKComponent::Set_Target(const _string& strGoal, _fvector vWorldPos, _fvect
 	_vector vModelPos = XMVector3TransformCoord(vWorldPos, matWorldInv); // 모델 스페이스 변환
 	_vector vModelNormal = XMVector3TransformNormal(vNormal, matWorldInv); // 모델 스페이스 변환 => 아직 미사용
 
+	// 모델 스페이스 변환
 	target.Chain.vTargetPos = vModelPos;
 	target.vCurTargetPos = vModelPos;
 	target.vTargetNormal = vModelNormal;
@@ -238,7 +239,6 @@ void CIKComponent::Execute(_float fTimeDelta)
 			continue;
 		}
 
-		// Ease Out 도입.
 		if (target.fCurWeight < target.fTargetWeight)
 			target.fCurWeight = min(target.fCurWeight + target.fBlendSpeed * fTimeDelta, target.fTargetWeight);
 		else if (target.fCurWeight > target.fTargetWeight)
@@ -251,14 +251,7 @@ void CIKComponent::Execute(_float fTimeDelta)
 		Context.matModelToWorld = m_matModelToWorld;
 
 		IK_RESULT tResult = m_Solvers[ENUM_CLASS(target.eSolver)]->Solve(Context);
-
-		/*if (tResult.isSolved && !target.Chain.BoneChain.empty())
-			iMinBone = min(iMinBone, target.Chain.BoneChain[0]);*/
 	}
-
-	// Solver가 동작하고 난 뒤 FK 수행. => 회전 전파.
-	/*if (iMinBone != UINT_MAX)
-		m_pModelCom->Update_BoneMatrix_Map(iMinBone);*/
 }
 
 #ifdef _DEBUG

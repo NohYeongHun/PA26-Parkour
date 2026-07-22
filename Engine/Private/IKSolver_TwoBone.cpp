@@ -43,7 +43,7 @@ IK_RESULT CIKSolver_TwoBone::Solve(const IK_SOLVE_CONTEXT& Context)
 	{
 		m_pOwner->Update_ForwardKinematics(Context.pTarget->Chain.BoneChain[0]);
 	}
-	
+
 	return tResult;
 }
 
@@ -59,61 +59,94 @@ IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Co
 	IK_RESULT tResult{};
 	tResult.isSolved = true;
 
-	const _float fEPSILON = 1e-6f;
 	const vector<CBone*>& Bones = *Context.pBones;
 	const IK_TARGET& Target = *Context.pTarget;
 	const vector<_uint>& Chain = Target.Chain.BoneChain;
 	if (Chain.size() < 3)
 		return tResult;
-
-	_float fWeight = Target.fCurWeight; // 블렌딩할 가중치.
-	if (fWeight <= 0.f)
+	if (Target.fCurWeight <= 0.f)
 		return tResult;
 
 	_uint iRoot = Chain[0];
 	_uint iMid = Chain[1];
 	_uint iEnd = Chain[2];
 
-	_vector vNormal = Target.vTargetNormal;
-	// 0. 도달할 수 있는 최소 거리는 뼈 길이 차이의 절대값 |l1 - l2| >= d
-	//    도달할 수 있는 최대 거리는 뼈 길이의 합 |l1 + l2 | < d
-	//	  | l1 - l2 | <= d < | l1 + l2 |
-	//    못 푸는 해라 할지라도 최대한 근사치 구현 => 팔을 쭉 뻗는다던가 하는 식으로
+	_vector vPlaneNormal = XMVector3Normalize(Target.vTargetNormal);
+	_vector vPlanePoint = Target.vCurTargetPos;
+	_vector vSolveTarget = vPlanePoint;
 
-	// 1. 현재 Position 읽기.
+	if (Target.eMode == EIKTARGET_MODE::POSITION_CLEARANCE)
+	{
+		// 1. 기존 Transformatrix 저장.
+		_matrix matRootSave = XMLoadFloat4x4(Bones[iRoot]->Get_TransformationMatrix());
+		_matrix matMidSave = XMLoadFloat4x4(Bones[iMid]->Get_TransformationMatrix());
+
+		// 2. 타겟지점으로의 첫번째 IK
+		Solve_TwoBonePosition(Context, vPlanePoint, 1.f);
+		m_pOwner->Update_ForwardKinematics(iRoot);
+
+		_int iDeep = -1;
+		// 3. Ray에 타겟된 지점과의 침투 깊이를 구합니다.
+		_float fPen = Measure_DeepestPenetration(Bones, iEnd, vPlanePoint, vPlaneNormal, iDeep);
+
+		Bones[iRoot]->Set_TransformationMatrix(matRootSave);
+		Bones[iMid]->Set_TransformationMatrix(matMidSave);
+		m_pOwner->Update_ForwardKinematics(iRoot);
+
+		// 3. 침투 깊이를 통한 새로운 Target지점을 구합니다.
+		if (fPen < 0.f && iDeep >= 0)
+		{
+			const _float fSkin = 0.02f;
+			vSolveTarget = vPlanePoint + (-fPen + fSkin) * vPlaneNormal;
+		}
+	}
+
+	// 4. 보정된 타겟지점으로 다시 IK를 수행합니다.
+	Solve_TwoBonePosition(Context, vSolveTarget, Target.fCurWeight);
+	m_pOwner->Update_ForwardKinematics(iRoot);
+	return tResult;
+}
+
+void CIKSolver_TwoBone::Solve_TwoBonePosition(const IK_SOLVE_CONTEXT& Context, _fvector vTargetPos, _float fWeight)
+{
+	const _float fEPSILON = 1e-6f;
+	const vector<CBone*>& Bones = *Context.pBones;
+	const IK_TARGET& Target = *Context.pTarget;
+	const vector<_uint>& Chain = Target.Chain.BoneChain;
+
+	_uint iRoot = Chain[0];
+	_uint iMid = Chain[1];
+	_uint iEnd = Chain[2];
+
 	_vector vRootPos = XMLoadFloat4x4(Bones[iRoot]->Get_CombinedTransformationMatrix()).r[3];
 	_vector vMidPos = XMLoadFloat4x4(Bones[iMid]->Get_CombinedTransformationMatrix()).r[3];
 	_vector vEndPos = XMLoadFloat4x4(Bones[iEnd]->Get_CombinedTransformationMatrix()).r[3];
-	_vector vJointTargetPos = Target.vCurTargetPos;
+	_vector vJointTargetPos = vTargetPos;
 
-	_vector vUpper = vMidPos - vRootPos;				// Root -> Mid
-	_vector vLower = vEndPos - vMidPos;					// Mid -> End
-	_vector vJointTarget = vJointTargetPos - vRootPos;	// Root -> Target
+	_vector vUpper = vMidPos - vRootPos;
+	_vector vLower = vEndPos - vMidPos;
+	_vector vJointTarget = vJointTargetPos - vRootPos;
 
 	_float l1 = XMVectorGetX(XMVector3Length(vUpper));
 	_float l2 = XMVectorGetX(XMVector3Length(vLower));
 	_float d = XMVectorGetX(XMVector3Length(vJointTarget));
 
-	// 2. 코사인 법칙으로 상단 뼈 각도 계산
 	_float cosAngle = std::clamp((l1 * l1 + d * d - l2 * l2) / ((2 * l1) * d), -1.f, 1.f);
 	_float angle = acosf(cosAngle);
 
-	// 3. 굽힘 평면 기저 구하기: forward(Root->Target) + forward에 직교하는 bend 방향
 	_vector vForward = XMVector3Normalize(vJointTarget);
 	_vector vBendDir;
-	if (d < 0.1f) // 타겟이 Root에 너무 붙어 방향이 불안정한 경우
+	if (d < 0.1f)
 	{
 		vForward = XMVectorSet(1.f, 0.f, 0.f, 0.f);
 		vBendDir = XMVectorSet(0.f, 0.f, 1.f, 0.f);
 	}
 	else
 	{
-		// 폴 벡터를 forward에 직교하도록 정사영
 		_vector vPole = CIKSolver::TwoBoneMakePoleVector(vRootPos, vMidPos, vEndPos);
 		vBendDir = vPole - XMVector3Dot(vPole, vForward) * vForward;
-		if (XMVectorGetX(XMVector3LengthSq(vBendDir)) < fEPSILON) // 굽힘 정도가 거의 없고 평행하다면?
+		if (XMVectorGetX(XMVector3LengthSq(vBendDir)) < fEPSILON)
 		{
-			// 폴이 forward와 거의 평행 => forward에 직교하는 임의 축 선택
 			vBendDir = XMVector3Cross(vForward, XMVectorSet(0.f, 1.f, 0.f, 0.f));
 			if (XMVectorGetX(XMVector3LengthSq(vBendDir)) < fEPSILON)
 				vBendDir = XMVector3Cross(vForward, XMVectorSet(1.f, 0.f, 0.f, 0.f));
@@ -121,35 +154,22 @@ IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Co
 		vBendDir = XMVector3Normalize(vBendDir);
 	}
 
-	// 4. 위치 삼각형을 풀어 관절/엔드의 목표 좌표 확정.
-	//    상단 뼈를 forward 축 성분 + 평면 수직 성분으로 분해.
-	_float  projDist = l1 * cosAngle;          // forward 축 방향 성분 (부호 포함)
-	_float  jointLineDist = l1 * sinf(angle);       // 평면 수직 성분
-	_vector vSolvedMidPos = vRootPos + projDist * vForward + jointLineDist * vBendDir; // Mid를 회전할 구간.
-	_vector vSolvedEndPos = vJointTargetPos;        // 엔드의 목표 = 이펙터(타겟)
+	_float  projDist = l1 * cosAngle;
+	_float  jointLineDist = l1 * sinf(angle);
+	_vector vSolvedMidPos = vRootPos + projDist * vForward + jointLineDist * vBendDir;
+	_vector vSolvedEndPos = vJointTargetPos;
 
-	// 확정된 좌표를 향해 각 뼈를 회전시켜 실제 스켈레톤을 갱신.
-
-	// Root: 상단 뼈를 (Root -> 목표 관절 위치) 방향으로 회전
 	_vector vCurUpperDir = XMVector3Normalize(vMidPos - vRootPos);
 	_vector vTgtUpperDir = XMVector3Normalize(vSolvedMidPos - vRootPos);
 	_vector qRootDelta = QuatFromTo(vCurUpperDir, vTgtUpperDir);
-	qRootDelta = XMQuaternionSlerp(XMQuaternionIdentity(), qRootDelta, fWeight); // 가중치 블렌딩
+	qRootDelta = XMQuaternionSlerp(XMQuaternionIdentity(), qRootDelta, fWeight);
 
-	// Mid: Root 회전이 전파된 뒤, 하단 뼈를 (회전된 관절 -> 목표 엔드) 방향으로 회전
-	_vector vNewMidPos = vRootPos + XMVector3Rotate(vCurUpperDir, qRootDelta) * l1; // 가중치 반영된 실제 관절 위치
+	_vector vNewMidPos = vRootPos + XMVector3Rotate(vCurUpperDir, qRootDelta) * l1;
 	_vector vTgtLowerDir = XMVector3Normalize(vSolvedEndPos - vNewMidPos);
-	_vector vCurLowerDir = XMVector3Rotate(XMVector3Normalize(vEndPos - vMidPos), qRootDelta); // Root 회전 전파 반영
+	_vector vCurLowerDir = XMVector3Rotate(XMVector3Normalize(vEndPos - vMidPos), qRootDelta);
 	_vector qMidDelta = QuatFromTo(vCurLowerDir, vTgtLowerDir);
 	qMidDelta = XMQuaternionSlerp(XMQuaternionIdentity(), qMidDelta, fWeight);
 
-
-	/*
-		1. Pivot의 점을 원점으로 돌리기
-		2. qDelta 변화량으로 회전
-		3. Pivot으로 다시 변경
-		=> 이러한 변환 행렬을 생성.
-	*/
 	auto PivotRot = [](_fvector qDelta, _fvector vPivot) -> _matrix {
 		return XMMatrixTranslationFromVector(-vPivot)
 			* XMMatrixRotationQuaternion(qDelta)
@@ -161,15 +181,53 @@ IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Co
 	_matrix mRootPivot = PivotRot(qRootDelta, vRootPos);
 	_matrix matRootComb = XMLoadFloat4x4(Bones[iRoot]->Get_CombinedTransformationMatrix()) * mRootPivot;
 
-	// 현재 계산한 Matrix는 Model Space이므로 뼈의 Local Space로 돌려줍니다.
+	// 부모 행렬의 역행렬을 곱해줌으로써 로컬행렬 상태를 갱신합니다.
 	Bones[iRoot]->Set_TransformationMatrix(matRootComb * XMMatrixInverse(nullptr, matRootParent));
 
 	_matrix mMidPivot = PivotRot(qMidDelta, vNewMidPos);
 	_matrix matMidComb = (XMLoadFloat4x4(Bones[iMid]->Get_CombinedTransformationMatrix()) * mRootPivot) * mMidPivot;
-	// 현재 계산한 Matrix는 Model Space이므로 뼈의 Local Space로 돌려줍니다.
+	// 부모 행렬의 역행렬을 곱해줌으로써 로컬행렬 상태를 갱신합니다.
 	Bones[iMid]->Set_TransformationMatrix(matMidComb * XMMatrixInverse(nullptr, matRootComb));
 }
 
+_float CIKSolver_TwoBone::Measure_DeepestPenetration(const vector<CBone*>& Bones, _uint iEnd, _fvector vPlanePoint, _fvector vPlaneNormal, _int& iDeepestOut)
+{
+	iDeepestOut = -1;
+	_float fMin = FLT_MAX; // 부호가 음수이므로 Min으로 계산.
+
+	// 위상 정렬되어 있으므로 iEnd부터 검사하면됩니다.
+	for (_uint i = iEnd + 1; i < static_cast<_uint>(Bones.size()); ++i)
+	{
+		if (!Is_Descendant(Bones, i, iEnd))
+			continue;
+
+		_vector vPos = XMLoadFloat4x4(Bones[i]->Get_CombinedTransformationMatrix()).r[3];
+		_float fPen = XMVectorGetX(XMVector3Dot(vPos - vPlanePoint, vPlaneNormal));
+		if (fPen < fMin)
+		{
+			fMin = fPen;
+			iDeepestOut = static_cast<_int>(i);
+		}
+	}
+
+	if (iDeepestOut < 0)
+		return 0.f;
+
+	return fMin;
+}
+
+_bool CIKSolver_TwoBone::Is_Descendant(const vector<CBone*>& Bones, _uint iBone, _uint iAncestor)
+{
+	_int iParent = Bones[iBone]->Get_ParentIndex();
+	while (iParent >= 0)
+	{
+		if (static_cast<_uint>(iParent) == iAncestor)
+			return true;
+		iParent = Bones[static_cast<_uint>(iParent)]->Get_ParentIndex();
+	}
+
+	return false;
+}
 
 CIKSolver_TwoBone* CIKSolver_TwoBone::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 {

@@ -19,7 +19,10 @@ public:
 
 private:
 	IK_RESULT Update_InverseKinematics(const IK_SOLVE_CONTEXT& Context);
-	
+	void      Solve_TwoBonePosition(const IK_SOLVE_CONTEXT& Context, _fvector vTargetPos, _float fWeight);
+	_float    Measure_DeepestPenetration(const vector<class CBone*>& Bones, _uint iEnd, _fvector vPlanePoint, _fvector vPlaneNormal, _int& iDeepestOut);
+	static _bool Is_Descendant(const vector<class CBone*>& Bones, _uint iBone, _uint iAncestor);
+
 
 public:
 	static CIKSolver_TwoBone* Create(ID3D11Device * pDevice, ID3D11DeviceContext * pContext);

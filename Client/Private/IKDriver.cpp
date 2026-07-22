@@ -42,7 +42,8 @@ void CIKDriver::Activate_Fixed(const _string& strTarget, _fvector vWorldPos, _fv
 
 void CIKDriver::Activate_WallFoot(const _string& strTarget, _fvector vWallNormal, _float fPosWeight, _float fRotWeight, _float fBlendSec, _float fProbeOut, _float fProbeDepth, _float fSkin)
 {
-	m_pIKCom->Begin_Target(strTarget, EIKTARGET_MODE::POSITION_ROTATION, fPosWeight, fRotWeight, fBlendSec);
+	
+	m_pIKCom->Begin_Target(strTarget, EIKTARGET_MODE::POSITION_CLEARANCE, fPosWeight, fRotWeight, fBlendSec);
 
 	ACTIVE_IK Active{};
 	Active.eTrigger = IK_TRIGGER::STATE;
