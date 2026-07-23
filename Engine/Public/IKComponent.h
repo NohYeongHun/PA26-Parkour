@@ -26,7 +26,6 @@ public:
 	void End_Target(const _string& strTarget, _float fBlendSec);
 	// 외부 구동 알파(트랙 포지션 등 연속 값) — 시간 블렌드를 우회하고 즉시 반영
 	void Set_TargetAlpha(const _string& strTarget, _float fAlpha);
-	void Set_AlignMode(const _string& strTarget, EALIGN_MODE eAlignMode);
 
 public:
 	_bool Get_TargetEndWorldPos(const _string& strTarget, _vector& vOutWorld);
@@ -63,6 +62,7 @@ private:
 private:
 	// 부위 마다 1개를 가집니다.
 	vector<IK_TARGET> m_Targets{};
+	IK_SOLVE_WORKSPACE m_Workspace{};	// 솔버에 빌려주는 스크래치 (컴포넌트당 1개)
 	unordered_map<_string, _uint> m_TargetHandles;
 	_matrix m_matWorldToModel{};
 	_matrix m_matModelToWorld{};
@@ -70,6 +70,8 @@ private:
 private:
 	_uint Find_BoneIndex(const char* pBoneName);
 	EIKSOLVER_TYPE To_SolverType(const _string& strSolverType);
+
+	void Parse_SolverOptions(const json& j, IK_TARGET& Target);
 
 public:
 	static CIKComponent* Create(ID3D11Device * pDevice, ID3D11DeviceContext * pContext);

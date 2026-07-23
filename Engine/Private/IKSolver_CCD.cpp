@@ -36,10 +36,6 @@ IK_RESULT CIKSolver_CCD::Solve(const IK_SOLVE_CONTEXT& Context)
 	return IK_RESULT();
 }
 
-const _char* CIKSolver_CCD::Get_Name() const
-{
-	return nullptr;
-}
 
 CIKSolver_CCD* CIKSolver_CCD::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 {

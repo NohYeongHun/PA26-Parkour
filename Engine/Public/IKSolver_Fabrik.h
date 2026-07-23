@@ -16,7 +16,14 @@ public:
 
 public:
 	virtual IK_RESULT	 Solve(const IK_SOLVE_CONTEXT& Context) override;
-	virtual const _char* Get_Name() const override;
+
+private:
+	IK_RESULT Update_InverseKinematics(const IK_SOLVE_CONTEXT& Context);
+
+private:
+	_bool     Gather_Chain(const IK_SOLVE_CONTEXT& Context);
+	_uint     Iterate_Fabrik(const IK_SOLVE_CONTEXT& Context, _fvector vTarget,
+		_fvector vRootOrigin, _float& fErrOut);
 
 public:
 	static CIKSolver_Fabrik* Create(ID3D11Device * pDevice, ID3D11DeviceContext * pContext);

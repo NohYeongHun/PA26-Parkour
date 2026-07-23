@@ -565,19 +565,34 @@ namespace Engine
 		std::vector<_uint> BoneChain; // Index를 담습니다. root -> end 순서로 이동합니다.
 		_vector vTargetPos;	 // 목표 위치
 		_vector vTargetRot; // 목표 회전
-		_vector vPoleVector;
-		_vector vSoleAxis; // 발바닥 방향 로컬 축.
 		_float fPosWeight; // 가중치
 		_float fRotWeight; // 가중치
 	}IK_CHAIN_DESC;
 
-	typedef struct tagIKTarget
+	typedef struct tagIKOptionTwoBone
 	{
-		_string          strName;		// 고정
-		EIKSOLVER_TYPE   eSolver;		// 고정
+		_vector vPoleVector;
+	}IK_OPTION_TWOBONE;
+
+	typedef struct tagIKOptionFabrik
+	{
+		// Fabrik
+		std::vector<string> Constraints;
+		_vector vPoleVector;
+		_float  fTolerance = 0.001f;
+		_uint   iMaxIterations = 10; //최대 반복해.
+	}IK_OPTION_FABRIK;
+
+	typedef struct tagIKOptionCCD
+	{
+		_float	fTolerance = 0.001f;
+		_uint	iMaxIterations = 10;
+	}IK_OPTION_CCD;
+
+	
+	typedef struct tagIKTargetRuntime
+	{
 		EIKTARGET_MODE	 eMode;			// 수정되는 값
-		EALIGN_MODE		 eAlignMode;	// 수정되는 값 (엔드 본 방향 정렬 모드)
-		IK_CHAIN_DESC    Chain;			// 고정
 		_bool            isEnable;		// 수정되는 값
 		_bool			 isTargetSet;	// 수정되는 값 => 최소 1회 유효되었는지.
 		_float           fCurWeight;	// 수정되는 값
@@ -585,7 +600,21 @@ namespace Engine
 		_float			 fBlendSpeed;	// 수정되는 값
 		_vector			 vCurTargetPos;	// 수정되는 값
 		_vector			 vTargetNormal; // 수정되는 값
+	}IK_TARGET_RUNTIME;
+
+	typedef struct tagIKTarget
+	{
+		_string           strName;		// 고정
+		EIKSOLVER_TYPE    eSolver;		// 고정
+		IK_CHAIN_DESC     Chain;		// 고정
+		IK_TARGET_RUNTIME Runtime;		// Runtime 값들
+		IK_OPTION_TWOBONE OptTwoBone;	// 
+		IK_OPTION_FABRIK  OptFabrik;	// 
+		IK_OPTION_CCD	  OptCCD;		// 
+
 	} IK_TARGET;
+
+
 
 	typedef struct tagIKResult { 
 		_float fPosError; 
@@ -617,10 +646,20 @@ namespace Engine
 		_float fProgress = 1.f;		// 램프 진행률 0~1: (트랙pos - begin) / RampLen (미지정 시 구간 전체)
 	}ACTIVE_IK_WINDOW;
 
+	// 솔브 1회용 스크래치 버퍼 (컴포넌트당 1개 소유 — 솔버는 state-less 유지)
+	typedef struct tagIKSolveWorkspace
+	{
+		std::vector<_vector> Positions;		// P[0..N-1] 관절 위치 (모델 공간)
+		std::vector<_float>  Lengths;		// L[0..N-2] 세그먼트 길이
+		_float				 fTotalLength = 0.f;
+	}IK_SOLVE_WORKSPACE;
+
 	typedef struct tagIKSolveContext
 	{
 		const vector<class CBone*>* pBones;
 		const IK_TARGET*			pTarget;
+		class CIKComponent*			pOwner;		// FK 갱신 등 컴포넌트 호출용 (솔버 멤버 상태 제거)
+		IK_SOLVE_WORKSPACE*			pWorkspace;	// 호출자 소유 스크래치
 		_float						fTimeDelta;
 		_matrix						matModelToWorld;	// 디버그 드로우용(모델→월드)
 	}IK_SOLVE_CONTEXT;

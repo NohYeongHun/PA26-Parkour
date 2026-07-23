@@ -18,11 +18,7 @@ CIKComponent::CIKComponent(const CIKComponent& Prototype)
 	, m_Solvers { Prototype.m_Solvers }
 {
 	for (auto& pSolver : m_Solvers)
-	{
 		Safe_AddRef(pSolver);
-		pSolver->Set_Owner(this);
-	}
-		
 }
 
 void CIKComponent::Update_ForwardKinematics(_uint iRootIdx)
@@ -40,14 +36,13 @@ void CIKComponent::Begin_Target(const _string& strTarget, EIKTARGET_MODE eMode, 
 	IK_TARGET& Target = m_Targets[iter->second];
 
 
-	Target.isEnable = true;
-	Target.isTargetSet = false;
-	Target.eMode = eMode;
-	Target.eAlignMode = EALIGN_MODE::NONE;   // 기본값 (Set_AlignMode로 지정)
+	Target.Runtime.isEnable = true;
+	Target.Runtime.isTargetSet = false;
+	Target.Runtime.eMode = eMode;
 	Target.Chain.fPosWeight = fPosWeight;
 	Target.Chain.fRotWeight = fRotWeight;
-	Target.fBlendSpeed = (fBlendSec > 0.f) ? 1.f / fBlendSec : FLT_MAX;
-	Target.fTargetWeight = 1.f;
+	Target.Runtime.fBlendSpeed = (fBlendSec > 0.f) ? 1.f / fBlendSec : FLT_MAX;
+	Target.Runtime.fTargetWeight = 1.f;
 
 }
 
@@ -58,16 +53,10 @@ void CIKComponent::Set_TargetAlpha(const _string& strTarget, _float fAlpha)
 		return;
 
 	IK_TARGET& target = m_Targets[it->second];
-	target.fTargetWeight = fAlpha;
-	target.fCurWeight = fAlpha;
+	target.Runtime.fTargetWeight = fAlpha;
+	target.Runtime.fCurWeight = fAlpha;
 }
 
-void CIKComponent::Set_AlignMode(const _string& strTarget, EALIGN_MODE eAlignMode)
-{
-	auto it = m_TargetHandles.find(strTarget);
-	if (it == m_TargetHandles.end()) return;
-	m_Targets[it->second].eAlignMode = eAlignMode;
-}
 
 void CIKComponent::End_Target(const _string& strTarget, _float fBlendSec)
 {
@@ -75,8 +64,8 @@ void CIKComponent::End_Target(const _string& strTarget, _float fBlendSec)
 	if (it == m_TargetHandles.end()) return;
 	IK_TARGET& target = m_Targets[it->second];
 
-	target.fTargetWeight = 0.f;
-	target.fBlendSpeed = (fBlendSec > 0.f) ? 1.f / fBlendSec : FLT_MAX;
+	target.Runtime.fTargetWeight = 0.f;
+	target.Runtime.fBlendSpeed = (fBlendSec > 0.f) ? 1.f / fBlendSec : FLT_MAX;
 }
 
 _bool CIKComponent::Get_TargetEndWorldPos(const _string& strTarget, _vector& vOutWorld)
@@ -110,9 +99,9 @@ void CIKComponent::Set_Target(const _string& strGoal, _fvector vWorldPos, _fvect
 
 	// 모델 스페이스 변환
 	target.Chain.vTargetPos = vModelPos;
-	target.vCurTargetPos = vModelPos;
-	target.vTargetNormal = vModelNormal;
-	target.isTargetSet = true;
+	target.Runtime.vCurTargetPos = vModelPos;
+	target.Runtime.vTargetNormal = vModelNormal;
+	target.Runtime.isTargetSet = true;
 }
 
 
@@ -151,12 +140,19 @@ void CIKComponent::Register_Targets(const _string& strFolderPath)
 
 		// 4. Register_Goal이 안 담는 나머지 채우기
 		IK_TARGET& Target = m_Targets[iTarget];
-		if (j.contains("PoleVector") && j["PoleVector"].size() == 3)
-			Target.Chain.vPoleVector = XMVectorSet(j["PoleVector"][0], j["PoleVector"][1], j["PoleVector"][2], 0.f);
-		if (j.contains("SoleAxis") && j["SoleAxis"].size() == 3)
-			Target.Chain.vSoleAxis = XMVectorSet(j["SoleAxis"][0], j["SoleAxis"][1], j["SoleAxis"][2], 0.f);
 		Target.Chain.fPosWeight = j.value("PosWeight", 1.f);
 		Target.Chain.fRotWeight = j.value("RotWeight", 1.f);
+
+		// 5. Parse
+		Parse_SolverOptions(j, Target);
+
+		_uint iMax = 0;
+		for (const IK_TARGET& t : m_Targets)
+			iMax = max(iMax, static_cast<_uint>(t.Chain.BoneChain.size()));
+
+		m_Workspace.Positions.reserve(iMax);
+		m_Workspace.Lengths.reserve(iMax);
+
 	}
 }
 
@@ -172,7 +168,6 @@ _uint CIKComponent::Register_Target(const _string& strName, EIKSOLVER_TYPE eSolv
 	IK_TARGET target{};
 	target.strName = strName;
 	target.eSolver = eSolver;
-	target.Chain.vSoleAxis = XMVectorSet(0.f, -1.f, 0.f, 0.f); // 기본값.
 
 	for (auto& name : BoneNames)
 	{
@@ -181,18 +176,20 @@ _uint CIKComponent::Register_Target(const _string& strName, EIKSOLVER_TYPE eSolv
 		target.Chain.BoneChain.push_back(iBoneIndex);
 	}
 
-	if (eSolver == EIKSOLVER_TYPE::TWO_BONE && target.Chain.BoneChain.size() >= 3)
-	{
-		const vector<CBone*>& Bones = m_pModelCom->Get_Bones();
-		_uint iR = target.Chain.BoneChain[0];
-		_uint iM = target.Chain.BoneChain[1];
-		_uint iE = target.Chain.BoneChain[2];
-		// 부모 자식 관계가 아닌 Bone인경우 Crash
-		ASSERT_CRASH(Bones[iM]->Get_ParentIndex() == static_cast<_int>(iR));
-		ASSERT_CRASH(Bones[iE]->Get_ParentIndex() == static_cast<_int>(iM));
-	}
+	const vector<CBone*>& Bones = m_pModelCom->Get_Bones();
+	const vector<_uint>& ChainIdx = target.Chain.BoneChain;
 
-	// 3. push한 위치가 handle값
+	// 전 솔버 공통 불변식 (개수와 무관함)
+	ASSERT_CRASH(ChainIdx.size() >= 3);
+	ASSERT_CRASH(Bones[ChainIdx[0]]->Get_ParentIndex() >= 0); // Root 뼈는 부모가 필수
+	for (size_t k = 1; k < ChainIdx.size(); ++k)
+		ASSERT_CRASH(Bones[ChainIdx[k]]->Get_ParentIndex() == static_cast<_int>(ChainIdx[k - 1]));
+
+	// TwoBone 개수 조건
+	if (eSolver == EIKSOLVER_TYPE::TWO_BONE)
+		ASSERT_CRASH(ChainIdx.size() == 3);
+
+	// 4. push한 위치가 handle값
 	_uint iTarget = static_cast<_uint>(m_Targets.size());
 	m_Targets.push_back(target);
 
@@ -241,23 +238,26 @@ void CIKComponent::Execute(_float fTimeDelta)
 
 	for (auto& target : m_Targets)
 	{
-		if (!target.isEnable || !target.isTargetSet)
+		if (!target.Runtime.isEnable || !target.Runtime.isTargetSet)
 			continue;
 
-		if (target.fTargetWeight <= 0.f && target.fCurWeight <= 0.f)
+		if (target.Runtime.fTargetWeight <= 0.f && target.Runtime.fCurWeight <= 0.f)
 		{
-			target.isEnable = false;
+			target.Runtime.isEnable = false;
 			continue;
 		}
 
-		if (target.fCurWeight < target.fTargetWeight)
-			target.fCurWeight = min(target.fCurWeight + target.fBlendSpeed * fTimeDelta, target.fTargetWeight);
-		else if (target.fCurWeight > target.fTargetWeight)
-			target.fCurWeight = max(target.fCurWeight - target.fBlendSpeed * fTimeDelta, target.fTargetWeight);
+		if (target.Runtime.fCurWeight < target.Runtime.fTargetWeight)
+			target.Runtime.fCurWeight = min(target.Runtime.fCurWeight + target.Runtime.fBlendSpeed * fTimeDelta
+				, target.Runtime.fTargetWeight);
+		else if (target.Runtime.fCurWeight > target.Runtime.fTargetWeight)
+			target.Runtime.fCurWeight = max(target.Runtime.fCurWeight - target.Runtime.fBlendSpeed * fTimeDelta, target.Runtime.fTargetWeight);
 
 		IK_SOLVE_CONTEXT Context{};
 		Context.pBones = &m_pModelCom->Get_Bones();
 		Context.pTarget = &target;
+		Context.pOwner = this;
+		Context.pWorkspace = &m_Workspace;
 		Context.fTimeDelta = fTimeDelta;
 		Context.matModelToWorld = m_matModelToWorld;
 
@@ -273,7 +273,7 @@ void CIKComponent::Debug_DrawActiveIK(_fmatrix WorldMatrix, const JPH::Color& Ch
 
 	for (const IK_TARGET& target : m_Targets)
 	{
-		if (!target.isEnable || !target.isTargetSet)
+		if (!target.Runtime.isEnable || !target.Runtime.isTargetSet)
 			continue;
 
 		const vector<_uint>& Chain = target.Chain.BoneChain;
@@ -284,7 +284,7 @@ void CIKComponent::Debug_DrawActiveIK(_fmatrix WorldMatrix, const JPH::Color& Ch
 			pGI->Add_DebugLine(Prev.r[3], Cur.r[3], ChainColor);
 		}
 
-		_vector vTargetWorld = XMVector3TransformCoord(target.vCurTargetPos, WorldMatrix);
+		_vector vTargetWorld = XMVector3TransformCoord(target.Runtime.vCurTargetPos, WorldMatrix);
 		const _float fCross = 0.05f;
 		_vector vX = XMVectorSet(fCross, 0.f, 0.f, 0.f);
 		_vector vY = XMVectorSet(0.f, fCross, 0.f, 0.f);
@@ -321,6 +321,39 @@ EIKSOLVER_TYPE CIKComponent::To_SolverType(const _string& strSolverType)
 
 	return EIKSOLVER_TYPE::END;
 }
+
+// 솔버별 파라미터는 "Option" 오브젝트 하위에 저작합니다. (미저작 시 구조체 기본값 유지)
+void CIKComponent::Parse_SolverOptions(const json& j, IK_TARGET& Target)
+{
+	if (!j.contains("Option") || !j["Option"].is_object())
+		return;
+
+	const json& Option = j["Option"];
+
+	switch (Target.eSolver)
+	{
+	case EIKSOLVER_TYPE::TWO_BONE:
+
+		if (Option.contains("PoleVector") && Option["PoleVector"].size() == 3)
+			Target.OptTwoBone.vPoleVector = XMVectorSet(Option["PoleVector"][0], Option["PoleVector"][1], Option["PoleVector"][2], 0.f);
+		break;
+
+	case EIKSOLVER_TYPE::FABRIK:
+		if (Option.contains("PoleVector") && Option["PoleVector"].size() == 3)
+			Target.OptFabrik.vPoleVector = XMVectorSet(Option["PoleVector"][0], Option["PoleVector"][1], Option["PoleVector"][2], 0.f);
+		Target.OptFabrik.fTolerance = Option.value("Tolerance", 0.001f);
+		Target.OptFabrik.iMaxIterations = Option.value("MaxIterations", 10u);
+		break;
+
+	case EIKSOLVER_TYPE::CCD:
+		Target.OptCCD.fTolerance = Option.value("Tolerance", 0.001f);
+		Target.OptCCD.iMaxIterations = Option.value("MaxIterations", 10u);
+		break;
+	}
+	
+}
+
+
 
 CIKComponent* CIKComponent::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 {

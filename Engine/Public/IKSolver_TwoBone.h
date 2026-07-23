@@ -15,7 +15,6 @@ public:
 
 public:
 	virtual IK_RESULT    Solve(const IK_SOLVE_CONTEXT& Context) override;
-	virtual const _char* Get_Name() const override;
 
 private:
 	IK_RESULT Update_InverseKinematics(const IK_SOLVE_CONTEXT& Context);

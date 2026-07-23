@@ -15,7 +15,6 @@ public:
 
 public:
 	virtual IK_RESULT	 Solve(const IK_SOLVE_CONTEXT& Context) override;
-	virtual const _char* Get_Name() const override;
 
 public:
 	static CIKSolver_CCD* Create(ID3D11Device * pDevice, ID3D11DeviceContext * pContext);

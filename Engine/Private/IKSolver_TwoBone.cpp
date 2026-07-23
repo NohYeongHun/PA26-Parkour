@@ -1,6 +1,7 @@
 ﻿#include "EnginePch.h"
 #include "IKSolver_TwoBone.h"
 #include "GameObject.h"
+#include "IKComponent.h"
 #include "Bone.h"
 #include "Engine_Profile.h"
 #include "GameInstance.h"   // 디버그 드로우용
@@ -45,11 +46,6 @@ IK_RESULT CIKSolver_TwoBone::Solve(const IK_SOLVE_CONTEXT& Context)
 
 
 
-const _char* CIKSolver_TwoBone::Get_Name() const
-{
-	return nullptr;
-}
-
 IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Context)
 {
 	IK_RESULT tResult{};
@@ -60,18 +56,18 @@ IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Co
 	const vector<_uint>& Chain = Target.Chain.BoneChain;
 	if (Chain.size() < 3)
 		return tResult;
-	if (Target.fCurWeight <= 0.f)
+	if (Target.Runtime.fCurWeight <= 0.f)
 		return tResult;
 
 	_uint iRoot = Chain[0];
 	_uint iMid = Chain[1];
 	_uint iEnd = Chain[2];
 
-	_vector vPlaneNormal = XMVector3Normalize(Target.vTargetNormal);
-	_vector vPlanePoint = Target.vCurTargetPos;
+	_vector vPlaneNormal = XMVector3Normalize(Target.Runtime.vTargetNormal);
+	_vector vPlanePoint = Target.Runtime.vCurTargetPos;
 	_vector vSolveTarget = vPlanePoint;
 
-	if (Target.eMode == EIKTARGET_MODE::POSITION_CLEARANCE)
+	if (Target.Runtime.eMode == EIKTARGET_MODE::POSITION_CLEARANCE)
 	{
 		// 1. 기존 Transformatrix 저장.
 		_matrix matRootSave = XMLoadFloat4x4(Bones[iRoot]->Get_TransformationMatrix());
@@ -79,7 +75,7 @@ IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Co
 
 		// 2. 타겟지점으로의 첫번째 IK
 		Solve_TwoBonePosition(Context, vPlanePoint, 1.f);
-		m_pOwner->Update_ForwardKinematics(iRoot);
+		Context.pOwner->Update_ForwardKinematics(iRoot);
 
 		_int iDeep = -1;
 		// 3. Ray에 타겟된 지점과의 침투 깊이를 구합니다.
@@ -87,7 +83,7 @@ IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Co
 
 		Bones[iRoot]->Set_TransformationMatrix(matRootSave);
 		Bones[iMid]->Set_TransformationMatrix(matMidSave);
-		m_pOwner->Update_ForwardKinematics(iRoot);
+		Context.pOwner->Update_ForwardKinematics(iRoot);
 
 		// 3. 침투 깊이를 통한 새로운 Target지점을 구합니다.
 		if (fPen < 0.f && iDeep >= 0)
@@ -98,8 +94,8 @@ IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Co
 	}
 
 	// 4. 보정된 타겟지점으로 다시 IK를 수행합니다.
-	Solve_TwoBonePosition(Context, vSolveTarget, Target.fCurWeight);
-	m_pOwner->Update_ForwardKinematics(iRoot);
+	Solve_TwoBonePosition(Context, vSolveTarget, Target.Runtime.fCurWeight);
+	Context.pOwner->Update_ForwardKinematics(iRoot);
 	return tResult;
 }
 

@@ -14,13 +14,7 @@ public:
 	virtual HRESULT		Render();
 
 public:
-	void Set_Owner(class CIKComponent* pIKCom) { m_pOwner = pIKCom; }
-
-public:
 	static _vector TwoBoneMakePoleVector(_fvector vRootPos, _fvector vMidPos, _vector  vEndPos, _float Distance = 2.f);
-
-public:
-	virtual const _char* Get_Name() const = 0;
 
 public:
 	virtual IK_RESULT Solve(const IK_SOLVE_CONTEXT& Context) = 0;
@@ -31,8 +25,6 @@ protected:
 	ID3D11DeviceContext* m_pContext = { nullptr };
 	class CGameInstance* m_pGameInstance = { nullptr };
 	_bool m_isClone = { false };
-
-	class CIKComponent* m_pOwner = { nullptr };
 
 public:
 	virtual CIKSolver* Clone(void* pArg) = 0;

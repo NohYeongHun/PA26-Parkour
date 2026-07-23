@@ -1375,7 +1375,6 @@
     <None Include="..\Bin\ShaderFiles\Engine_Shader_Light.hlsli">
       <Filter>97. ShaderFiles</Filter>
     </None>
-    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Bin\ShaderFiles\Engine_Shader_Cell.hlsl">
