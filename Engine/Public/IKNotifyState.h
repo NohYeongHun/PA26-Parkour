@@ -15,6 +15,7 @@ public:
     const vector<IK_BINDING>& Get_Bindings() const { return m_Bindings; }
     _float Get_BlendInSec() const { return m_fBlendInSec; }
     _float Get_BlendOutSec() const { return m_fBlendOutSec; }
+    _float Get_RampLen() const { return m_fRampLen; }
 
 #ifdef _DEBUG
     void ImGui_Print() override;
@@ -35,5 +36,6 @@ private:
     vector<IK_BINDING> m_Bindings{};
     _float m_fBlendInSec = {};
     _float m_fBlendOutSec = {};
+    _float m_fRampLen = {};		// 트랙 단위 알파 램프 길이 (0 = 구간 전체가 램프)
 };
 NS_END

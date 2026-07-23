@@ -1,4 +1,4 @@
-#include "ClientPch.h"
+﻿#include "ClientPch.h"
 #include "IKDriver.h"
 #include "IKComponent.h"
 #include "EnvironmentQueryComponent.h"
@@ -27,7 +27,7 @@ HRESULT CIKDriver::Initialize_Clone(void* pArg)
 	ASSERT_CRASH(m_pOwner != nullptr);
 
 	m_pIKCom = dynamic_cast<CIKComponent*>(m_pOwner->Get_Component(TEXT("Com_IK")));
-	ASSERT_CRASH(m_pIKCom != nullptr); // expression이 잘못되면 Crash
+	ASSERT_CRASH(m_pIKCom != nullptr);
 
 	m_pEnvQueryCom = dynamic_cast<CEnvironmentQueryComponent*>(m_pOwner->Get_Component(TEXT("Com_EnvQuery")));
 	ASSERT_CRASH(m_pEnvQueryCom != nullptr);
@@ -52,17 +52,23 @@ void CIKDriver::Execute(const vector<IK_REQUEST>& Requests, _float fTimeDelta)
 	Reap_Missing();
 
 	for (auto& [strGoal, Entry] : m_ActiveMap)
+	{
+		if (Entry.Req.fDrivenAlpha >= 0.f)
+			m_pIKCom->Set_TargetAlpha(strGoal, min(Entry.Req.fDrivenAlpha, 1.f));
+
 		Resolve_Target(strGoal, Entry);
+	}
 
 	m_pIKCom->Execute(fTimeDelta);
 }
 
 void CIKDriver::Apply_Requests(const vector<IK_REQUEST>& Requests)
 {
+	// 매 프레임 isSeen 해제.
 	for (auto& [strGoal, Entry] : m_ActiveMap)
 		Entry.isSeen = false;
 
-	// 수집 순서가 우선순위다: 상태 요청이 먼저, 클립 요청이 나중에 들어오므로
+	// 상태 요청이 먼저, 클립 요청이 나중에 들어오므로
 	// 같은 골이면 클립 요청이 덮어쓴다.
 	for (const IK_REQUEST& Req : Requests)
 	{
@@ -89,7 +95,7 @@ void CIKDriver::Apply_Requests(const vector<IK_REQUEST>& Requests)
 		if (Entry.Req.eSource != Req.eSource || Entry.Req.strToken != Req.strToken)
 			Entry.isLatched = false;
 
-		// weight/mode가 바뀌면 솔버의 목표 weight 갱신 (블렌드 재시작)
+		// weight/mode가 바뀌면 솔버의 목표 weight 갱신 블렌드 재시작.
 		if (Entry.Req.fPosWeight != Req.fPosWeight || Entry.Req.fRotWeight != Req.fRotWeight
 			|| Entry.Req.eMode != Req.eMode)
 			m_pIKCom->Begin_Target(Req.strGoal, Req.eMode, Req.fPosWeight, Req.fRotWeight, Req.fBlendInSec);
@@ -99,6 +105,7 @@ void CIKDriver::Apply_Requests(const vector<IK_REQUEST>& Requests)
 	}
 }
 
+// 매프레임 체크.
 void CIKDriver::Reap_Missing()
 {
 	for (auto it = m_ActiveMap.begin(); it != m_ActiveMap.end(); )
@@ -158,8 +165,18 @@ void CIKDriver::Resolve_Target(const _string& strGoal, ACTIVE_IK_ENTRY& Entry)
 		if (!m_pIKCom->Get_TargetEndWorldPos(strGoal, vFootWorld))
 			break;
 
+		// 토큰이 있으면(클립 저작 경로) 앵커의 노멀을 벽 방향으로 사용
+		_vector vWallN = XMLoadFloat3(&Req.vWallNormal);
+		if (!Req.strToken.empty())
+		{
+			_vector vAnchorPos{}, vAnchorN{};
+			if (!m_pEnvQueryCom->Resolve_Anchor(Req.strToken, vAnchorPos, vAnchorN))
+				break;	// 앵커 미해석 — 이 프레임 스킵
+			vWallN = vAnchorN;
+		}
+
 		_vector vPos{}, vNormal{};
-		if (!m_pEnvQueryCom->Raycast_Wall(vFootWorld, XMLoadFloat3(&Req.vWallNormal),
+		if (!m_pEnvQueryCom->Raycast_Wall(vFootWorld, vWallN,
 			Req.fProbeOut, Req.fProbeDepth, Req.fSkin, vPos, vNormal))
 			break;	// 미스 — 이 프레임 발 IK 스킵 (애님 유지)
 

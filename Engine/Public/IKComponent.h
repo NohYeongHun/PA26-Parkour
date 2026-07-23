@@ -24,6 +24,8 @@ public:
 public:
 	void Begin_Target(const _string& strTarget, EIKTARGET_MODE eMode, _float fPosWeight, _float fRotWeight, _float fBlendSec);
 	void End_Target(const _string& strTarget, _float fBlendSec);
+	// 외부 구동 알파(트랙 포지션 등 연속 값) — 시간 블렌드를 우회하고 즉시 반영
+	void Set_TargetAlpha(const _string& strTarget, _float fAlpha);
 	void Set_AlignMode(const _string& strTarget, EALIGN_MODE eAlignMode);
 
 public:

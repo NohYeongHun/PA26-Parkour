@@ -33,11 +33,9 @@ void CTraceurClimbHop::OnEnter(void* pArg)
 		return;
 	}
 
-	HANG_CONTEXT& Ctx = m_pOwner->Get_HangContext();
-	Ctx.isValid      = true;
-	Ctx.vGrabEdgePos = Target.vGrabEdgePos;
-	Ctx.vWallNormal  = Target.vWallNormal;
-	Ctx.GrabBodyID   = Target.GrabBodyID;
+	// 새 렛지로 컨텍스트 갱신
+	// 이후 IK는 전부 클립의 IK 노티가 담당: Hang 요청 소멸 = 놓기, 노티 구간 진입 = 트랙 동기 잡기.
+	Set_HangContext(XMLoadFloat3(&Target.vGrabEdgePos), XMLoadFloat3(&Target.vWallNormal), Target.GrabBodyID);
 
 	const HANG_TUNING&  T     = CGameSystem::GetInstance()->Get_ParkourTuning()->Get().Hang;
 	const BODY_PROFILE* pBody = m_pOwner->Get_BodyProfile();
@@ -145,28 +143,12 @@ _bool CTraceurClimbHop::Find_HangTarget(ETraceurClimbHop eDir, HANG_TARGET& Out)
 	if (!Calc_ProbeSegment(Ctx, T, eDir, vStart, vDir, fDist))
 		return false;
 
-#ifdef _DEBUG
-	XMStoreFloat3(&m_vDebugProbeStart, vStart);
-	XMStoreFloat3(&m_vDebugProbeEnd, vStart + vDir * fDist);
-	m_hasDebugProbe   = true;
-	m_isDebugProbeHit = false;
-#endif
-
 	SHAPE_CAST_HIT Hit{};
 	const _bool isProbeHit = pGI->Sphere_Cast(vStart, vDir, fDist, T.fHopProbeRadius,
 			ENUM_CLASS(COLLISIONLAYER::PARKOUR), Hit);
-#ifdef _DEBUG
-	if (isProbeHit)
-	{
-		m_isDebugProbeHit = true;
-		m_vDebugProbeHitPos = _float3(Hit.vHitPoint.x, Hit.vHitPoint.y, Hit.vHitPoint.z);
-	}
-#endif
+
 	if (!isProbeHit)
 	{
-#ifdef _DEBUG
-		cout << "[Hop] reject: probe miss\n";
-#endif
 		return false;
 	}
 
@@ -175,9 +157,6 @@ _bool CTraceurClimbHop::Find_HangTarget(ETraceurClimbHop eDir, HANG_TARGET& Out)
 		iFlag = ENUM_CLASS(static_cast<CALLBACK_CLIENT*>(Hit.pDesc)->eObjectParkourFlag);
 	if (iFlag >= ENUM_CLASS(PARKOUR_FLAG::END) || !(iFlag & ENUM_CLASS(PARKOUR_FLAG::HANGABLE)))
 	{
-#ifdef _DEBUG
-		cout << "[Hop] reject: flag denied (" << iFlag << ")\n";
-#endif
 		return false;
 	}
 
@@ -187,9 +166,6 @@ _bool CTraceurClimbHop::Find_HangTarget(ETraceurClimbHop eDir, HANG_TARGET& Out)
 	_float3 vBodyMin{}, vBodyMax{};
 	if (!pGI->Get_Body_AABB(Hit.HitBodyID, vBodyMin, vBodyMax))
 	{
-#ifdef _DEBUG
-		cout << "[Hop] reject: body AABB query failed\n";
-#endif
 		return false;
 	}
 
@@ -203,11 +179,6 @@ _bool CTraceurClimbHop::Find_HangTarget(ETraceurClimbHop eDir, HANG_TARGET& Out)
 		ENUM_CLASS(COLLISIONLAYER::PARKOUR));
 	if (!TopHit.isHit)
 	{
-#ifdef _DEBUG
-		cout << "[Hop] reject: top-face miss  hit=(" << Hit.vHitPoint.x << ", " << Hit.vHitPoint.y
-		     << ", " << Hit.vHitPoint.z << ")  center=(" << XMVectorGetX(vBodyCenter) << ", " << XMVectorGetZ(vBodyCenter)
-		     << ")  ray y " << (vBodyMax.y + 0.1f) << " -> " << (Hit.vHitPoint.y - 0.2f) << "\n";
-#endif
 		return false;
 	}
 
@@ -221,9 +192,6 @@ _bool CTraceurClimbHop::Find_HangTarget(ETraceurClimbHop eDir, HANG_TARGET& Out)
 		ENUM_CLASS(COLLISIONLAYER::PARKOUR));
 	if (!FrontHit.isHit)
 	{
-#ifdef _DEBUG
-		cout << "[Hop] reject: front-face miss  topY=" << TopHit.vHitPosition.y << "\n";
-#endif
 		return false;
 	}
 
@@ -233,9 +201,6 @@ _bool CTraceurClimbHop::Find_HangTarget(ETraceurClimbHop eDir, HANG_TARGET& Out)
 	vTargetN = XMVector3Normalize(vTargetN);
 	if (XMVectorGetX(XMVector3Dot(vTargetN, vNormal)) < T.fMinNormalDot)
 	{
-#ifdef _DEBUG
-		cout << "[Hop] reject: normal dot < " << T.fMinNormalDot << "\n";
-#endif
 		return false;
 	}
 
@@ -256,9 +221,6 @@ _bool CTraceurClimbHop::Can_StandTop(_float3& vOutStandPos) const
 	_float3 vMin{}, vMax{};
 	if (!pGI->Get_Body_AABB(Ctx.GrabBodyID, vMin, vMax))
 	{
-#ifdef _DEBUG
-		cout << "[Hop] standtop reject: body AABB query failed\n";
-#endif
 		return false;
 	}
 
@@ -266,15 +228,14 @@ _bool CTraceurClimbHop::Can_StandTop(_float3& vOutStandPos) const
 	const _float fDepth = fabsf(XMVectorGetX(vInward)) * (vMax.x - vMin.x)
 	                    + fabsf(XMVectorGetZ(vInward)) * (vMax.z - vMin.z);
 
-	// 설 표면 후보: 판이 충분히 두꺼우면 판 자신의 상단, 얇으면 판 뒤 벽의 상단 (A안)
-	// 프로브 XZ = 엣지 + 안쪽으로 (판 깊이 + 침투깊이) — 사용자 정의 지오메트리 기준 (probe)
+	// 설 표면 후보: 판이 충분히 두꺼우면 판 자신의 상단, 얇으면 판 뒤 벽의 상단
 	const _bool isThin = (fDepth < pBody->fRadius * 2.f);
 	const _float fProbeInward = isThin
 		? fDepth + T.fStandProbeInset
 		: min(pBody->fRadius * T.fTopStandDepthMult, fDepth - 0.05f);
 	_vector vProbe = XMLoadFloat3(&Ctx.vGrabEdgePos) + vInward * fProbeInward;
 
-	// 다운캐스트: 잡은 바디 상단 + standProbeUp 에서 아래로 — 시작 높이도 튜닝 기준 (top)
+	// 다운캐스트 잡은 바디 상단 + standProbeUp 에서 아래로 — 시작 높이도 튜닝 기준 (top)
 	const _float fRayTopY = vMax.y + T.fStandProbeUp;
 	const _float fRayBotY = Ctx.vGrabEdgePos.y - 0.3f;
 	RAY_CAST_HIT TopHit = pGI->Ray_Cast(
@@ -287,36 +248,12 @@ _bool CTraceurClimbHop::Can_StandTop(_float3& vOutStandPos) const
 			XMVectorSetY(vProbe, fRayBotY),
 			ENUM_CLASS(COLLISIONLAYER::MAP));
 
-	// 허용창: 엣지 -0.3 ~ 엣지 + standMaxRise (벽 상단이 엣지보다 조금 높아도 기립 허용)
 	const _float fRise = TopHit.isHit ? (TopHit.vHitPosition.y - Ctx.vGrabEdgePos.y) : 0.f;
 	if (!TopHit.isHit || fRise < -0.3f || fRise > T.fStandMaxRise)
 	{
-#ifdef _DEBUG
-		cout << "[Hop] standtop reject: top-face " << (TopHit.isHit ? "out of window" : "miss")
-		     << (isThin ? " (behind-wall probe)" : "")
-		     << "  edgeY=" << Ctx.vGrabEdgePos.y
-		     << "  rayY " << fRayTopY << " -> " << fRayBotY
-		     << (TopHit.isHit ? ("  topY=" + to_string(TopHit.vHitPosition.y)) : string()) << "\n";
-#endif
 		return false;
 	}
 
-	_vector vUpStart = XMVectorSetY(vProbe, TopHit.vHitPosition.y + 0.1f);
-	_vector vUpEnd   = XMVectorSetY(vProbe, TopHit.vHitPosition.y + pBody->fHeight);
-	if (pGI->Ray_Cast(vUpStart, vUpEnd, ENUM_CLASS(COLLISIONLAYER::PARKOUR)).isHit)
-	{
-#ifdef _DEBUG
-		cout << "[Hop] standtop reject: headroom blocked (PARKOUR)\n";
-#endif
-		return false;
-	}
-	if (pGI->Ray_Cast(vUpStart, vUpEnd, ENUM_CLASS(COLLISIONLAYER::MAP)).isHit)
-	{
-#ifdef _DEBUG
-		cout << "[Hop] standtop reject: headroom blocked (MAP)\n";
-#endif
-		return false;
-	}
 
 	XMStoreFloat3(&vOutStandPos, XMVectorSetY(vProbe, TopHit.vHitPosition.y));
 	return true;

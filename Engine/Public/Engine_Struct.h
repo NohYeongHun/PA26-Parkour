@@ -600,6 +600,12 @@ namespace Engine
 		_float			fPosWeight;
 		_float			fRotWeight;
 		_bool			isFix;
+
+		// 발 등 표면 추적용: 타겟 소스의 노멀 방향으로 매 프레임 벽 프로브
+		_bool			isWallProbe = { false };
+		_float			fProbeOut = 0.3f;
+		_float			fProbeDepth = 0.6f;
+		_float			fSkin = 0.02f;
 	}IK_BINDING;
 
 	// 현재 트랙 위치에서 활성인 IK 노티 구간 1개 (블렌드 값은 구간마다 다를 수 있음)
@@ -608,6 +614,7 @@ namespace Engine
 		const vector<IK_BINDING>* pBindings = { nullptr };
 		_float fBlendInSec = {};
 		_float fBlendOutSec = {};
+		_float fProgress = 1.f;		// 램프 진행률 0~1: (트랙pos - begin) / RampLen (미지정 시 구간 전체)
 	}ACTIVE_IK_WINDOW;
 
 	typedef struct tagIKSolveContext

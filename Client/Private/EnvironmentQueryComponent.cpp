@@ -51,6 +51,16 @@ HRESULT CEnvironmentQueryComponent::Initialize_Clone(void* pArg)
 
 _bool CEnvironmentQueryComponent::Resolve_Anchor(const _string& token, _vector& vOutPos, _vector& vOutNormal)
 {
+	// 1. 퍼블리시된 앵커 우선 — 상태가 래치한 좌표
+	auto published = m_PublishedAnchors.find(token);
+	if (published != m_PublishedAnchors.end())
+	{
+		vOutPos    = XMVectorSetW(XMLoadFloat3(&published->second.first), 1.f);
+		vOutNormal = XMLoadFloat3(&published->second.second);
+		return true;
+	}
+
+	// 2. 지각 토큰 폴백
 	const auto& Geo = m_Perception.Geometry;
 
 	_vector vEdge = XMVectorSetW(XMLoadFloat3(&Geo.Top.vEdgePos), 1.f);
@@ -70,6 +80,14 @@ _bool CEnvironmentQueryComponent::Resolve_Anchor(const _string& token, _vector& 
 	}
 
 	return false;
+}
+
+void CEnvironmentQueryComponent::Publish_Anchor(const _string& strName, _fvector vPos, _fvector vNormal)
+{
+	pair<_float3, _float3> Anchor{};
+	XMStoreFloat3(&Anchor.first, vPos);
+	XMStoreFloat3(&Anchor.second, vNormal);
+	m_PublishedAnchors[strName] = Anchor;
 }
 
 void CEnvironmentQueryComponent::Compute_EdgeAnchor(const _string& token, _fvector vEdge, _fvector vTrav,

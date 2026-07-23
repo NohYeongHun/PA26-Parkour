@@ -51,6 +51,17 @@ void CIKComponent::Begin_Target(const _string& strTarget, EIKTARGET_MODE eMode, 
 
 }
 
+void CIKComponent::Set_TargetAlpha(const _string& strTarget, _float fAlpha)
+{
+	auto it = m_TargetHandles.find(strTarget);
+	if (it == m_TargetHandles.end())
+		return;
+
+	IK_TARGET& target = m_Targets[it->second];
+	target.fTargetWeight = fAlpha;
+	target.fCurWeight = fAlpha;
+}
+
 void CIKComponent::Set_AlignMode(const _string& strTarget, EALIGN_MODE eAlignMode)
 {
 	auto it = m_TargetHandles.find(strTarget);

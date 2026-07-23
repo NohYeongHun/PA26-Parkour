@@ -14,6 +14,10 @@ public:
 	virtual void OnUpdate(_float fTimeDelta) override;
 	virtual void OnExit() override;
 
+protected:
+	// HANG_CONTEXT 세팅 
+	void Set_HangContext(_fvector vEdgePos, _fvector vWallNormal, const BodyID& GrabBodyID);
+
 
 public:
 	virtual void Free() override;

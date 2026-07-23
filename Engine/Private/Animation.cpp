@@ -223,6 +223,19 @@ void CAnimation::Collect_ActiveIKWindows(vector<ACTIVE_IK_WINDOW>& Out)
 		Window.pBindings    = &pIKState->Get_Bindings();
 		Window.fBlendInSec  = pIKState->Get_BlendInSec();
 		Window.fBlendOutSec = pIKState->Get_BlendOutSec();
+
+		const _float fBegin = pNotifyState->Get_BeginTrackPos();
+		const _float fRamp  = (pIKState->Get_RampLen() > 0.f)
+			? pIKState->Get_RampLen()
+			: (pNotifyState->Get_EndTrackPos() - fBegin);
+		if (fRamp > 0.f)
+		{
+			_float fProgress = (m_fCurrentTrackPosition - fBegin) / fRamp;
+			if (fProgress < 0.f) fProgress = 0.f;
+			if (fProgress > 1.f) fProgress = 1.f;
+			Window.fProgress = fProgress;
+		}
+
 		Out.push_back(Window);
 	}
 }

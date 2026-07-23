@@ -194,7 +194,11 @@ namespace Client
 		_bool   isValid = false;
 		_float3 vGrabEdgePos{};
 		_float3 vWallNormal{};
-		BodyID  GrabBodyID{};  // 지금 잡고 있는 장애물의 물리 바디
+		BodyID  GrabBodyID{};  // 지금 잡고 있는 장애물의 물리 바디 (Hop 프로브 기하의 AABB 기준)
+		// 손 앵커
+		_float3 vGrabL{};
+		_float3 vGrabR{};
+		_float3 vGrabN{ 0.f, 1.f, 0.f };
 		void Reset() { isValid = false; GrabBodyID = BodyID{}; }
 	}HANG_CONTEXT;
 #pragma endregion
@@ -228,6 +232,10 @@ namespace Client
 		_float           fRotWeight = 1.f;
 		_float           fBlendInSec = 0.2f;
 		_float           fBlendOutSec = 0.2f;
+
+		// 알파 직접 구동 (0~1): 음수면 시간 블렌드(fBlendIn/OutSec) 사용.
+		// 노티 구간 진행률처럼 트랙 포지션에 동기화된 값으로 알파를 구동할 때 사용.
+		_float           fDrivenAlpha = -1.f;
 
 		// FIXED: 요청자가 좌표를 직접 제공
 		_float3          vWorldPos{};
@@ -275,14 +283,14 @@ namespace Client
 			return Req;
 		}
 
-		static tagIKRequest WallFoot(const _string& strGoal, _fvector vWallNormal,
+		static tagIKRequest WallProbe(const _string& strGoal, EIKTARGET_MODE eMode, _fvector vWallNormal,
 			_float fPosW, _float fRotW, _float fBlendIn, _float fBlendOut,
 			_float fProbeOut, _float fProbeDepth, _float fSkin)
 		{
 			tagIKRequest Req{};
 			Req.strGoal = strGoal;
 			Req.eSource = EIKSOURCE_MODE::WALL_PROBE;
-			Req.eMode = EIKTARGET_MODE::POSITION_CLEARANCE;
+			Req.eMode = eMode;
 			Req.fPosWeight = fPosW;
 			Req.fRotWeight = fRotW;
 			Req.fBlendInSec = fBlendIn;

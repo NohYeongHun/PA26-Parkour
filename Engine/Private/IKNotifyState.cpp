@@ -27,7 +27,8 @@ json CIKNotifyState::To_Json() const
     j["EndTrackPosition"] = m_fEndTrackPosition;
     j["BlendInSec"] = m_fBlendInSec;
     j["BlendOutSec"] = m_fBlendOutSec;
-    j["IsState"] = true;    
+    j["RampLen"] = m_fRampLen;
+    j["IsState"] = true;
 
     json bindings = json::array();
     for (const auto& b : m_Bindings) {
@@ -37,7 +38,11 @@ json CIKNotifyState::To_Json() const
             { "TargetSource", b.strTargetSource },
             { "PosWeight",    b.fPosWeight },
             { "RotWeight",    b.fRotWeight },
-			{ "IsFix",		  b.isFix}
+			{ "IsFix",		  b.isFix},
+            { "IsWallProbe",  b.isWallProbe },
+            { "ProbeOut",     b.fProbeOut },
+            { "ProbeDepth",   b.fProbeDepth },
+            { "Skin",         b.fSkin }
             });
     }
     j["Bindings"] = bindings;
@@ -91,6 +96,7 @@ CIKNotifyState* CIKNotifyState::From_Json(const json& j)
     CIKNotifyState* pInstance = new CIKNotifyState(fBegin, fEnd);
     pInstance->m_fBlendInSec = j.value("BlendInSec", 0.15f);
     pInstance->m_fBlendOutSec = j.value("BlendOutSec", 0.15f);
+    pInstance->m_fRampLen = j.value("RampLen", 0.f);
 
     for (const auto& b : j.at("Bindings"))
     {
@@ -101,6 +107,10 @@ CIKNotifyState* CIKNotifyState::From_Json(const json& j)
         bind.fPosWeight = b.value("PosWeight", 1.f);
         bind.fRotWeight = b.value("RotWeight", 1.f);
 		bind.isFix		= b.value("IsFix", false);
+        bind.isWallProbe = b.value("IsWallProbe", false);
+        bind.fProbeOut   = b.value("ProbeOut", 0.3f);
+        bind.fProbeDepth = b.value("ProbeDepth", 0.6f);
+        bind.fSkin       = b.value("Skin", 0.02f);
         pInstance->m_Bindings.push_back(bind);
     }
     return pInstance;

@@ -39,10 +39,6 @@ IK_RESULT CIKSolver_TwoBone::Solve(const IK_SOLVE_CONTEXT& Context)
 	IK_RESULT tResult = Update_InverseKinematics(Context);
 
 	// Update FK
-	if (tResult.isSolved && !Context.pTarget->Chain.BoneChain.empty())
-	{
-		m_pOwner->Update_ForwardKinematics(Context.pTarget->Chain.BoneChain[0]);
-	}
 
 	return tResult;
 }

@@ -39,20 +39,7 @@ void CTraceurClimbHang::OnEnter(void* pArg)
 		return;
 	}
 
-	// 1. Ready_Hang이 성공했다면? IK 좌표를 멤버에 래치. 실제 선언은 매 프레임 Build_IKRequests가 수행.
-	HANG_CONTEXT& Ctx = m_pOwner->Get_HangContext();
-	_vector vEdge = XMLoadFloat3(&Ctx.vGrabEdgePos);
-	_vector vTrav = XMVectorNegate(XMLoadFloat3(&Ctx.vWallNormal));
-	_vector vTopN = XMVectorSet(0.f, 1.f, 0.f, 0.f);
-
-	_vector vLeft{}, vRight{}, vN{};
-	m_pEnvQueryCom->Compute_EdgeAnchor("TOP_LEFT_EDGE",  vEdge, vTrav, vTopN, vLeft,  vN);
-	m_pEnvQueryCom->Compute_EdgeAnchor("TOP_RIGHT_EDGE", vEdge, vTrav, vTopN, vRight, vN);
-
-	XMStoreFloat3(&m_vGrabL, vLeft);
-	XMStoreFloat3(&m_vGrabR, vRight);
-	XMStoreFloat3(&m_vGrabN, vN);
-	m_vWallN   = Ctx.vWallNormal;
+	// Ready_Hang 성공 — 손 앵커는 HANG_CONTEXT(진입 경로가 래치)에서 읽는다.
 	m_isHangIK = true;
 }
 
@@ -69,15 +56,19 @@ void CTraceurClimbHang::Build_IKRequests(vector<IK_REQUEST>& Out)
 	if (!m_isHangIK)
 		return;
 
+	const HANG_CONTEXT& Ctx = m_pOwner->Get_HangContext();
+	if (!Ctx.isValid)
+		return;
+
 	const HANG_TUNING& T = CGameSystem::GetInstance()->Get_ParkourTuning()->Get().Hang;
 
-	Out.push_back(IK_REQUEST::Fixed("LeftArmTwoBone",  XMLoadFloat3(&m_vGrabL), XMLoadFloat3(&m_vGrabN), 1.f, 1.f, 0.4f, 0.2f));
-	Out.push_back(IK_REQUEST::Fixed("RightArmTwoBone", XMLoadFloat3(&m_vGrabR), XMLoadFloat3(&m_vGrabN), 1.f, 1.f, 0.4f, 0.2f));
+	Out.push_back(IK_REQUEST::Fixed("LeftArmTwoBone",  XMLoadFloat3(&Ctx.vGrabL), XMLoadFloat3(&Ctx.vGrabN), 1.f, 1.f, 0.4f, 0.2f));
+	Out.push_back(IK_REQUEST::Fixed("RightArmTwoBone", XMLoadFloat3(&Ctx.vGrabR), XMLoadFloat3(&Ctx.vGrabN), 1.f, 1.f, 0.4f, 0.2f));
 
-	Out.push_back(IK_REQUEST::WallFoot("LeftLegTwoBone",  XMLoadFloat3(&m_vWallN),
+	Out.push_back(IK_REQUEST::WallProbe("LeftLegTwoBone",  EIKTARGET_MODE::POSITION_CLEARANCE, XMLoadFloat3(&Ctx.vWallNormal),
 		T.fFootPosWeight, T.fFootRotWeight, T.fFootBlendSec, 0.2f,
 		T.fFootProbeOut, T.fFootProbeDepth, T.fFootSkin));
-	Out.push_back(IK_REQUEST::WallFoot("RightLegTwoBone", XMLoadFloat3(&m_vWallN),
+	Out.push_back(IK_REQUEST::WallProbe("RightLegTwoBone", EIKTARGET_MODE::POSITION_CLEARANCE, XMLoadFloat3(&Ctx.vWallNormal),
 		T.fFootPosWeight, T.fFootRotWeight, T.fFootBlendSec, 0.2f,
 		T.fFootProbeOut, T.fFootProbeDepth, T.fFootSkin));
 }
@@ -96,10 +87,7 @@ _bool CTraceurClimbHang::Ready_Hang(void* pArg)
 		if (XMVectorGetX(XMVector3LengthSq(vN)) < 1e-4f)
 			return false;
 
-		Ctx.isValid      = true;
-		Ctx.vGrabEdgePos = Scan.Reach.vEdgePos;
-		Ctx.GrabBodyID   = Scan.Reach.HitBodyID;
-		XMStoreFloat3(&Ctx.vWallNormal, XMVector3Normalize(vN));
+		Set_HangContext(XMLoadFloat3(&Scan.Reach.vEdgePos), XMVector3Normalize(vN), Scan.Reach.HitBodyID);
 	}
 
 	// 행 포즈로 짧은 시간 기반 커브워프 스냅 (snap)

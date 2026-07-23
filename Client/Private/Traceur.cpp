@@ -375,7 +375,7 @@ void CTraceur::Drive_IK(_float fTimeDelta)
 {
 	vector<IK_REQUEST> Requests;
 
-	// 상태 레이어 먼저, 클립 레이어 나중 — 같은 골이면 클립 요청이 우선(덮어씀).
+	// 상태 레이어 먼저, 클립 레이어 나중
 	if (CTraceurState* pState = dynamic_cast<CTraceurState*>(m_pStateMachineCom->Get_CurrentState()))
 		pState->Build_IKRequests(Requests);
 
@@ -384,6 +384,7 @@ void CTraceur::Drive_IK(_float fTimeDelta)
 	m_pIKDriverCom->Execute(Requests, fTimeDelta);
 }
 
+// 상태 레이어에서 IK에 대한 요청을 수집합니다.
 void CTraceur::Collect_ClipIKRequests(vector<IK_REQUEST>& Out)
 {
 	const CState::ANIM_DATA* pAnimData = m_pAnimControllerCom->Get_CurrentAnimData();
@@ -395,10 +396,28 @@ void CTraceur::Collect_ClipIKRequests(vector<IK_REQUEST>& Out)
 
 	for (const ACTIVE_IK_WINDOW& Window : Windows)
 	{
+		// 알파를 트랙 포지션에 동기화 램프 시작 0 => 램프 끝 1
+		const _float p = Window.fProgress;
+		const _float fAlpha = p * p * (3.f - 2.f * p);
+
 		for (const IK_BINDING& Bind : *Window.pBindings)
 		{
-			Out.push_back(IK_REQUEST::Anchor(Bind.strGoalName, Bind.strTargetSource, Bind.eMode,
-				Bind.fPosWeight, Bind.fRotWeight, Window.fBlendInSec, Window.fBlendOutSec, Bind.isFix));
+			IK_REQUEST Req{};
+			if (Bind.isWallProbe)
+			{
+				// 벽 방향은 드라이버가 토큰 앵커의 노멀로 해석.
+				Req = IK_REQUEST::WallProbe(Bind.strGoalName, Bind.eMode, XMVectorSet(0.f, 0.f, 1.f, 0.f),
+					Bind.fPosWeight, Bind.fRotWeight, Window.fBlendInSec, Window.fBlendOutSec,
+					Bind.fProbeOut, Bind.fProbeDepth, Bind.fSkin);
+				Req.strToken = Bind.strTargetSource;
+			}
+			else
+			{
+				Req = IK_REQUEST::Anchor(Bind.strGoalName, Bind.strTargetSource, Bind.eMode,
+					Bind.fPosWeight, Bind.fRotWeight, Window.fBlendInSec, Window.fBlendOutSec, Bind.isFix);
+			}
+			Req.fDrivenAlpha = fAlpha;
+			Out.push_back(Req);
 		}
 	}
 }

@@ -47,7 +47,7 @@ public:
 
 	void				Force_EndNotifyStates();	// 활성 구간 전부 강제 End (인터럽트/랩/재시작용)
 
-	// 현재 트랙 위치가 [begin, end) 안에 있는 IK 노티 구간들을 Out에 추가
+	// 현재 트랙 위치가 [begin, end) 안에 있는 IK 노티 구간들을 Out에 추가 (램프 진행률 포함)
 	void				Collect_ActiveIKWindows(vector<ACTIVE_IK_WINDOW>& Out);
 
 public:

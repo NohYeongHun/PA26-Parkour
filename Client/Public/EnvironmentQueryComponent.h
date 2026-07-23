@@ -50,6 +50,7 @@ public:
 public:
 	// IK에 전달할 장애물의 특정 지점 위치와 Normal
 	_bool Resolve_Anchor(const _string& token, _vector& vOutPos, _vector& vOutNormal);
+	void  Publish_Anchor(const _string& strName, _fvector vPos, _fvector vNormal);
 	void Compute_EdgeAnchor(const _string& token, _fvector vEdge, _fvector vTrav,
 		_fvector vTopNormal, _vector& vOutPos, _vector& vOutNormal) const;
 	_bool Raycast_Wall(_fvector vOrigin, _fvector vWallNormal,
@@ -120,6 +121,9 @@ private:
 	ENV_PERCEPTION m_Perception{};
 	_float3 m_vScanDirOverride = {};
 	_bool   m_hasScanDirOverride = false;
+
+	// 이름 (위치, 노멀). 게임플레이 상태가 래치한 좌표의 공표 창구
+	unordered_map<_string, pair<_float3, _float3>> m_PublishedAnchors{};
 
 public:
 	static	CEnvironmentQueryComponent* Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
