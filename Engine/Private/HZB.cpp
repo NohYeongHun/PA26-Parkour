@@ -55,6 +55,7 @@ void CHZB::Update()
 
 void CHZB::Occlusion_Culling(vector<class CStaticObject*>& Objects)
 {
+	return;
 	_uint iNumObjects = Objects.size();
 
 	// Create StructuredBuffer (BoxPoints)

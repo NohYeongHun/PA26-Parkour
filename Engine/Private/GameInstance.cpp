@@ -153,7 +153,7 @@ void CGameInstance::Update_Engine(_float fTimeDelta)
 {
 	m_pTimer_Manager->Update(fTimeDelta); // Timer Manager Update => Time Stop 관련.
 
-	m_pHZB->Update();
+	//m_pHZB->Update();
 
 	m_pGUIManager->Update();
 
@@ -176,7 +176,7 @@ void CGameInstance::Update_Engine(_float fTimeDelta)
 	m_pCamera_Manager->Late_Update(fTimeDelta);
 	m_pPipeLine->Update();
 
-	m_pFrustrum->Update();
+	//m_pFrustrum->Update();
 	m_pPooling_Manager->Add_Work([this]() {m_pCSM->Update_CSM(); });
 	m_pOctoTree->Update();
 
