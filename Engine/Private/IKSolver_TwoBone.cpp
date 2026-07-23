@@ -156,6 +156,7 @@ void CIKSolver_TwoBone::Solve_TwoBonePosition(const IK_SOLVE_CONTEXT& Context, _
 	_vector qRootDelta = QuatFromTo(vCurUpperDir, vTgtUpperDir);
 	qRootDelta = XMQuaternionSlerp(XMQuaternionIdentity(), qRootDelta, fWeight);
 
+	// 새로운 Mid 위치는 기존 벡터를 회전하고 길이를 곱해서 길이는 유지하되 회전된 위치로.
 	_vector vNewMidPos = vRootPos + XMVector3Rotate(vCurUpperDir, qRootDelta) * l1;
 	_vector vTgtLowerDir = XMVector3Normalize(vSolvedEndPos - vNewMidPos);
 	_vector vCurLowerDir = XMVector3Rotate(XMVector3Normalize(vEndPos - vMidPos), qRootDelta);
@@ -180,46 +181,6 @@ void CIKSolver_TwoBone::Solve_TwoBonePosition(const IK_SOLVE_CONTEXT& Context, _
 	_matrix matMidComb = (XMLoadFloat4x4(Bones[iMid]->Get_CombinedTransformationMatrix()) * mRootPivot) * mMidPivot;
 	// 부모 행렬의 역행렬을 곱해줌으로써 로컬행렬 상태를 갱신합니다.
 	Bones[iMid]->Set_TransformationMatrix(matMidComb * XMMatrixInverse(nullptr, matRootComb));
-}
-
-_float CIKSolver_TwoBone::Measure_DeepestPenetration(const vector<CBone*>& Bones, _uint iEnd, _fvector vPlanePoint, _fvector vPlaneNormal, _int& iDeepestOut)
-{
-	iDeepestOut = -1;
-	_float fMin = FLT_MAX; // 부호가 음수이므로 Min으로 계산.
-
-	// 위상 정렬되어 있으므로 iEnd부터 검사하면됩니다.
-	for (_uint i = iEnd + 1; i < static_cast<_uint>(Bones.size()); ++i)
-	{
-		if (!Is_Descendant(Bones, i, iEnd))
-			continue;
-
-		_vector vPos = XMLoadFloat4x4(Bones[i]->Get_CombinedTransformationMatrix()).r[3];
-		// 침투 깊이는 정사영해서 노말 벡터의 직선거리로 구합니다.
-		_float fPen = XMVectorGetX(XMVector3Dot(vPos - vPlanePoint, vPlaneNormal));
-		if (fPen < fMin)
-		{
-			fMin = fPen;
-			iDeepestOut = static_cast<_int>(i);
-		}
-	}
-
-	if (iDeepestOut < 0)
-		return 0.f;
-
-	return fMin;
-}
-
-_bool CIKSolver_TwoBone::Is_Descendant(const vector<CBone*>& Bones, _uint iBone, _uint iAncestor)
-{
-	_int iParent = Bones[iBone]->Get_ParentIndex();
-	while (iParent >= 0)
-	{
-		if (static_cast<_uint>(iParent) == iAncestor)
-			return true;
-		iParent = Bones[static_cast<_uint>(iParent)]->Get_ParentIndex();
-	}
-
-	return false;
 }
 
 CIKSolver_TwoBone* CIKSolver_TwoBone::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
