@@ -68,7 +68,7 @@ void CTraceurClimbHang::Build_IKRequests(vector<IK_REQUEST>& Out)
 	Out.push_back(IK_REQUEST::WallProbe("LeftLegTwoBone",  EIKTARGET_MODE::POSITION_CLEARANCE, XMLoadFloat3(&Ctx.vWallNormal),
 		T.fFootPosWeight, T.fFootRotWeight, T.fFootBlendSec, 0.2f,
 		T.fFootProbeOut, T.fFootProbeDepth, T.fFootSkin));
-	Out.push_back(IK_REQUEST::WallProbe("RightLegTwoBone", EIKTARGET_MODE::POSITION_CLEARANCE, XMLoadFloat3(&Ctx.vWallNormal),
+	Out.push_back(IK_REQUEST::WallProbe("RightLegFabrik", EIKTARGET_MODE::POSITION_CLEARANCE, XMLoadFloat3(&Ctx.vWallNormal),
 		T.fFootPosWeight, T.fFootRotWeight, T.fFootBlendSec, 0.2f,
 		T.fFootProbeOut, T.fFootProbeDepth, T.fFootSkin));
 }

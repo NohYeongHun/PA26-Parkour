@@ -63,6 +63,7 @@ void CMapObject::Render(ID3D11DeviceContext* pDeferredContext, _uint iIndex)
 			m_pModelCom->Request_LOD(m_iLODIndex);
 
 		m_pGameInstance->Add_Render_StaticObject(this, m_iLODIndex = m_pModelCom->Get_ReadyLOD());
+		//m_pGameInstance->Add_Render_Object(RENDERGROUP::DYNAMIC, this);
 		return;
 	}
 	_bool HasNormal = { true };
