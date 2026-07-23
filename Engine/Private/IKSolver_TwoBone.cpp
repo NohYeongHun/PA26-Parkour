@@ -151,8 +151,8 @@ void CIKSolver_TwoBone::Solve_TwoBonePosition(const IK_SOLVE_CONTEXT& Context, _
 	_vector vSolvedMidPos = vRootPos + projDist * vForward + jointLineDist * vBendDir;
 	_vector vSolvedEndPos = vJointTargetPos;
 
-	_vector vCurUpperDir = XMVector3Normalize(vMidPos - vRootPos);
-	_vector vTgtUpperDir = XMVector3Normalize(vSolvedMidPos - vRootPos);
+	_vector vCurUpperDir = XMVector3Normalize(vMidPos - vRootPos); // Root -> Mid
+	_vector vTgtUpperDir = XMVector3Normalize(vSolvedMidPos - vRootPos); // Root -> NewMid
 	_vector qRootDelta = QuatFromTo(vCurUpperDir, vTgtUpperDir);
 	qRootDelta = XMQuaternionSlerp(XMQuaternionIdentity(), qRootDelta, fWeight);
 

@@ -62,7 +62,7 @@ void CTraceurClimbHop::Update_Animations(_float fTimeDelta)
 	m_pColliderCom->Set_Position(m_pTransformCom->Get_State(Engine::STATE::POSITION));
 
 #ifdef _DEBUG
-	Draw_DebugProbe();
+	//Draw_DebugProbe();
 #endif
 }
 
