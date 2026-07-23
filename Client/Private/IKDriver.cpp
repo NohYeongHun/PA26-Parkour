@@ -1,4 +1,4 @@
-﻿#include "ClientPch.h"
+#include "ClientPch.h"
 #include "IKDriver.h"
 #include "IKComponent.h"
 #include "EnvironmentQueryComponent.h"
@@ -12,54 +12,6 @@ CIKDriver::CIKDriver(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 CIKDriver::CIKDriver(const CIKDriver& Prototype)
 	: CComponent(Prototype)
 {
-}
-
-void CIKDriver::Activate(const _string& strTarget, const _string& strToken, EIKTARGET_MODE eMode, _float fPosWeight, _float fRotWeight, _float fBlendSec, IK_TRIGGER eTrigger, _bool isFix)
-{
-	m_pIKCom->Begin_Target(strTarget, eMode, fPosWeight, fRotWeight, fBlendSec);
-
-	ACTIVE_IK Active{};
-	Active.strToken = strToken;
-	Active.eTrigger = eTrigger;
-	Active.isFixed = isFix;
-	Active.isResolved = false; 
-	m_ActiveIKSource[strTarget] = Active;
-}
-
-void CIKDriver::Activate_Fixed(const _string& strTarget, _fvector vWorldPos, _fvector vWorldNormal
-	, EIKTARGET_MODE eMode, _float fPosWeight, _float fRotWeight, _float fBlendSec)
-{
-	m_pIKCom->Begin_Target(strTarget, eMode, fPosWeight, fRotWeight, fBlendSec);
-
-	ACTIVE_IK Active{};
-	Active.eTrigger   = IK_TRIGGER::STATE;
-	Active.isFixed    = true;
-	Active.isResolved = true;                       // 즉시 latch — perception 재쿼리 없음
-	XMStoreFloat3(&Active.vFixedPos,    vWorldPos);
-	XMStoreFloat3(&Active.vFixedNormal, vWorldNormal);
-	m_ActiveIKSource[strTarget] = Active;
-}
-
-void CIKDriver::Activate_WallFoot(const _string& strTarget, _fvector vWallNormal, _float fPosWeight, _float fRotWeight, _float fBlendSec, _float fProbeOut, _float fProbeDepth, _float fSkin)
-{
-	
-	m_pIKCom->Begin_Target(strTarget, EIKTARGET_MODE::POSITION_CLEARANCE, fPosWeight, fRotWeight, fBlendSec);
-
-	ACTIVE_IK Active{};
-	Active.eTrigger = IK_TRIGGER::STATE;
-	Active.isWallProject = true;
-	XMStoreFloat3(&Active.vWallNormal, vWallNormal);
-	Active.fProbeOut = fProbeOut;
-	Active.fProbeDepth = fProbeDepth;
-	Active.fSkin = fSkin;
-	m_ActiveIKSource[strTarget] = Active;
-}
-
-void CIKDriver::Deactivate(const _string& strTarget, _float fBlendSec)
-{
-	// 현재 Driver 제거.
-	m_pIKCom->End_Target(strTarget, fBlendSec);
-	m_ActiveIKSource.erase(strTarget);
 }
 
 HRESULT CIKDriver::Initialize_Prototype()
@@ -89,71 +41,135 @@ HRESULT CIKDriver::Initialize_Clone(void* pArg)
 	return S_OK;
 }
 
-// Physics 시뮬레이션 이후 Late_Update 구간에서 실행되어야함 
+// Physics 시뮬레이션 이후 Late_Update 구간에서 실행되어야함
 // => 물리 처리가 끝난 애니메이션 상태에서 계산해야 정확함.
-void CIKDriver::Execute(_float fTimeDelta)
+void CIKDriver::Execute(const vector<IK_REQUEST>& Requests, _float fTimeDelta)
 {
 	_matrix matModelToWorld = m_pMeshAlignCom->Get_LocalMatrix() * m_pTransformCom->Get_WorldMatrix();
 	m_pIKCom->Set_SpaceMatrix(matModelToWorld);
 
-	for (auto& [target, active] : m_ActiveIKSource)
+	Apply_Requests(Requests);
+	Reap_Missing();
+
+	for (auto& [strGoal, Entry] : m_ActiveMap)
+		Resolve_Target(strGoal, Entry);
+
+	m_pIKCom->Execute(fTimeDelta);
+}
+
+void CIKDriver::Apply_Requests(const vector<IK_REQUEST>& Requests)
+{
+	for (auto& [strGoal, Entry] : m_ActiveMap)
+		Entry.isSeen = false;
+
+	// 수집 순서가 우선순위다: 상태 요청이 먼저, 클립 요청이 나중에 들어오므로
+	// 같은 골이면 클립 요청이 덮어쓴다.
+	for (const IK_REQUEST& Req : Requests)
 	{
-		
-		_vector vWorld{};
-		_vector vNormal{};
-		_bool isValid{};
-
-		if (active.isWallProject)
+		auto it = m_ActiveMap.find(Req.strGoal);
+		if (it == m_ActiveMap.end())
 		{
-			_vector vFootWorld{};
-			
-			if (!m_pIKCom->Get_TargetEndWorldPos(target, vFootWorld))
-				continue;
+			m_pIKCom->Begin_Target(Req.strGoal, Req.eMode, Req.fPosWeight, Req.fRotWeight, Req.fBlendInSec);
 
-			_vector vPos{}, vNor{};
-			if (!m_pEnvQueryCom->Raycast_Wall(vFootWorld, XMLoadFloat3(&active.vWallNormal),
-				active.fProbeOut, active.fProbeDepth, active.fSkin, vPos, vNor))
-				continue;   // 미스 → 이 프레임 발 IK 스킵(애님 유지)
-
-			m_pIKCom->Set_Target(target, vPos, vNor);
-#ifdef _DEBUG
-			m_pGameInstance->Add_DebugSphere(vPos, 0.05f, JPH::Color(0.f, 255.f, 0.f, 1.f));
-#endif
+			ACTIVE_IK_ENTRY Entry{};
+			Entry.Req = Req;
+			Entry.isSeen = true;
+			m_ActiveMap.emplace(Req.strGoal, Entry);
 			continue;
 		}
 
+		ACTIVE_IK_ENTRY& Entry = it->second;
 
-		if (active.isFixed && active.isResolved)
+#ifdef _DEBUG
+		if (Entry.isSeen)
+			OutputDebugStringA(("[IKDriver] duplicate request in same layer: " + Req.strGoal + "\n").c_str());
+#endif
+
+		// 소스가 바뀌면 래치 무효화
+		if (Entry.Req.eSource != Req.eSource || Entry.Req.strToken != Req.strToken)
+			Entry.isLatched = false;
+
+		// weight/mode가 바뀌면 솔버의 목표 weight 갱신 (블렌드 재시작)
+		if (Entry.Req.fPosWeight != Req.fPosWeight || Entry.Req.fRotWeight != Req.fRotWeight
+			|| Entry.Req.eMode != Req.eMode)
+			m_pIKCom->Begin_Target(Req.strGoal, Req.eMode, Req.fPosWeight, Req.fRotWeight, Req.fBlendInSec);
+
+		Entry.Req = Req;
+		Entry.isSeen = true;
+	}
+}
+
+void CIKDriver::Reap_Missing()
+{
+	for (auto it = m_ActiveMap.begin(); it != m_ActiveMap.end(); )
+	{
+		if (!it->second.isSeen)
 		{
-			vWorld = XMLoadFloat3(&active.vFixedPos);
-			vNormal = XMLoadFloat3(&active.vFixedNormal);
-			isValid = true;
+			m_pIKCom->End_Target(it->first, it->second.Req.fBlendOutSec);
+			it = m_ActiveMap.erase(it);
 		}
 		else
-		{
-			isValid = m_pEnvQueryCom->Resolve_Anchor(active.strToken, vWorld, vNormal);
-			
-		}
-
-		if (!isValid)
-			continue;
-
-		if (isValid && active.isFixed)
-		{
-			XMStoreFloat3(&active.vFixedPos, vWorld);
-			active.isResolved = true;
-		}
-
-		m_pIKCom->Set_Target(target, vWorld, vNormal);
-#ifdef _DEBUG
-		m_pGameInstance->Add_DebugSphere(vWorld, 0.05f, JPH::Color(255.f, 0.f, 0.f, 1.f));
-#endif
+			++it;
 	}
-	
-	// Solver의 실행은 IK Component가 수행.
-	m_pIKCom->Execute(fTimeDelta);
+}
 
-	
+void CIKDriver::Resolve_Target(const _string& strGoal, ACTIVE_IK_ENTRY& Entry)
+{
+	const IK_REQUEST& Req = Entry.Req;
+
+	switch (Req.eSource)
+	{
+	case EIKSOURCE_MODE::FIXED:
+	{
+		m_pIKCom->Set_Target(strGoal, XMLoadFloat3(&Req.vWorldPos), XMLoadFloat3(&Req.vWorldNormal));
+#ifdef _DEBUG
+		m_pGameInstance->Add_DebugSphere(XMLoadFloat3(&Req.vWorldPos), 0.05f, JPH::Color(255.f, 0.f, 0.f, 1.f));
+#endif
+		break;
+	}
+	case EIKSOURCE_MODE::ANCHOR:
+	{
+		if (Req.isFix && Entry.isLatched)
+		{
+			m_pIKCom->Set_Target(strGoal, XMLoadFloat3(&Entry.vLatchedPos), XMLoadFloat3(&Entry.vLatchedNormal));
+			break;
+		}
+
+		_vector vPos{}, vNormal{};
+		if (!m_pEnvQueryCom->Resolve_Anchor(Req.strToken, vPos, vNormal))
+			break;	// 미해석 — 이 프레임 스킵 (isFix면 다음 프레임 재시도)
+
+		if (Req.isFix)
+		{
+			XMStoreFloat3(&Entry.vLatchedPos, vPos);
+			XMStoreFloat3(&Entry.vLatchedNormal, vNormal);
+			Entry.isLatched = true;
+		}
+
+		m_pIKCom->Set_Target(strGoal, vPos, vNormal);
+#ifdef _DEBUG
+		m_pGameInstance->Add_DebugSphere(vPos, 0.05f, JPH::Color(255.f, 0.f, 0.f, 1.f));
+#endif
+		break;
+	}
+	case EIKSOURCE_MODE::WALL_PROBE:
+	{
+		_vector vFootWorld{};
+		if (!m_pIKCom->Get_TargetEndWorldPos(strGoal, vFootWorld))
+			break;
+
+		_vector vPos{}, vNormal{};
+		if (!m_pEnvQueryCom->Raycast_Wall(vFootWorld, XMLoadFloat3(&Req.vWallNormal),
+			Req.fProbeOut, Req.fProbeDepth, Req.fSkin, vPos, vNormal))
+			break;	// 미스 — 이 프레임 발 IK 스킵 (애님 유지)
+
+		m_pIKCom->Set_Target(strGoal, vPos, vNormal);
+#ifdef _DEBUG
+		m_pGameInstance->Add_DebugSphere(vPos, 0.05f, JPH::Color(255.f, 0.f, 0.f, 1.f));
+#endif
+		break;
+	}
+	}
 }
 
 CIKDriver* CIKDriver::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
@@ -185,5 +201,5 @@ void CIKDriver::Free()
 	m_pEnvQueryCom = nullptr;
 	m_pTransformCom = nullptr;
 	m_pMeshAlignCom = nullptr;
-	m_ActiveIKSource.clear();
+	m_ActiveMap.clear();
 }

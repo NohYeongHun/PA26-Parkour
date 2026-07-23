@@ -602,6 +602,14 @@ namespace Engine
 		_bool			isFix;
 	}IK_BINDING;
 
+	// 현재 트랙 위치에서 활성인 IK 노티 구간 1개 (블렌드 값은 구간마다 다를 수 있음)
+	typedef struct tagActiveIKWindow
+	{
+		const vector<IK_BINDING>* pBindings = { nullptr };
+		_float fBlendInSec = {};
+		_float fBlendOutSec = {};
+	}ACTIVE_IK_WINDOW;
+
 	typedef struct tagIKSolveContext
 	{
 		const vector<class CBone*>* pBones;

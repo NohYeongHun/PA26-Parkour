@@ -125,6 +125,9 @@ public:
 public:
 	const vector<_string>& Get_AnimationNames() const { return m_AnimationNames; }
 	_float* Get_TrackPositionPtr(const _string& strAnimName);
+
+	// 해당 애니메이션에서 현재 트랙 위치에 활성인 IK 노티 구간들을 수집 (레벨 트리거 샘플링)
+	void								Collect_ActiveIKWindows(const _string& strAnimName, vector<ACTIVE_IK_WINDOW>& Out);
 	
 	
 

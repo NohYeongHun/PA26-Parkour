@@ -641,6 +641,15 @@ CAnimation* CModel::Get_AnimationOrNull(const string& strAnimationName)
 	return (it == m_Animations.end()) ? nullptr : it->second;
 }
 
+void CModel::Collect_ActiveIKWindows(const _string& strAnimName, vector<ACTIVE_IK_WINDOW>& Out)
+{
+	CAnimation* pAnimation = Get_AnimationOrNull(strAnimName);
+	if (nullptr == pAnimation)
+		return;
+
+	pAnimation->Collect_ActiveIKWindows(Out);
+}
+
 _float3 CModel::Get_RootMotionTotalDisplacement(const _string& strAnimationName)
 {
 	CAnimation* pAnim = Get_AnimationOrNull(strAnimationName);

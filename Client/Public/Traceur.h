@@ -114,6 +114,7 @@ private:
 	// Late Update
 	void Sync_Transform();
 	void Drive_IK(_float fTimeDelta);
+	void Collect_ClipIKRequests(vector<IK_REQUEST>& Out);
 	void Ready_Render();
 
 

@@ -12,6 +12,7 @@ public:
 	virtual HRESULT Initialize(class CTraceur* pOwner) override;
 	virtual void OnEnter(void* pArg = nullptr) override;
 	virtual void OnExit() override;
+	virtual void Build_IKRequests(vector<IK_REQUEST>& Out) override;
 
 private:
 	virtual void Update_Animations(_float fTimeDelta) override;
@@ -28,6 +29,11 @@ private:
 private:
 	_float m_fSnapElapsed = 0.f;
 	_bool  m_isSnapping   = false;
+
+	_bool   m_isHangIK = { false };			// Ready_Hang 성공 시에만 IK 선언
+	_float3 m_vGrabL{}, m_vGrabR{};			// 손 IK 래치 좌표 (OnEnter에서 계산)
+	_float3 m_vGrabN{};						// 손 IK 노멀
+	_float3 m_vWallN{};						// 발 IK용 벽 노멀
 
 public:
 	static CTraceurClimbHang* Create(class CTraceur* pOwner);

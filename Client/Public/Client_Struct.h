@@ -216,21 +216,84 @@ namespace Client
 #pragma endregion
 
 #pragma region IK
-	typedef struct tagActiveIK
-	{
-		_string     strToken;        
-		IK_TRIGGER  eTrigger;      
-		_bool       isFixed;
-		_bool		isResolved;
-		_float3     vFixedPos;   
-		_float3		vFixedNormal{ 0.f, 1.f, 0.f };
+	// IK 좌표 획득 방식
+	enum class EIKSOURCE_MODE { FIXED, ANCHOR, WALL_PROBE };
 
-		_bool		isWallProject = { false };
-		_float3     vWallNormal{ 0.f, 0.f, 1.f };
-		_float		fProbeOut = 0.3f;
-		_float		fProbeDepth = 0.6f;
-		_float		fSkin = 0.02f;
-	}ACTIVE_IK;
+	typedef struct tagIKRequest
+	{
+		_string          strGoal;
+		EIKSOURCE_MODE   eSource = EIKSOURCE_MODE::FIXED;
+		EIKTARGET_MODE   eMode = EIKTARGET_MODE::POSITION;
+		_float           fPosWeight = 1.f;
+		_float           fRotWeight = 1.f;
+		_float           fBlendInSec = 0.2f;
+		_float           fBlendOutSec = 0.2f;
+
+		// FIXED: 요청자가 좌표를 직접 제공
+		_float3          vWorldPos{};
+		_float3          vWorldNormal{ 0.f, 1.f, 0.f };
+
+		// ANCHOR: 드라이버가 EnvQuery::Resolve_Anchor(토큰)로 해석
+		_string          strToken;
+		_bool            isFix = { false };	// 첫 해석 성공 시 드라이버가 고정
+
+		// WALL_PROBE: 드라이버가 매 프레임 벽 레이캐스트
+		_float3          vWallNormal{ 0.f, 0.f, 1.f };
+		_float           fProbeOut = 0.3f;
+		_float           fProbeDepth = 0.6f;
+		_float           fSkin = 0.02f;
+
+		static tagIKRequest Fixed(const _string& strGoal, _fvector vPos, _fvector vNormal,
+			_float fPosW, _float fRotW, _float fBlendIn, _float fBlendOut)
+		{
+			tagIKRequest Req{};
+			Req.strGoal = strGoal;
+			Req.eSource = EIKSOURCE_MODE::FIXED;
+			Req.eMode = EIKTARGET_MODE::POSITION;
+			Req.fPosWeight = fPosW;
+			Req.fRotWeight = fRotW;
+			Req.fBlendInSec = fBlendIn;
+			Req.fBlendOutSec = fBlendOut;
+			XMStoreFloat3(&Req.vWorldPos, vPos);
+			XMStoreFloat3(&Req.vWorldNormal, vNormal);
+			return Req;
+		}
+
+		static tagIKRequest Anchor(const _string& strGoal, const _string& strToken, EIKTARGET_MODE eMode,
+			_float fPosW, _float fRotW, _float fBlendIn, _float fBlendOut, _bool isFix)
+		{
+			tagIKRequest Req{};
+			Req.strGoal = strGoal;
+			Req.eSource = EIKSOURCE_MODE::ANCHOR;
+			Req.eMode = eMode;
+			Req.fPosWeight = fPosW;
+			Req.fRotWeight = fRotW;
+			Req.fBlendInSec = fBlendIn;
+			Req.fBlendOutSec = fBlendOut;
+			Req.strToken = strToken;
+			Req.isFix = isFix;
+			return Req;
+		}
+
+		static tagIKRequest WallFoot(const _string& strGoal, _fvector vWallNormal,
+			_float fPosW, _float fRotW, _float fBlendIn, _float fBlendOut,
+			_float fProbeOut, _float fProbeDepth, _float fSkin)
+		{
+			tagIKRequest Req{};
+			Req.strGoal = strGoal;
+			Req.eSource = EIKSOURCE_MODE::WALL_PROBE;
+			Req.eMode = EIKTARGET_MODE::POSITION_CLEARANCE;
+			Req.fPosWeight = fPosW;
+			Req.fRotWeight = fRotW;
+			Req.fBlendInSec = fBlendIn;
+			Req.fBlendOutSec = fBlendOut;
+			XMStoreFloat3(&Req.vWallNormal, vWallNormal);
+			Req.fProbeOut = fProbeOut;
+			Req.fProbeDepth = fProbeDepth;
+			Req.fSkin = fSkin;
+			return Req;
+		}
+	}IK_REQUEST;
 #pragma endregion
 
 

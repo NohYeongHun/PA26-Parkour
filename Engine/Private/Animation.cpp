@@ -206,6 +206,27 @@ void CAnimation::Force_EndNotifyStates()
 	}
 }
 
+void CAnimation::Collect_ActiveIKWindows(vector<ACTIVE_IK_WINDOW>& Out)
+{
+	for (CAnimNotifyState* pNotifyState : m_AnimNotifyStates)
+	{
+		if (pNotifyState->Get_NotifyTypeName() != "IK")
+			continue;
+
+		if (m_fCurrentTrackPosition < pNotifyState->Get_BeginTrackPos()
+			|| m_fCurrentTrackPosition >= pNotifyState->Get_EndTrackPos())
+			continue;
+
+		CIKNotifyState* pIKState = static_cast<CIKNotifyState*>(pNotifyState);
+
+		ACTIVE_IK_WINDOW Window{};
+		Window.pBindings    = &pIKState->Get_Bindings();
+		Window.fBlendInSec  = pIKState->Get_BlendInSec();
+		Window.fBlendOutSec = pIKState->Get_BlendOutSec();
+		Out.push_back(Window);
+	}
+}
+
 
 void CAnimation::Reset_Status()
 {

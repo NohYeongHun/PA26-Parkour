@@ -50,10 +50,6 @@ namespace Client
 		END
 	};
 
-	// IK TRIGGER
-	enum class IK_TRIGGER { NOTIFY, STATE };
-
-
 	enum class INSTANCETYPE { DEFAULT, SONORO, NONSONORO, END };
 
 	enum class SHADER_VTXANIMMESH_PATH { DEFAULT, NORMAL, END};

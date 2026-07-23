@@ -149,7 +149,7 @@ void CTraceur::Late_Update(_float fTimeDelta)
 		m_pModelCom->Debug_DrawSkeleton(WorldMatrix, JPH::Color(0.F, 0.F, 255.F), "mixamorig:Head");
 		m_pIKCom->Debug_DrawActiveIK(WorldMatrix,
 			JPH::Color(255.F, 0.F, 0.F),      // IK 체인 빨강
-			JPH::Color(255.F, 255.F, 0.F));   // 타겟 마커 노랑
+			JPH::Color(255.F, 0.F, 0.F));     // 타겟 마커 빨강
 	}
 #endif // _DEBUG
 
@@ -369,12 +369,38 @@ void CTraceur::Sync_Transform()
 	m_pColliderCom->Sync_Position(m_pTransformCom);
 }
 
-// Physics 시뮬레이션 이후 Late_Update 구간에서 실행되어야함 
+// Physics 시뮬레이션 이후 Late_Update 구간에서 실행되어야함
 // => 물리 처리가 끝난 애니메이션 상태에서 계산해야 정확함.
 void CTraceur::Drive_IK(_float fTimeDelta)
 {
+	vector<IK_REQUEST> Requests;
 
-	m_pIKDriverCom->Execute(fTimeDelta);
+	// 상태 레이어 먼저, 클립 레이어 나중 — 같은 골이면 클립 요청이 우선(덮어씀).
+	if (CTraceurState* pState = dynamic_cast<CTraceurState*>(m_pStateMachineCom->Get_CurrentState()))
+		pState->Build_IKRequests(Requests);
+
+	Collect_ClipIKRequests(Requests);
+
+	m_pIKDriverCom->Execute(Requests, fTimeDelta);
+}
+
+void CTraceur::Collect_ClipIKRequests(vector<IK_REQUEST>& Out)
+{
+	const CState::ANIM_DATA* pAnimData = m_pAnimControllerCom->Get_CurrentAnimData();
+	if (nullptr == pAnimData || CState::EAnimSlotType::CLIP != pAnimData->eType)
+		return;
+
+	vector<ACTIVE_IK_WINDOW> Windows;
+	m_pModelCom->Collect_ActiveIKWindows(pAnimData->AnimPlayDesc.strAnimationName, Windows);
+
+	for (const ACTIVE_IK_WINDOW& Window : Windows)
+	{
+		for (const IK_BINDING& Bind : *Window.pBindings)
+		{
+			Out.push_back(IK_REQUEST::Anchor(Bind.strGoalName, Bind.strTargetSource, Bind.eMode,
+				Bind.fPosWeight, Bind.fRotWeight, Window.fBlendInSec, Window.fBlendOutSec, Bind.isFix));
+		}
+	}
 }
 
 
@@ -501,17 +527,6 @@ HRESULT CTraceur::Ready_Variables(const CHARACTER_DESC* pDesc)
 		};
 	};
 
-	auto IKCallBack = [this](const vector<IK_BINDING>& Bindings, _float fBlendSec, _bool isBegin) {
-		for (const auto& bind : Bindings) {
-			if (isBegin) {
-				m_pIKDriverCom->Activate(bind.strGoalName, bind.strTargetSource, bind.eMode, bind.fPosWeight, bind.fRotWeight, fBlendSec, IK_TRIGGER::NOTIFY, bind.isFix);
-			}
-			else {
-				m_pIKDriverCom->Deactivate(bind.strGoalName, fBlendSec);
-			}
-		}
-	};
-
 	m_pModelCom->Register_AllNotifies(
 		pDesc->strNotfiyFolderPath,
 		nullptr,
@@ -519,7 +534,7 @@ HRESULT CTraceur::Ready_Variables(const CHARACTER_DESC* pDesc)
 		nullptr,
 		StateFlagCallBack,
 		MotionWarpCallBack,
-		IKCallBack
+		nullptr	// IK는 엣지 콜백 대신 Drive_IK의 구간 샘플링으로 처리 (Collect_ClipIKRequests)
 	);
 
 	// Bone Chain을 등록합니다.

@@ -12,6 +12,10 @@ public:
 
     void Set_IKCallback(function<void(const vector<IK_BINDING>& bindings, _float fBlendSec, _bool isBegin)> Callback) { m_IKCallBack = Callback; }
 
+    const vector<IK_BINDING>& Get_Bindings() const { return m_Bindings; }
+    _float Get_BlendInSec() const { return m_fBlendInSec; }
+    _float Get_BlendOutSec() const { return m_fBlendOutSec; }
+
 #ifdef _DEBUG
     void ImGui_Print() override;
 #endif // _DEBUG

@@ -22,6 +22,7 @@ HRESULT CTraceurClimbHang::Initialize(CTraceur* pOwner)
 void CTraceurClimbHang::OnEnter(void* pArg)
 {
 	__super::OnEnter(pArg);
+	m_isHangIK = false;
 	m_pColliderCom->Set_Gravity(false);
 	Request_Anim(ENUM_CLASS(ETraceurClimbHang::HopIdle));
 
@@ -38,7 +39,7 @@ void CTraceurClimbHang::OnEnter(void* pArg)
 		return;
 	}
 
-	// 1. Ready_Hang이 성공했다면? IK 실행. => Hang은 계속 유지되어야함.
+	// 1. Ready_Hang이 성공했다면? IK 좌표를 멤버에 래치. 실제 선언은 매 프레임 Build_IKRequests가 수행.
 	HANG_CONTEXT& Ctx = m_pOwner->Get_HangContext();
 	_vector vEdge = XMLoadFloat3(&Ctx.vGrabEdgePos);
 	_vector vTrav = XMVectorNegate(XMLoadFloat3(&Ctx.vWallNormal));
@@ -48,16 +49,11 @@ void CTraceurClimbHang::OnEnter(void* pArg)
 	m_pEnvQueryCom->Compute_EdgeAnchor("TOP_LEFT_EDGE",  vEdge, vTrav, vTopN, vLeft,  vN);
 	m_pEnvQueryCom->Compute_EdgeAnchor("TOP_RIGHT_EDGE", vEdge, vTrav, vTopN, vRight, vN);
 
-	m_pIKDriverCom->Activate_Fixed("LeftArmTwoBone",  vLeft,  vN, EIKTARGET_MODE::POSITION, 1.f, 1.f, 0.4f);
-	m_pIKDriverCom->Activate_Fixed("RightArmTwoBone", vRight, vN, EIKTARGET_MODE::POSITION, 1.f, 1.f, 0.4f);
-
-	const HANG_TUNING& T = CGameSystem::GetInstance()->Get_ParkourTuning()->Get().Hang;
-
-	_vector vWallN = XMLoadFloat3(&Ctx.vWallNormal);
-	m_pIKDriverCom->Activate_WallFoot("LeftLegTwoBone", vWallN, T.fFootPosWeight, T.fFootRotWeight, T.fFootBlendSec,
-		T.fFootProbeOut, T.fFootProbeDepth, T.fFootSkin);
-	m_pIKDriverCom->Activate_WallFoot("RightLegTwoBone", vWallN, T.fFootPosWeight, T.fFootRotWeight, T.fFootBlendSec,
-		T.fFootProbeOut, T.fFootProbeDepth, T.fFootSkin);
+	XMStoreFloat3(&m_vGrabL, vLeft);
+	XMStoreFloat3(&m_vGrabR, vRight);
+	XMStoreFloat3(&m_vGrabN, vN);
+	m_vWallN   = Ctx.vWallNormal;
+	m_isHangIK = true;
 }
 
 void CTraceurClimbHang::OnExit()
@@ -65,10 +61,25 @@ void CTraceurClimbHang::OnExit()
 	__super::OnExit();
 	m_pMotionWarpCom->End_CurveWarp();
 
-	m_pIKDriverCom->Deactivate("LeftArmTwoBone", 0.2f);
-	m_pIKDriverCom->Deactivate("RightArmTwoBone", 0.2f);
-	m_pIKDriverCom->Deactivate("LeftLegTwoBone", 0.2f);
-	m_pIKDriverCom->Deactivate("RightLegTwoBone", 0.2f);
+	m_isHangIK = false;
+}
+
+void CTraceurClimbHang::Build_IKRequests(vector<IK_REQUEST>& Out)
+{
+	if (!m_isHangIK)
+		return;
+
+	const HANG_TUNING& T = CGameSystem::GetInstance()->Get_ParkourTuning()->Get().Hang;
+
+	Out.push_back(IK_REQUEST::Fixed("LeftArmTwoBone",  XMLoadFloat3(&m_vGrabL), XMLoadFloat3(&m_vGrabN), 1.f, 1.f, 0.4f, 0.2f));
+	Out.push_back(IK_REQUEST::Fixed("RightArmTwoBone", XMLoadFloat3(&m_vGrabR), XMLoadFloat3(&m_vGrabN), 1.f, 1.f, 0.4f, 0.2f));
+
+	Out.push_back(IK_REQUEST::WallFoot("LeftLegTwoBone",  XMLoadFloat3(&m_vWallN),
+		T.fFootPosWeight, T.fFootRotWeight, T.fFootBlendSec, 0.2f,
+		T.fFootProbeOut, T.fFootProbeDepth, T.fFootSkin));
+	Out.push_back(IK_REQUEST::WallFoot("RightLegTwoBone", XMLoadFloat3(&m_vWallN),
+		T.fFootPosWeight, T.fFootRotWeight, T.fFootBlendSec, 0.2f,
+		T.fFootProbeOut, T.fFootProbeDepth, T.fFootSkin));
 }
 
 _bool CTraceurClimbHang::Ready_Hang(void* pArg)

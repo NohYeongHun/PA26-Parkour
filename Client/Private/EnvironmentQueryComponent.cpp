@@ -589,7 +589,7 @@ void CEnvironmentQueryComponent::Measure_PathClearance(const MEASURE_FRAME& Fram
 	{
 		const JPH::Color Color = Geo.isPathBlocked ? JPH::Color(255.f, 0.f, 0.f, 1.f) : JPH::Color(0.f, 255.f, 0.f, 1.f);
 
-		// 캡슐 스윕(Shape Cast) 경로 라인 → ShapeCast 카테고리(2번)
+		// 캡슐 스윕(Shape Cast) 경로 라인 ShapeCast 카테고리(2번)
 		if (m_pGameInstance->IsDebugShape())
 			m_pGameInstance->Add_DebugLine(vStart, vStart + Frame.vTraversal * fDist, Color);
 
