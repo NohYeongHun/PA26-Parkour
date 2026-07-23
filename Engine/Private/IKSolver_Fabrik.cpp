@@ -64,6 +64,7 @@ IK_RESULT CIKSolver_Fabrik::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Con
 	_vector vPlanePoint = Target.Runtime.vCurTargetPos;
 	_vector vSolveTarget = vPlanePoint;
 
+	// 충돌 깊이만큼 보정합니다.
 	if (Target.Runtime.eMode == EIKTARGET_MODE::POSITION_CLEARANCE)
 	{
 		vector<_float4x4> SavedLocals;
