@@ -600,6 +600,8 @@ namespace Engine
 		_float			 fBlendSpeed;	// 수정되는 값
 		_vector			 vCurTargetPos;	// 수정되는 값
 		_vector			 vTargetNormal; // 수정되는 값
+		_vector			 vLastPoleDir;
+		_bool			 bHasPole;
 	}IK_TARGET_RUNTIME;
 
 	typedef struct tagIKTarget

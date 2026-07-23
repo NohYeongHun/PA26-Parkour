@@ -23,7 +23,8 @@ private:
 private:
 	_bool     Gather_Chain(const IK_SOLVE_CONTEXT& Context);
 	_uint     Iterate_Fabrik(const IK_SOLVE_CONTEXT& Context, _fvector vTarget,
-		_fvector vRootOrigin, _float& fErrOut);
+		_fvector vRootOrigin, _fvector vPlaneNormal, _float& fErrOut);
+	void      Solve_FabrikPosition(const IK_SOLVE_CONTEXT& Context, _fvector vTargetPos, _float fWeight);
 
 public:
 	static CIKSolver_Fabrik* Create(ID3D11Device * pDevice, ID3D11DeviceContext * pContext);

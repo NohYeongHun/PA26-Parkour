@@ -1,6 +1,7 @@
 ﻿#include "EnginePch.h"
 #include "IKSolver.h"
 #include "GameInstance.h"
+#include "Bone.h"
 
 CIKSolver::CIKSolver(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	: m_pDevice {pDevice}, m_pContext { pContext },
@@ -72,6 +73,44 @@ _vector CIKSolver::TwoBoneMakePoleVector(_fvector vRootPos, _fvector vMidPos, _v
 	return vBendDir;
 }
 
+
+_float CIKSolver::Measure_DeepestPenetration(const vector<CBone*>& Bones, _uint iEnd, _fvector vPlanePoint, _fvector vPlaneNormal, _int& iDeepestOut)
+{
+	iDeepestOut = -1;
+	_float fMin = FLT_MAX;
+
+	for (_uint i = iEnd + 1; i < static_cast<_uint>(Bones.size()); ++i)
+	{
+		if (!Is_Descendant(Bones, i, iEnd))
+			continue;
+
+		_vector vPos = XMLoadFloat4x4(Bones[i]->Get_CombinedTransformationMatrix()).r[3];
+		_float fPen = XMVectorGetX(XMVector3Dot(vPos - vPlanePoint, vPlaneNormal));
+		if (fPen < fMin)
+		{
+			fMin = fPen;
+			iDeepestOut = static_cast<_int>(i);
+		}
+	}
+
+	if (iDeepestOut < 0)
+		return 0.f;
+
+	return fMin;
+}
+
+_bool CIKSolver::Is_Descendant(const vector<CBone*>& Bones, _uint iBone, _uint iAncestor)
+{
+	_int iParent = Bones[iBone]->Get_ParentIndex();
+	while (iParent >= 0)
+	{
+		if (static_cast<_uint>(iParent) == iAncestor)
+			return true;
+		iParent = Bones[static_cast<_uint>(iParent)]->Get_ParentIndex();
+	}
+
+	return false;
+}
 
 void CIKSolver::Free()
 {

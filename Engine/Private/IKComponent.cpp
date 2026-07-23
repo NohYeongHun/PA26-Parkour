@@ -38,6 +38,7 @@ void CIKComponent::Begin_Target(const _string& strTarget, EIKTARGET_MODE eMode, 
 
 	Target.Runtime.isEnable = true;
 	Target.Runtime.isTargetSet = false;
+	Target.Runtime.bHasPole = false;
 	Target.Runtime.eMode = eMode;
 	Target.Chain.fPosWeight = fPosWeight;
 	Target.Chain.fRotWeight = fRotWeight;
@@ -93,9 +94,8 @@ void CIKComponent::Set_Target(const _string& strGoal, _fvector vWorldPos, _fvect
 		return;
 
 	IK_TARGET& target = m_Targets[iter->second];
-	_matrix matWorldInv = m_pTransformCom->Get_WorldMatrix_Inv();
-	_vector vModelPos = XMVector3TransformCoord(vWorldPos, matWorldInv); // 모델 스페이스 변환
-	_vector vModelNormal = XMVector3TransformNormal(vNormal, matWorldInv); // 모델 스페이스 변환 => 아직 미사용
+	_vector vModelPos = XMVector3TransformCoord(vWorldPos, m_matWorldToModel); // 모델 스페이스 변환
+	_vector vModelNormal = XMVector3TransformNormal(vNormal, m_matWorldToModel); // 모델 스페이스 변환
 
 	// 모델 스페이스 변환
 	target.Chain.vTargetPos = vModelPos;

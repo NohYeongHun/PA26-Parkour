@@ -18,7 +18,10 @@ public:
 
 public:
 	virtual IK_RESULT Solve(const IK_SOLVE_CONTEXT& Context) = 0;
-	
+
+protected:
+	static _float Measure_DeepestPenetration(const vector<class CBone*>& Bones, _uint iEnd, _fvector vPlanePoint, _fvector vPlaneNormal, _int& iDeepestOut);
+	static _bool  Is_Descendant(const vector<class CBone*>& Bones, _uint iBone, _uint iAncestor);
 
 protected:
 	ID3D11Device* m_pDevice = { nullptr };
