@@ -74,16 +74,14 @@ _vector CIKSolver::TwoBoneMakePoleVector(_fvector vRootPos, _fvector vMidPos, _v
 }
 
 
-_float CIKSolver::Measure_DeepestPenetration(const vector<CBone*>& Bones, _uint iEnd, _fvector vPlanePoint, _fvector vPlaneNormal, _int& iDeepestOut)
+_float CIKSolver::Measure_DeepestPenetration(const vector<CBone*>& Bones, const vector<_uint>& EndSubtree, _fvector vPlanePoint, _fvector vPlaneNormal, _int& iDeepestOut)
 {
 	iDeepestOut = -1;
 	_float fMin = FLT_MAX;
 
-	for (_uint i = iEnd + 1; i < static_cast<_uint>(Bones.size()); ++i)
+	// 자손 판정은 Register_Target에서 캐시된 목록 사용 (매 프레임 조상 탐색 제거)
+	for (_uint i : EndSubtree)
 	{
-		if (!Is_Descendant(Bones, i, iEnd))
-			continue;
-
 		_vector vPos = XMLoadFloat4x4(Bones[i]->Get_CombinedTransformationMatrix()).r[3];
 		_float fPen = XMVectorGetX(XMVector3Dot(vPos - vPlanePoint, vPlaneNormal));
 		if (fPen < fMin)

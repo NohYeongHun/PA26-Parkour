@@ -61,7 +61,6 @@ IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Co
 
 	_uint iRoot = Chain[0];
 	_uint iMid = Chain[1];
-	_uint iEnd = Chain[2];
 
 	_vector vPlaneNormal = XMVector3Normalize(Target.Runtime.vTargetNormal);
 	_vector vPlanePoint = Target.Runtime.vCurTargetPos;
@@ -79,7 +78,7 @@ IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Co
 
 		_int iDeep = -1;
 		// 3. Ray에 타겟된 지점과의 침투 깊이를 구합니다.
-		_float fPen = Measure_DeepestPenetration(Bones, iEnd, vPlanePoint, vPlaneNormal, iDeep);
+		_float fPen = Measure_DeepestPenetration(Bones, Target.Chain.EndSubtree, vPlanePoint, vPlaneNormal, iDeep);
 
 		Bones[iRoot]->Set_TransformationMatrix(matRootSave);
 		Bones[iMid]->Set_TransformationMatrix(matMidSave);

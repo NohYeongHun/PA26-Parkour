@@ -58,7 +58,6 @@ IK_RESULT CIKSolver_Fabrik::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Con
 		return tResult;
 
 	_uint iRoot = Chain[0];
-	_uint iEnd = Chain.back();
 
 	_vector vPlaneNormal = XMVector3Normalize(Target.Runtime.vTargetNormal);
 	_vector vPlanePoint = Target.Runtime.vCurTargetPos;
@@ -76,7 +75,7 @@ IK_RESULT CIKSolver_Fabrik::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Con
 		Context.pOwner->Update_ForwardKinematics(iRoot);
 
 		_int iDeep = -1;
-		_float fPen = Measure_DeepestPenetration(Bones, iEnd, vPlanePoint, vPlaneNormal, iDeep);
+		_float fPen = Measure_DeepestPenetration(Bones, Target.Chain.EndSubtree, vPlanePoint, vPlaneNormal, iDeep);
 
 		for (_uint i = 0; i + 1 < iChainSize; ++i)
 			Bones[Chain[i]]->Set_TransformationMatrix(XMLoadFloat4x4(&SavedLocals[i]));

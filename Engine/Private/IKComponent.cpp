@@ -189,6 +189,18 @@ _uint CIKComponent::Register_Target(const _string& strName, EIKSOLVER_TYPE eSolv
 	if (eSolver == EIKSOLVER_TYPE::TWO_BONE)
 		ASSERT_CRASH(ChainIdx.size() == 3);
 
+	// 3. 끝 본의 자손 인덱스 캐시 — 토폴로지는 런타임 불변이므로 등록 시 1회만 계산.
+	//    (침투 측정이 매 프레임 전체 본 × 조상 탐색하던 것을 목록 순회로 대체)
+	const _uint iEnd = ChainIdx.back();
+	for (_uint i = iEnd + 1; i < static_cast<_uint>(Bones.size()); ++i)
+	{
+		_int iParent = Bones[i]->Get_ParentIndex();
+		while (iParent >= 0 && static_cast<_uint>(iParent) != iEnd)
+			iParent = Bones[static_cast<_uint>(iParent)]->Get_ParentIndex();
+		if (iParent >= 0)
+			target.Chain.EndSubtree.push_back(i);
+	}
+
 	// 4. push한 위치가 handle값
 	_uint iTarget = static_cast<_uint>(m_Targets.size());
 	m_Targets.push_back(target);

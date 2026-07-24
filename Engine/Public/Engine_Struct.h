@@ -563,6 +563,7 @@ namespace Engine
 	typedef struct tagIKChangeDesc
 	{
 		std::vector<_uint> BoneChain; // Index를 담습니다. root -> end 순서로 이동합니다.
+		std::vector<_uint> EndSubtree; // 끝 본의 자손 인덱스 캐시 (Register_Target에서 1회 계산 — 침투 측정 시 매 프레임 조상 탐색 제거)
 		_vector vTargetPos;	 // 목표 위치
 		_vector vTargetRot; // 목표 회전
 		_float fPosWeight; // 가중치
