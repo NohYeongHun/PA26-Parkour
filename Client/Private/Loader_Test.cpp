@@ -55,13 +55,13 @@ HRESULT CLoader_Test::Load_Shader()
 {
 	cout << "Shader" << endl;
 
-    if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_Component_Shader_VtxAnimMesh"),
+   /* if (FAILED(m_pGameInstance->Add_Prototype(ENUM_CLASS(m_eCurLevel), TEXT("Prototype_Component_Shader_VtxAnimMesh"),
         CShader::Create(m_pDevice, m_pContext, TEXT("../../Client/Bin/ShaderFiles/Shader_VtxAnimMesh.hlsl")
             , VTXANIMMESH::Elements, VTXANIMMESH::iNumElements))))
     {
         CRASH("Failed Load AnimMesh Shader");
         return E_FAIL;
-    }
+    }*/
 
 
     return S_OK;
