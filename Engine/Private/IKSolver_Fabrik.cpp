@@ -36,7 +36,7 @@ HRESULT CIKSolver_Fabrik::Render()
 
 IK_RESULT CIKSolver_Fabrik::Solve(const IK_SOLVE_CONTEXT& Context)
 {
-	PROFILE_ZONE(); // Release에서만 실행될 때 동작함.
+	PROFILE_ZONE();
 	IK_RESULT tResult = Update_InverseKinematics(Context);
 
 	return tResult;

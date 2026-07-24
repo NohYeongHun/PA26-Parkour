@@ -36,7 +36,7 @@ HRESULT CIKSolver_TwoBone::Render()
 
 IK_RESULT CIKSolver_TwoBone::Solve(const IK_SOLVE_CONTEXT& Context)
 {
-	PROFILE_ZONE();
+
 	IK_RESULT tResult = Update_InverseKinematics(Context);
 
 	// Update FK
@@ -48,6 +48,7 @@ IK_RESULT CIKSolver_TwoBone::Solve(const IK_SOLVE_CONTEXT& Context)
 
 IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Context)
 {
+	PROFILE_ZONE();
 	IK_RESULT tResult{};
 	tResult.isSolved = true;
 
@@ -65,9 +66,9 @@ IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Co
 	_vector vPlaneNormal = XMVector3Normalize(Target.Runtime.vTargetNormal);
 	_vector vPlanePoint = Target.Runtime.vCurTargetPos;
 	_vector vSolveTarget = vPlanePoint;
-
 	if (Target.Runtime.eMode == EIKTARGET_MODE::POSITION_CLEARANCE)
 	{
+		PROFILE_ZONE_N("DeepestPeneration");
 		// 1. 기존 Transformatrix 저장.
 		_matrix matRootSave = XMLoadFloat4x4(Bones[iRoot]->Get_TransformationMatrix());
 		_matrix matMidSave = XMLoadFloat4x4(Bones[iMid]->Get_TransformationMatrix());
@@ -91,7 +92,6 @@ IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Co
 			vSolveTarget = vPlanePoint + (-fPen + fSkin) * vPlaneNormal;
 		}
 	}
-
 	// 4. 보정된 타겟지점으로 다시 IK를 수행합니다.
 	Solve_TwoBonePosition(Context, vSolveTarget, Target.Runtime.fCurWeight);
 	Context.pOwner->Update_ForwardKinematics(iRoot);
@@ -100,6 +100,7 @@ IK_RESULT CIKSolver_TwoBone::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Co
 
 void CIKSolver_TwoBone::Solve_TwoBonePosition(const IK_SOLVE_CONTEXT& Context, _fvector vTargetPos, _float fWeight)
 {
+	PROFILE_ZONE();
 	const _float fEPSILON = 1e-6f;
 	const vector<CBone*>& Bones = *Context.pBones;
 	const IK_TARGET& Target = *Context.pTarget;
