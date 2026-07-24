@@ -23,6 +23,9 @@ protected:
 	static _float Measure_DeepestPenetration(const vector<class CBone*>& Bones, const vector<_uint>& EndSubtree, _fvector vPlanePoint, _fvector vPlaneNormal, _int& iDeepestOut);
 	static _bool  Is_Descendant(const vector<class CBone*>& Bones, _uint iBone, _uint iAncestor);
 
+	_bool Gather_Chain(const IK_SOLVE_CONTEXT& Context);
+	void  Apply_ChainPositions(const IK_SOLVE_CONTEXT& Context, _float fWeight);
+
 protected:
 	ID3D11Device* m_pDevice = { nullptr };
 	ID3D11DeviceContext* m_pContext = { nullptr };

@@ -61,7 +61,7 @@ private:
 	Engine::StateKey m_ScanDirRequester  = { 0, 0 };
 	_float3          m_vRequestedScanDir = {};
 
-	_float           m_fFallTime         = 0.f;
+	_float           m_fCoyoteTime         = 0.f;
 	_float           m_fWallRunCooldown  = 0.f;
 	Engine::StateKey m_PrevStateKey      = { 0, 0 };
 

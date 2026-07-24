@@ -1,6 +1,7 @@
 ﻿#include "EnginePch.h"
 #include "IKSolver.h"
 #include "GameInstance.h"
+#include "IKComponent.h"
 #include "Bone.h"
 
 CIKSolver::CIKSolver(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
@@ -108,6 +109,80 @@ _bool CIKSolver::Is_Descendant(const vector<CBone*>& Bones, _uint iBone, _uint i
 	}
 
 	return false;
+}
+
+_bool CIKSolver::Gather_Chain(const IK_SOLVE_CONTEXT& Context)
+{
+	const _float fEPSILON = 1e-6f;
+	const vector<CBone*>& Bones = *Context.pBones;
+	const IK_TARGET& Target = *Context.pTarget;
+	const vector<_uint>& Chain = Target.Chain.BoneChain;
+
+	_uint iChainSize = static_cast<_uint>(Chain.size());
+
+	IK_SOLVE_WORKSPACE& WS = *Context.pWorkspace;
+	WS.Positions.clear();
+	WS.Lengths.clear();
+	WS.fTotalLength = 0.f;
+
+	// 2. Bone Chaing 으로 부터 정보를 추출합니다.
+	for (_uint i = 0; i < iChainSize; i++)
+	{
+		// 위치 저장.
+		_matrix matComb = XMLoadFloat4x4(Bones[Chain[i]]->Get_CombinedTransformationMatrix());
+		WS.Positions.push_back(matComb.r[3]);
+	}
+
+	for (_uint i = 0; i < iChainSize - 1; i++)
+	{
+		_float fLength = XMVectorGetX(XMVector3Length(WS.Positions[i] - WS.Positions[i + 1]));
+		if (fLength < fEPSILON)
+			return false;
+		WS.Lengths.push_back(fLength);
+		WS.fTotalLength += fLength;
+	}
+
+	return true;
+}
+
+void CIKSolver::Apply_ChainPositions(const IK_SOLVE_CONTEXT& Context, _float fWeight)
+{
+	const _float fEPSILON = 1e-6f;
+	const vector<CBone*>& Bones = *Context.pBones;
+	const vector<_uint>& Chain = Context.pTarget->Chain.BoneChain;
+	const vector<_vector>& P = Context.pWorkspace->Positions;
+	const size_t iN = P.size();
+
+	for (size_t i = 0; i + 1 < iN; ++i)
+	{
+		_uint iBone = Chain[i];
+		_uint iChild = Chain[i + 1];
+
+		_vector vA = XMLoadFloat4x4(Bones[iBone]->Get_CombinedTransformationMatrix()).r[3];
+		_vector vBcur = XMLoadFloat4x4(Bones[iChild]->Get_CombinedTransformationMatrix()).r[3];
+
+		_vector vCurDir = vBcur - vA;
+		_vector vTgtDir = P[i + 1] - vA;
+		if (XMVectorGetX(XMVector3LengthSq(vCurDir)) < fEPSILON || XMVectorGetX(XMVector3LengthSq(vTgtDir)) < fEPSILON)
+			continue;
+
+		vCurDir = XMVector3Normalize(vCurDir);
+		vTgtDir = XMVector3Normalize(vTgtDir);
+
+		_vector qDelta = QuatFromTo(vCurDir, vTgtDir);
+		qDelta = XMQuaternionSlerp(XMQuaternionIdentity(), qDelta, fWeight);
+
+		_matrix mPivot = XMMatrixTranslationFromVector(-vA)
+			* XMMatrixRotationQuaternion(qDelta)
+			* XMMatrixTranslationFromVector(vA);
+		_matrix matComb = XMLoadFloat4x4(Bones[iBone]->Get_CombinedTransformationMatrix()) * mPivot;
+
+		_int iParent = Bones[iBone]->Get_ParentIndex();
+		_matrix matParent = XMLoadFloat4x4(Bones[iParent]->Get_CombinedTransformationMatrix());
+		Bones[iBone]->Set_TransformationMatrix(matComb * XMMatrixInverse(nullptr, matParent));
+
+		Context.pOwner->Update_ForwardKinematics(iBone);
+	}
 }
 
 void CIKSolver::Free()
