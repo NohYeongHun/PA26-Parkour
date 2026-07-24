@@ -136,24 +136,40 @@ void CIKDriver::Resolve_Target(const _string& strGoal, ACTIVE_IK_ENTRY& Entry)
 	}
 	case EIKSOURCE_MODE::ANCHOR:
 	{
+		_vector vPos{}, vNormal{};
 		if (Req.isFix && Entry.isLatched)
 		{
-			m_pIKCom->Set_Target(strGoal, XMLoadFloat3(&Entry.vLatchedPos), XMLoadFloat3(&Entry.vLatchedNormal));
-			break;
+			vPos = XMLoadFloat3(&Entry.vLatchedPos);
+			vNormal = XMLoadFloat3(&Entry.vLatchedNormal);
 		}
-
-		_vector vPos{}, vNormal{};
-		if (!m_pEnvQueryCom->Resolve_Anchor(Req.strToken, vPos, vNormal))
-			break;	// 미해석 — 이 프레임 스킵 (isFix면 다음 프레임 재시도)
-
-		if (Req.isFix)
+		else
 		{
-			XMStoreFloat3(&Entry.vLatchedPos, vPos);
-			XMStoreFloat3(&Entry.vLatchedNormal, vNormal);
-			Entry.isLatched = true;
+			if (!m_pEnvQueryCom->Resolve_Anchor(Req.strToken, vPos, vNormal))
+				break;	// 미해석 — 이 프레임 스킵 (isFix면 다음 프레임 재시도)
+
+			if (Req.isFix)
+			{
+				XMStoreFloat3(&Entry.vLatchedPos, vPos);
+				XMStoreFloat3(&Entry.vLatchedNormal, vNormal);
+				Entry.isLatched = true;
+			}
 		}
 
 		m_pIKCom->Set_Target(strGoal, vPos, vNormal);
+
+		// 거리 자석: FK 손끝이 앵커 반경 안으로 들어온 만큼만 알파 개입.
+		if (Req.fReachRadius > 0.f)
+		{
+			_vector vEndFK{};
+			if (m_pIKCom->Get_TargetEndWorldPos(strGoal, vEndFK))
+			{
+				const _float fDist = XMVectorGetX(XMVector3Length(vPos - vEndFK));
+				_float w = 1.f - min(fDist / Req.fReachRadius, 1.f);
+				w = w * w * (3.f - 2.f * w);	// smoothstep
+				const _float fRamp = (Req.fDrivenAlpha >= 0.f) ? min(Req.fDrivenAlpha, 1.f) : 0.f;
+				m_pIKCom->Set_TargetAlpha(strGoal, max(fRamp, w));
+			}
+		}
 #ifdef _DEBUG
 		m_pGameInstance->Add_DebugSphere(vPos, 0.05f, JPH::Color(255.f, 0.f, 0.f, 1.f));
 #endif

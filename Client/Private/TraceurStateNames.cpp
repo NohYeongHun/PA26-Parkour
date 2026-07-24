@@ -98,7 +98,7 @@ namespace
 				{ "WallRunUp", ENUM_CLASS(ETraceurClimbRun::WallRunUp) },
 			}},
 			{ { ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Hang) }, {
-				{ "BracedHangHopIdle", ENUM_CLASS(ETraceurClimbHang::HopIdle) },
+				{ "BracedHangHopIdle", ENUM_CLASS(ETraceurClimbHang::BracedHangHopIdle) },
 			}},
 			{ { ENUM_CLASS(EStateCategory::CLIMB), ENUM_CLASS(ETraceurClimbState::Hop) }, {
 				{ "BracedHangHopLeft",  ENUM_CLASS(ETraceurClimbHop::HopLeft) },

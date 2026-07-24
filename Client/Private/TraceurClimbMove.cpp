@@ -1,9 +1,11 @@
-#include "ClientPch.h"
+﻿#include "ClientPch.h"
 #include "TraceurClimbMove.h"
 #include "Traceur.h"
 #include "TraceurState_Enum.h"
 #include "MovementComponent.h"
 #include "EnvironmentQueryComponent.h"
+#include "GameSystem.h"
+#include "ParkourTuningTable.h"
 
 HRESULT CTraceurClimbMove::Initialize(CTraceur* pOwner)
 {
@@ -26,6 +28,12 @@ void CTraceurClimbMove::OnExit()
 {
 	__super::OnExit();
 	m_pColliderCom->Set_Gravity(false);
+}
+
+void CTraceurClimbMove::Build_IKRequests(vector<IK_REQUEST>& Out)
+{
+	// 매프레임 탐색한다.
+	
 }
 
 void CTraceurClimbMove::Update_Animations(_float fTimeDelta)

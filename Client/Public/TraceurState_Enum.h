@@ -138,7 +138,7 @@ enum class ETraceurClimbRun : _uint
 
 enum class ETraceurClimbHang : _uint
 {
-	HopIdle = 0, // BracedHangHopIdle — 매달림 대기 루프 (loop)
+	BracedHangHopIdle = 0, // BracedHangHopIdle — 매달림 대기 루프 (loop)
 	HangEnd
 };
 

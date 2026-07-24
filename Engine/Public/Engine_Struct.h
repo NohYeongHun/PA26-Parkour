@@ -637,6 +637,9 @@ namespace Engine
 		_float			fProbeOut = 0.3f;
 		_float			fProbeDepth = 0.6f;
 		_float			fSkin = 0.02f;
+
+		// 거리 자석: FK 손끝이 앵커에 이 반경 안으로 들어오면 근접도 비례로 알파 개입 (0 = 비활성, 시간 램프만)
+		_float			fReachRadius = 0.f;
 	}IK_BINDING;
 
 	// 현재 트랙 위치에서 활성인 IK 노티 구간 1개 (블렌드 값은 구간마다 다를 수 있음)
@@ -665,6 +668,91 @@ namespace Engine
 		_float						fTimeDelta;
 		_matrix						matModelToWorld;	// 디버그 드로우용(모델→월드)
 	}IK_SOLVE_CONTEXT;
+
+
+	enum class EIKSOURCE_MODE { FIXED, ANCHOR, WALL_PROBE };
+
+	typedef struct tagIKRequest
+	{
+		_string          strGoal;
+		EIKSOURCE_MODE   eSource = EIKSOURCE_MODE::FIXED;
+		EIKTARGET_MODE   eMode = EIKTARGET_MODE::POSITION;
+		_float           fPosWeight = 1.f;
+		_float           fRotWeight = 1.f;
+		_float           fBlendInSec = 0.2f;
+		_float           fBlendOutSec = 0.2f;
+
+		// 알파 직접 구동 (0~1): 음수면 시간 블렌드(fBlendIn/OutSec) 사용.
+		// 노티 구간 진행률처럼 트랙 포지션에 동기화된 값으로 알파를 구동할 때 사용.
+		_float           fDrivenAlpha = -1.f;
+
+		// FIXED: 요청자가 좌표를 직접 제공
+		_float3          vWorldPos{};
+		_float3          vWorldNormal{ 0.f, 1.f, 0.f };
+
+		// ANCHOR: 드라이버가 EnvQuery::Resolve_Anchor(토큰)로 해석
+		_string          strToken;
+		_bool            isFix = { false };	// 첫 해석 성공 시 드라이버가 고정
+		// 거리 자석(ANCHOR 전용): FK 손끝~앵커 거리가 반경 내로 줄수록 알파 개입. 최종 알파 = max(시간 램프, 자석). 0 = 비활성
+		_float           fReachRadius = 0.f;
+
+		// WALL_PROBE: 드라이버가 매 프레임 벽 레이캐스트
+		_float3          vWallNormal{ 0.f, 0.f, 1.f };
+		_float           fProbeOut = 0.3f;
+		_float           fProbeDepth = 0.6f;
+		_float           fSkin = 0.02f;
+
+		static tagIKRequest Fixed(const _string& strGoal, _fvector vPos, _fvector vNormal,
+			_float fPosW, _float fRotW, _float fBlendIn, _float fBlendOut)
+		{
+			tagIKRequest Req{};
+			Req.strGoal = strGoal;
+			Req.eSource = EIKSOURCE_MODE::FIXED;
+			Req.eMode = EIKTARGET_MODE::POSITION;
+			Req.fPosWeight = fPosW;
+			Req.fRotWeight = fRotW;
+			Req.fBlendInSec = fBlendIn;
+			Req.fBlendOutSec = fBlendOut;
+			XMStoreFloat3(&Req.vWorldPos, vPos);
+			XMStoreFloat3(&Req.vWorldNormal, vNormal);
+			return Req;
+		}
+
+		static tagIKRequest Anchor(const _string& strGoal, const _string& strToken, EIKTARGET_MODE eMode,
+			_float fPosW, _float fRotW, _float fBlendIn, _float fBlendOut, _bool isFix)
+		{
+			tagIKRequest Req{};
+			Req.strGoal = strGoal;
+			Req.eSource = EIKSOURCE_MODE::ANCHOR;
+			Req.eMode = eMode;
+			Req.fPosWeight = fPosW;
+			Req.fRotWeight = fRotW;
+			Req.fBlendInSec = fBlendIn;
+			Req.fBlendOutSec = fBlendOut;
+			Req.strToken = strToken;
+			Req.isFix = isFix;
+			return Req;
+		}
+
+		static tagIKRequest WallProbe(const _string& strGoal, EIKTARGET_MODE eMode, _fvector vWallNormal,
+			_float fPosW, _float fRotW, _float fBlendIn, _float fBlendOut,
+			_float fProbeOut, _float fProbeDepth, _float fSkin)
+		{
+			tagIKRequest Req{};
+			Req.strGoal = strGoal;
+			Req.eSource = EIKSOURCE_MODE::WALL_PROBE;
+			Req.eMode = eMode;
+			Req.fPosWeight = fPosW;
+			Req.fRotWeight = fRotW;
+			Req.fBlendInSec = fBlendIn;
+			Req.fBlendOutSec = fBlendOut;
+			XMStoreFloat3(&Req.vWallNormal, vWallNormal);
+			Req.fProbeOut = fProbeOut;
+			Req.fProbeDepth = fProbeDepth;
+			Req.fSkin = fSkin;
+			return Req;
+		}
+	}IK_REQUEST;
 #pragma endregion
 
 }

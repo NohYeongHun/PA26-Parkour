@@ -42,7 +42,8 @@ json CIKNotifyState::To_Json() const
             { "IsWallProbe",  b.isWallProbe },
             { "ProbeOut",     b.fProbeOut },
             { "ProbeDepth",   b.fProbeDepth },
-            { "Skin",         b.fSkin }
+            { "Skin",         b.fSkin },
+            { "ReachRadius",  b.fReachRadius }
             });
     }
     j["Bindings"] = bindings;
@@ -111,6 +112,7 @@ CIKNotifyState* CIKNotifyState::From_Json(const json& j)
         bind.fProbeOut   = b.value("ProbeOut", 0.3f);
         bind.fProbeDepth = b.value("ProbeDepth", 0.6f);
         bind.fSkin       = b.value("Skin", 0.02f);
+        bind.fReachRadius = b.value("ReachRadius", 0.f);
         pInstance->m_Bindings.push_back(bind);
     }
     return pInstance;

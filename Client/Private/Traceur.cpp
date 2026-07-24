@@ -310,6 +310,7 @@ void CTraceur::Handle_Input(_float fTimeDelta)
 	{
 		m_pGameSystem->Reload_TransitionTable();
 		m_pGameSystem->Reload_ParkourTuning();
+		Reload_Notifies();
 	}
 		
 #endif // _DEBUG
@@ -376,7 +377,7 @@ void CTraceur::Drive_IK(_float fTimeDelta)
 	vector<IK_REQUEST> Requests;
 
 	// 상태 레이어 먼저, 클립 레이어 나중
-	if (CTraceurState* pState = dynamic_cast<CTraceurState*>(m_pStateMachineCom->Get_CurrentState()))
+	if (CState* pState = m_pStateMachineCom->Get_CurrentState())
 		pState->Build_IKRequests(Requests);
 
 	Collect_ClipIKRequests(Requests);
@@ -415,6 +416,7 @@ void CTraceur::Collect_ClipIKRequests(vector<IK_REQUEST>& Out)
 			{
 				Req = IK_REQUEST::Anchor(Bind.strGoalName, Bind.strTargetSource, Bind.eMode,
 					Bind.fPosWeight, Bind.fRotWeight, Window.fBlendInSec, Window.fBlendOutSec, Bind.isFix);
+				Req.fReachRadius = Bind.fReachRadius;
 			}
 			Req.fDrivenAlpha = fAlpha;
 			Out.push_back(Req);
@@ -537,24 +539,10 @@ HRESULT CTraceur::Ready_EnvQueryComponents(const CHARACTER_DESC* pDesc)
 
 HRESULT CTraceur::Ready_Variables(const CHARACTER_DESC* pDesc)
 {
-	auto StateFlagCallBack = [this](const _string& strFlag, _bool isOn) { Notify_StateFlag(strFlag, isOn); };
-	auto MotionWarpCallBack = [this](const _string& strName, _bool isStart, _float fEndPos, _bool bTrans, _bool bRot) {
-		if (m_pMotionWarpCom && m_pColliderCom)
-		{
-			m_pMotionWarpCom->On_WarpNotify(strName, isStart, fEndPos, bTrans, bRot);
-			m_pColliderCom->Set_Gravity(false);
-		};
-	};
-
-	m_pModelCom->Register_AllNotifies(
-		pDesc->strNotfiyFolderPath,
-		nullptr,
-		nullptr,
-		nullptr,
-		StateFlagCallBack,
-		MotionWarpCallBack,
-		nullptr	// IK는 엣지 콜백 대신 Drive_IK의 구간 샘플링으로 처리 (Collect_ClipIKRequests)
-	);
+	Register_ClipNotifies(pDesc->strNotfiyFolderPath);
+#ifdef _DEBUG
+	m_strNotifyFolderPath = pDesc->strNotfiyFolderPath;	// 핫리로드용 경로 보관
+#endif
 
 	// Bone Chain을 등록합니다.
 	m_pIKCom->Register_Targets(pDesc->strIKGoalFolderPath);
@@ -569,6 +557,38 @@ HRESULT CTraceur::Ready_Variables(const CHARACTER_DESC* pDesc)
 
 	return S_OK;
 }
+
+void CTraceur::Register_ClipNotifies(const _string& strNotifyFolderPath)
+{
+	auto StateFlagCallBack = [this](const _string& strFlag, _bool isOn) { Notify_StateFlag(strFlag, isOn); };
+	auto MotionWarpCallBack = [this](const _string& strName, _bool isStart, _float fEndPos, _bool bTrans, _bool bRot) {
+		if (m_pMotionWarpCom && m_pColliderCom)
+		{
+			m_pMotionWarpCom->On_WarpNotify(strName, isStart, fEndPos, bTrans, bRot);
+			m_pColliderCom->Set_Gravity(false);
+		};
+	};
+
+	m_pModelCom->Register_AllNotifies(
+		strNotifyFolderPath,
+		nullptr,
+		nullptr,
+		nullptr,
+		StateFlagCallBack,
+		MotionWarpCallBack,
+		nullptr	// IK는 엣지 콜백 대신 Drive_IK의 구간 샘플링으로 처리 (Collect_ClipIKRequests)
+	);
+}
+
+#ifdef _DEBUG
+// 노티 JSON 핫리로드 — 활성 구간(StateFlag/MotionWarp)의 End 엣지가 유실될 수 있으므로 가급적 Idle/Move에서 사용
+void CTraceur::Reload_Notifies()
+{
+	m_pModelCom->Clear_AllNotifies();
+	Register_ClipNotifies(m_strNotifyFolderPath);
+	OutputDebugStringA("[Traceur] Clip notify JSONs reloaded\n");
+}
+#endif
 
 HRESULT CTraceur::Bind_Matrices()
 {

@@ -13,9 +13,11 @@ public:
 	virtual HRESULT Initialize(class CTraceur* pOwner);
 	virtual void OnEnter(void* pArg = nullptr) override;
 	virtual void OnExit() override;
+	virtual void Build_IKRequests(vector<IK_REQUEST>& Out) override;
 
 private:
 	void Update_Animations(_float fTimeDelta) override;
+
 
 public:
 	static CTraceurClimbMove* Create(class CTraceur* pOwner);

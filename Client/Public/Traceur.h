@@ -74,12 +74,16 @@ private:
 	// 루트모션 궤적 디버그
 	_bool     m_IsShowTrajectory = { false };
 	_float    m_fTrajectoryTimeStep = { 0.1f };
-	_ubyte    m_iTrajectoryToggleKey = { DIK_5 }; 
+	_ubyte    m_iTrajectoryToggleKey = { DIK_5 };
 	_float4x4 m_TrajectoryAnchor = {};
 	_string   m_strTrajectoryAnchorAnim = {};
 
 	// 본/IK 시각화 토글 (4번 키)
 	_bool     m_IsShowBoneIK = { false };
+
+	// 노티 JSON 핫리로드 (6번 키 — 전환 테이블/튜닝과 함께)
+	_string   m_strNotifyFolderPath = {};
+	void      Reload_Notifies();
 #endif
 
 private:
@@ -123,6 +127,7 @@ private:
 	HRESULT Ready_EnvQueryComponents(const CHARACTER_DESC* pDesc);
 
 	HRESULT Ready_Variables(const CHARACTER_DESC* pDesc);
+	void    Register_ClipNotifies(const _string& strNotifyFolderPath);
 	HRESULT Bind_Matrices();
 
 private:
