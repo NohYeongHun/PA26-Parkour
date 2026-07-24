@@ -16,6 +16,10 @@ public:
 public:
 	virtual IK_RESULT	 Solve(const IK_SOLVE_CONTEXT& Context) override;
 
+private:
+	IK_RESULT Update_InverseKinematics(const IK_SOLVE_CONTEXT& Context);
+	_uint     Iterate_CCD(const IK_SOLVE_CONTEXT& Context, _fvector vTarget, _float& fErrOut);
+
 public:
 	static CIKSolver_CCD* Create(ID3D11Device * pDevice, ID3D11DeviceContext * pContext);
 	virtual CIKSolver* Clone(void* pArg) override;

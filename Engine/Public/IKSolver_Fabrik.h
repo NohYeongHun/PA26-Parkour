@@ -21,7 +21,6 @@ private:
 	IK_RESULT Update_InverseKinematics(const IK_SOLVE_CONTEXT& Context);
 
 private:
-	_bool     Gather_Chain(const IK_SOLVE_CONTEXT& Context);
 	_uint     Iterate_Fabrik(const IK_SOLVE_CONTEXT& Context, _fvector vTarget,
 		_fvector vRootOrigin, _fvector vPlaneNormal, _float& fErrOut);
 	void      Solve_FabrikPosition(const IK_SOLVE_CONTEXT& Context, _fvector vTargetPos, _float fWeight);

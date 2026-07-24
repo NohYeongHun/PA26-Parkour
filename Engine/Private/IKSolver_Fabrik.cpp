@@ -93,41 +93,6 @@ IK_RESULT CIKSolver_Fabrik::Update_InverseKinematics(const IK_SOLVE_CONTEXT& Con
 	return tResult;
 }
 
-_bool CIKSolver_Fabrik::Gather_Chain(const IK_SOLVE_CONTEXT& Context)
-{
-	const _float fEPSILON = 1e-6f;
-	const vector<CBone*>& Bones = *Context.pBones;
-	const IK_TARGET& Target = *Context.pTarget;
-	const vector<_uint>& Chain = Target.Chain.BoneChain;
-
-	_uint iChainSize = static_cast<_uint>(Chain.size());
-
-	IK_SOLVE_WORKSPACE& WS = *Context.pWorkspace;
-	// 워크스페이스는 타겟들이 돌려쓰므로 총길이까지 매번 초기화해야 합니다.
-	WS.Positions.clear();
-	WS.Lengths.clear();
-	WS.fTotalLength = 0.f;
-
-	// 2. Bone Chaing 으로 부터 정보를 추출합니다.
-	for (_uint i = 0; i < iChainSize; i++)
-	{
-		// 위치 저장.
-		_matrix matComb = XMLoadFloat4x4(Bones[Chain[i]]->Get_CombinedTransformationMatrix());
-		WS.Positions.push_back(matComb.r[3]);
-	}
-
-	for (_uint i = 0; i < iChainSize - 1; i++)
-	{
-		_float fLength = XMVectorGetX(XMVector3Length(WS.Positions[i] - WS.Positions[i + 1]));
-		if (fLength < fEPSILON)
-			return false;
-		WS.Lengths.push_back(fLength);
-		WS.fTotalLength += fLength;
-	}
-
-	return true;
-}
-
 // Forward(End => Root) / Backward(Root => End) 왕복 반복
 _uint CIKSolver_Fabrik::Iterate_Fabrik(const IK_SOLVE_CONTEXT& Context, _fvector vTarget, _fvector vRootOrigin, _fvector vPlaneNormal, _float& fErrOut)
 {
@@ -180,11 +145,10 @@ _uint CIKSolver_Fabrik::Iterate_Fabrik(const IK_SOLVE_CONTEXT& Context, _fvector
 void CIKSolver_Fabrik::Solve_FabrikPosition(const IK_SOLVE_CONTEXT& Context, _fvector vTargetPos, _float fWeight)
 {
 	const _float fEPSILON = 1e-6f;
-	const vector<CBone*>& Bones = *Context.pBones;
 	const IK_TARGET& Target = *Context.pTarget;
-	const vector<_uint>& Chain = Target.Chain.BoneChain;
 	IK_SOLVE_WORKSPACE& WS = *Context.pWorkspace;
 
+	// 1. 위치 지정(현재 위치)
 	if (!Gather_Chain(Context))
 		return;
 
@@ -236,36 +200,8 @@ void CIKSolver_Fabrik::Solve_FabrikPosition(const IK_SOLVE_CONTEXT& Context, _fv
 		Iterate_Fabrik(Context, vTargetPos, vRootOrigin, vPlaneNormal, fErr);
 	}
 
-	for (size_t i = 0; i + 1 < iN; ++i)
-	{
-		_uint iBone = Chain[i];
-		_uint iChild = Chain[i + 1];
-
-		_vector vA = XMLoadFloat4x4(Bones[iBone]->Get_CombinedTransformationMatrix()).r[3];
-		_vector vBcur = XMLoadFloat4x4(Bones[iChild]->Get_CombinedTransformationMatrix()).r[3];
-
-		_vector vCurDir = vBcur - vA;
-		_vector vTgtDir = P[i + 1] - vA;
-		if (XMVectorGetX(XMVector3LengthSq(vCurDir)) < fEPSILON || XMVectorGetX(XMVector3LengthSq(vTgtDir)) < fEPSILON)
-			continue;
-
-		vCurDir = XMVector3Normalize(vCurDir);
-		vTgtDir = XMVector3Normalize(vTgtDir);
-
-		_vector qDelta = QuatFromTo(vCurDir, vTgtDir);
-		qDelta = XMQuaternionSlerp(XMQuaternionIdentity(), qDelta, fWeight);
-
-		_matrix mPivot = XMMatrixTranslationFromVector(-vA)
-			* XMMatrixRotationQuaternion(qDelta)
-			* XMMatrixTranslationFromVector(vA);
-		_matrix matComb = XMLoadFloat4x4(Bones[iBone]->Get_CombinedTransformationMatrix()) * mPivot;
-
-		_int iParent = Bones[iBone]->Get_ParentIndex();
-		_matrix matParent = XMLoadFloat4x4(Bones[iParent]->Get_CombinedTransformationMatrix());
-		Bones[iBone]->Set_TransformationMatrix(matComb * XMMatrixInverse(nullptr, matParent));
-
-		Context.pOwner->Update_ForwardKinematics(iBone);
-	}
+	// 위치해 → 본 회전 재구성 (FABRIK/CCD 공용 베이스 헬퍼)
+	Apply_ChainPositions(Context, fWeight);
 }
 
 CIKSolver_Fabrik* CIKSolver_Fabrik::Create(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
