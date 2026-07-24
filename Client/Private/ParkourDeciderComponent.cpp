@@ -103,9 +103,9 @@ void CParkourDeciderComponent::Update_Context(_float fTimeDelta)
 	m_Decision.isSupported = m_pColliderCom->IsLand(&vGroundN);
 	m_Decision.isGrounded  = m_Decision.isSupported && vGroundN.y >= cosf(XMConvertToRadians(50.f));
 
-	if (m_Decision.isSupported) m_fFallTime = 0.f;
-	else                        m_fFallTime += fTimeDelta;
-	m_Decision.isFalling = (m_fFallTime >= 0.3f);
+	if (m_Decision.isSupported) m_fCoyoteTime = 0.f;
+	else                        m_fCoyoteTime += fTimeDelta;
+		m_Decision.isFalling = (m_fCoyoteTime >= 0.2f);
 
 	const _bool isGroundMove = (CurKey.iCategory == ENUM_CLASS(EStateCategory::GROUND)
 	                         && CurKey.iSubState  == ENUM_CLASS(ETraceurGroundState::Move));
